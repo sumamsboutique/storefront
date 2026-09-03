@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sumam's Boutique — Mobile PLP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&family=Hind+Siliguri:wght@300;400&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #2A1208; font-family: 'DM Sans', sans-serif; }
+body { display: flex; justify-content: center; min-height: 100vh; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1C0A06; }
+::-webkit-scrollbar-thumb { background: #8C6A55; }
+
+.linen-noise::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px 200px; opacity: 0.03; pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+/* ─── TOKENS ─── */
+const C = {
+  dark:   '#1C0A06',
+  copper: '#BF5E18',
+  ivory:  '#F5EFE6',
+  gold:   '#D4880A',
+  muted:  '#8C6A55',
+  cream:  '#EDE3D6',
+};
+const F = {
+  display: "'Cormorant Garamond', serif",
+  ui:      "'DM Sans', sans-serif",
+  bn:      "'Hind Siliguri', sans-serif",
+};
+
+/* ─── MOBILE TOP NAV (56px, sticky, brand-dark) ─── */
+function MobileNav() {
+  return (
+    <nav className="linen-noise" style={{
+      position: 'sticky', top: 0, zIndex: 100,
+      width: '100%', height: 56, background: C.dark,
+      borderBottom: '1px solid rgba(212,136,10,0.18)',
+      display: 'flex', alignItems: 'center', padding: '0 8px',
+      flexShrink: 0,
+    }}>
+      {/* Hamburger */}
+      <button style={{
+        width: 40, height: 40, background: 'none', border: 'none', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative', zIndex: 1,
+      }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.85 }}>
+          <line x1="3" y1="7" x2="21" y2="7" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="17" x2="21" y2="17" />
+        </svg>
+      </button>
+
+      {/* Centre lockup: small saree-figure mark + wordmark */}
+      <div style={{
+        position: 'absolute', left: '50%', top: '50%',
+        transform: 'translate(-50%,-50%)',
+        display: 'flex', alignItems: 'center', gap: 8, zIndex: 1,
+      }}>
+        {/* Saree-figure mark (a stylised drape glyph) */}
+        <svg width="14" height="18" viewBox="0 0 14 18" fill="none" stroke={C.copper} strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.95 }}>
+          <circle cx="7" cy="3" r="1.6" />
+          <path d="M7 4.6 L4 8.5 L4.5 17 L9.5 17 L10 8.5 Z" />
+          <path d="M4.4 9.5 L9.6 9.5" strokeWidth="0.5" opacity="0.8" />
+          <path d="M4.5 12 L9.5 12" strokeWidth="0.5" opacity="0.5" />
+        </svg>
+        <span style={{
+          fontFamily: F.display, fontSize: 13, fontWeight: 600,
+          letterSpacing: '0.12em', color: C.copper,
+          whiteSpace: 'nowrap',
+        }}>
+          SUMAM'S BOUTIQUE
+        </span>
+      </div>
+
+      {/* Right: search + cart */}
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 0, position: 'relative', zIndex: 1 }}>
+        <button style={{
+          width: 40, height: 40, background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.85 }}>
+            <circle cx="9.5" cy="9.5" r="6" /><line x1="14" y1="14" x2="19" y2="19" />
+          </svg>
+        </button>
+        <button style={{
+          width: 40, height: 40, background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.85 }}>
+            <path d="M2 2h2.5l2.5 10a1 1 0 001 .8h8a1 1 0 001-.8L19 6H5" />
+            <circle cx="9" cy="17.5" r="1.3" fill={C.ivory} stroke="none" style={{ opacity: 0.85 }} />
+            <circle cx="15" cy="17.5" r="1.3" fill={C.ivory} stroke="none" style={{ opacity: 0.85 }} />
+          </svg>
+          <span style={{
+            position: 'absolute', top: 7, right: 6,
+            background: C.copper, color: C.ivory,
+            fontSize: 8, fontWeight: 500, width: 14, height: 14, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+          }}>1</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+/* ─── PAGE HEADER STRIP ─── */
+function PageHeader() {
+  return (
+    <div style={{ background: C.ivory, padding: '24px 20px 0' }}>
+      {/* Breadcrumb */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        fontFamily: F.ui, fontSize: 11, fontWeight: 400, color: C.muted,
+        marginBottom: 18,
+      }}>
+        <a href="#" style={{ color: C.muted, textDecoration: 'none' }}>Home</a>
+        <span style={{ color: 'rgba(140,106,85,0.5)' }}>/</span>
+        <span style={{ color: 'rgba(28,10,6,0.6)' }}>Sarees</span>
+      </div>
+      {/* Title + count row */}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <h1 style={{
+          fontFamily: F.display, fontSize: 28, fontWeight: 300, color: C.dark,
+          letterSpacing: '0.005em', lineHeight: 1.05,
+        }}>Sarees</h1>
+        <span style={{
+          fontFamily: F.ui, fontSize: 11, fontWeight: 300,
+          color: C.muted, letterSpacing: '0.02em',
+        }}>47 pieces</span>
+      </div>
+      {/* Hairline */}
+      <div style={{ marginTop: 20, height: 1, background: 'rgba(140,106,85,0.2)' }} />
+    </div>
+  );
+}
+
+/* ─── FILTER & SORT BAR ─── */
+function FilterSortBar() {
+  const baseBtn = {
+    flex: 1, height: 44,
+    background: 'transparent',
+    border: '1px solid rgba(140,106,85,0.3)',
+    borderRadius: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+    cursor: 'pointer',
+    fontFamily: F.ui, fontSize: 11, fontWeight: 500,
+    letterSpacing: '0.14em', textTransform: 'uppercase',
+    color: 'rgba(28,10,6,0.8)',
+    whiteSpace: 'nowrap',
+  };
+  return (
+    <div style={{ background: C.ivory, padding: '14px 20px', position: 'relative' }}>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <button style={baseBtn}>
+          {/* Filter (sliders) */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={C.muted} strokeWidth="1.25" strokeLinecap="round">
+            <line x1="2" y1="4" x2="14" y2="4" />
+            <line x1="2" y1="8" x2="14" y2="8" />
+            <line x1="2" y1="12" x2="14" y2="12" />
+            <circle cx="6" cy="4" r="1.6" fill={C.ivory} />
+            <circle cx="11" cy="8" r="1.6" fill={C.ivory} />
+            <circle cx="5" cy="12" r="1.6" fill={C.ivory} />
+          </svg>
+          <span>FILTER</span>
+        </button>
+        <button style={baseBtn}>
+          {/* Sort (arrow down with bars) */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={C.muted} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="3.5" x2="12" y2="3.5" />
+            <line x1="3" y1="8" x2="9" y2="8" />
+            <line x1="3" y1="12.5" x2="6" y2="12.5" />
+            <path d="M12 7 L12 13.5 M9.5 11 L12 13.5 L14.5 11" />
+          </svg>
+          <span>SORT BY</span>
+        </button>
+      </div>
+      {/* Hairline at bottom of bar */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 1, background: 'rgba(140,106,85,0.15)' }} />
+    </div>
+  );
+}
+
+/* ─── PRODUCT DATA (inherited from desktop PLP) ─── */
+const GRADIENTS = {
+  benarasiHero:  'linear-gradient(155deg, #2A0D06, #6B2410 35%, #A04514 70%, #BF5E18)',
+  benarasiAlt:   'linear-gradient(165deg, #3D1408, #7A2C0C 45%, #BF5E18 75%, #8B3A14)',
+  tantLight:     'linear-gradient(170deg, #F5EFE6, #DCC9A8 45%, #B8956A 80%, #8C6A55)',
+  muslinLight:   'linear-gradient(170deg, #EDE3D6, #C9B488 50%, #8E6F4A 90%)',
+  jamdaniLight:  'linear-gradient(170deg, #EDE3D6, #C4A878 55%, #6B5238)',
+  kanthaDark:    'linear-gradient(155deg, #1C0A06, #4A2010 45%, #8C6A55 90%)',
+  silkDark:      'linear-gradient(155deg, #2A1008, #5A2A14 40%, #A04A18 75%, #D4880A)',
+  silkBridal:    'linear-gradient(160deg, #3D1408, #6B2310 40%, #BF5E18 70%, #D4880A)',
+  garadLight:    'linear-gradient(170deg, #F5EFE6, #E8D5B0 50%, #BF5E18 95%)',
+  templeJ:       'linear-gradient(165deg, #4A2010, #8B3A14 40%, #C4611A 70%, #7A2C0C)',
+  contemporaryJ: 'linear-gradient(165deg, #5A2A14, #8B5E10 40%, #D4880A 70%, #4A3810)',
+};
+
+const PRODUCTS = [
+  { type: 'saree', name: 'Chandrakala Benarasi Silk',  sub: 'BENARASI · BRIDAL',       price: '₹42,500', badge: 'FEATURED',    gradient: GRADIENTS.benarasiHero,  label: 'BENARASI',     sold: false },
+  { type: 'saree', name: 'Nilima Tant Cotton',         sub: 'TANT · EVERYDAY',         price: '₹3,800',  badge: 'NEW ARRIVAL', gradient: GRADIENTS.tantLight,     label: 'TANT',         sold: false },
+  { type: 'saree', name: 'Aarohi Muslin Drape',        sub: 'MUSLIN · FESTIVE',        price: '₹12,200', badge: null,          gradient: GRADIENTS.muslinLight,   label: 'MUSLIN',       sold: false },
+  { type: 'jewel', name: 'Durga Temple Necklace Set',  sub: 'TEMPLE COLLECTION',       price: '₹18,750', badge: null,          gradient: GRADIENTS.templeJ,       label: 'TEMPLE',       sold: false },
+  { type: 'saree', name: 'Priya Kantha Stitch',        sub: 'KANTHA · EVERYDAY',       price: '₹8,900',  badge: null,          gradient: GRADIENTS.kanthaDark,    label: 'KANTHA',       sold: true  },
+  { type: 'saree', name: 'Madhubani Silk Weave',       sub: 'SILK · FESTIVE',          price: '₹28,000', badge: 'NEW ARRIVAL', gradient: GRADIENTS.silkDark,      label: 'SILK',         sold: false },
+  { type: 'saree', name: 'Rukmini Jamdani Cotton',     sub: 'JAMDANI · PUJA',          price: '₹14,500', badge: null,          gradient: GRADIENTS.jamdaniLight,  label: 'JAMDANI',      sold: false },
+  { type: 'saree', name: 'Shankha Garad Silk',         sub: 'GARAD · WEDDING GUEST',   price: '₹19,200', badge: null,          gradient: GRADIENTS.garadLight,    label: 'GARAD',        sold: false },
+  { type: 'saree', name: 'Annapurna Benarasi Silk',    sub: 'BENARASI · PUJA',         price: '₹36,800', badge: 'FEATURED',    gradient: GRADIENTS.benarasiAlt,   label: 'BENARASI',     sold: false },
+  { type: 'jewel', name: 'Kolkata Contemporary Studs', sub: 'CONTEMPORARY COLLECTION', price: '₹6,400',  badge: null,          gradient: GRADIENTS.contemporaryJ, label: 'CONTEMPORARY', sold: false },
+  { type: 'saree', name: 'Meera Tant Handloom',        sub: 'TANT · EVERYDAY',         price: '₹4,200',  badge: null,          gradient: GRADIENTS.tantLight,     label: 'TANT',         sold: true  },
+  { type: 'saree', name: 'Devika Silk Drape',          sub: 'SILK · BRIDAL',           price: '₹52,000', badge: null,          gradient: GRADIENTS.silkBridal,    label: 'SILK',         sold: false },
+];
+
+/* ─── PRODUCT CARD (mobile) ─── */
+function ProductCard({ product }) {
+  const isJewel = product.type === 'jewel';
+  const photoLabel = isJewel ? 'JEWELLERY PHOTOGRAPHY' : 'SAREE PHOTOGRAPHY';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      {/* Image area — 3:4 portrait */}
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: product.gradient }} />
+
+        {/* Centred dashed photo placeholder */}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ border: '1px dashed rgba(245,239,230,0.18)', padding: '6px 10px', textAlign: 'center', maxWidth: '82%' }}>
+            <div style={{
+              fontFamily: F.ui, fontSize: 9, fontWeight: 400,
+              letterSpacing: '0.16em', textTransform: 'uppercase',
+              color: 'rgba(245,239,230,0.5)', lineHeight: 1.55,
+            }}>
+              {photoLabel}<br />— {product.label}
+            </div>
+          </div>
+        </div>
+
+        {/* Badge (top-left, scaled) */}
+        {product.badge && !product.sold && (
+          <div style={{
+            position: 'absolute', top: 10, left: 10,
+            background: product.badge === 'FEATURED' ? C.gold : C.copper,
+            fontFamily: F.ui, fontSize: 8, fontWeight: 500,
+            letterSpacing: '0.2em', textTransform: 'uppercase',
+            color: C.ivory, padding: '3px 8px',
+          }}>{product.badge}</div>
+        )}
+
+        {/* Wishlist heart — always visible on mobile */}
+        {!product.sold && (
+          <button style={{
+            position: 'absolute', top: 8, right: 8,
+            width: 36, height: 36,
+            background: 'rgba(28,10,6,0.32)',
+            border: '1px solid rgba(245,239,230,0.20)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', padding: 0,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 14S1.5 9.8 1.5 5.6A3.4 3.4 0 018 3.3 3.4 3.4 0 0114.5 5.6C14.5 9.8 8 14 8 14z" />
+            </svg>
+          </button>
+        )}
+
+        {/* Sold overlay */}
+        {product.sold && (
+          <>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,10,6,0.55)' }} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{
+                fontFamily: F.ui, fontSize: 13, fontWeight: 500,
+                letterSpacing: '0.22em', textTransform: 'uppercase',
+                color: 'rgba(245,239,230,0.85)',
+              }}>SOLD</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Cream info panel */}
+      <div style={{ background: C.cream, padding: '12px 12px 14px', minWidth: 0 }}>
+        {isJewel ? (
+          <>
+            <div style={{
+              fontFamily: F.ui, fontSize: 9, fontWeight: 400,
+              letterSpacing: '0.2em', textTransform: 'uppercase',
+              color: C.copper, marginBottom: 6,
+            }}>{product.sub}</div>
+            <h3 style={{
+              fontFamily: F.display, fontSize: 16, fontWeight: 400,
+              color: C.dark, lineHeight: 1.25, marginBottom: 12,
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>{product.name}</h3>
+          </>
+        ) : (
+          <>
+            <h3 style={{
+              fontFamily: F.display, fontSize: 16, fontWeight: 400,
+              color: C.dark, lineHeight: 1.25, marginBottom: 4,
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>{product.name}</h3>
+            <p style={{
+              fontFamily: F.ui, fontSize: 9, fontWeight: 400,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: C.muted, marginBottom: 12,
+            }}>{product.sub}</p>
+          </>
+        )}
+
+        {/* Row 3: price + ADD TO BAG / SOLD */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
+          minWidth: 0,
+        }}>
+          <span style={{
+            fontFamily: F.ui, fontSize: 14, fontWeight: 500,
+            color: product.sold ? C.muted : C.copper,
+            whiteSpace: 'nowrap',
+          }}>{product.price}</span>
+          {product.sold ? (
+            <span style={{
+              fontFamily: F.ui, fontSize: 9, fontWeight: 400,
+              letterSpacing: '0.18em', textTransform: 'uppercase',
+              color: 'rgba(140,106,85,0.5)',
+            }}>SOLD</span>
+          ) : (
+            <button style={{
+              background: 'none',
+              border: `1px solid ${C.copper}`,
+              color: C.copper,
+              fontFamily: F.ui, fontSize: 8.5, fontWeight: 500,
+              letterSpacing: '0.14em', textTransform: 'uppercase',
+              padding: '0 8px', height: 34, cursor: 'pointer', borderRadius: 0,
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}>ADD TO BAG</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── PRODUCT GRID ─── */
+function ProductGrid() {
+  return (
+    <div style={{
+      background: C.ivory,
+      padding: '24px 20px 0',
+    }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        columnGap: 14,
+        rowGap: 28,
+      }}>
+        {PRODUCTS.map((p, i) => <ProductCard key={i} product={p} />)}
+      </div>
+    </div>
+  );
+}
+
+/* ─── PAGINATION (mobile: 1 2 … 4) ─── */
+function Pagination() {
+  const [active, setActive] = useState(1);
+  const pages = [1, 2, '…', 4];
+  return (
+    <div style={{
+      background: C.ivory,
+      padding: '32px 20px 48px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {/* Prev arrow (disabled on page 1) */}
+      <button disabled style={{
+        width: 40, height: 40, background: 'none', border: 'none',
+        cursor: 'not-allowed',
+        color: 'rgba(140,106,85,0.3)',
+        fontSize: 18, fontWeight: 300, marginRight: 16, padding: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>←</button>
+
+      {/* Page numbers */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+        {pages.map((p, i) => {
+          if (p === '…') {
+            return <span key={i} style={{
+              padding: '0 10px',
+              fontFamily: F.ui, fontSize: 13, fontWeight: 400,
+              color: 'rgba(140,106,85,0.5)',
+            }}>…</span>;
+          }
+          const isActive = p === active;
+          return (
+            <button key={i} onClick={() => setActive(p)} style={{
+              padding: '0 10px', background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: F.ui, fontSize: 13,
+              fontWeight: isActive ? 500 : 400,
+              color: isActive ? C.dark : C.muted,
+              position: 'relative', height: 32,
+            }}>
+              {p}
+              {isActive && (
+                <span style={{
+                  position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+                  bottom: 4, width: 12, height: 1, background: C.copper,
+                }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Next arrow */}
+      <button style={{
+        width: 40, height: 40, background: 'none', border: 'none', cursor: 'pointer',
+        color: C.dark, fontSize: 18, fontWeight: 300, marginLeft: 16, padding: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>→</button>
+    </div>
+  );
+}
+
+/* ─── MOBILE FOOTER ─── */
+function FooterAccordionRow({ title, expanded = false, items = [] }) {
+  return (
+    <div style={{ borderTop: '1px solid rgba(212,136,10,0.15)' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '18px 0', minHeight: 52,
+      }}>
+        <span style={{
+          fontFamily: F.ui, fontSize: 9, fontWeight: 500,
+          letterSpacing: '0.25em', textTransform: 'uppercase', color: C.gold,
+        }}>{title}</span>
+        <span style={{ fontFamily: F.ui, fontSize: 16, color: C.gold, opacity: 0.7, lineHeight: 1, width: 16, textAlign: 'center' }}>
+          {expanded ? '−' : '+'}
+        </span>
+      </div>
+      {expanded && items.length > 0 && (
+        <div style={{ paddingBottom: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {items.map(l => (
+            <a key={l} href="#" style={{
+              fontFamily: F.ui, fontSize: 13, fontWeight: 400,
+              color: 'rgba(245,239,230,0.55)', textDecoration: 'none', lineHeight: 1.6,
+            }}>{l}</a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileFooter() {
+  const sarees = ['Benarasi / বেনারসি','Tant / তাঁত','Muslin / মসলিন','Kantha / কাঁথা','Silk / সিল্ক','Jamdani / জামদানি','Garad / গরদ'];
+  return (
+    <footer className="linen-noise" style={{
+      background: C.dark, padding: '64px 20px 24px',
+      borderTop: '1px solid rgba(212,136,10,0.45)',
+      position: 'relative', overflow: 'hidden', flexShrink: 0,
+    }}>
+      <div style={{ position: 'absolute', right: '-12%', top: '50%', transform: 'translateY(-50%)', width: 280, opacity: 0.06, pointerEvents: 'none' }}>
+        <img src="uploads/logo_transparent.png" alt="" style={{ width: '100%', filter: 'sepia(1) saturate(3) hue-rotate(-10deg) brightness(0.7)' }} />
+      </div>
+
+      {/* Brand block */}
+      <div style={{ marginBottom: 36, position: 'relative', zIndex: 1 }}>
+        <div style={{
+          fontFamily: F.display, fontSize: 22, fontWeight: 600,
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: C.copper, marginBottom: 6,
+        }}>SUMAM'S BOUTIQUE</div>
+        <div style={{
+          fontFamily: F.bn, fontSize: 12, fontWeight: 300,
+          color: 'rgba(212,136,10,0.6)', marginBottom: 16,
+        }}>বাংলার ঐতিহ্যের শাড়ি ও গহনা</div>
+        <p style={{
+          fontFamily: F.ui, fontSize: 11, fontStyle: 'italic',
+          color: C.muted, lineHeight: 1.7, marginBottom: 22, maxWidth: 280,
+        }}>Heritage sarees &amp; jewellery, curated with love from Bengal.</p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {['IG','FB','WA','YT'].map(s => (
+            <div key={s} style={{
+              width: 36, height: 36,
+              border: '1px solid rgba(212,136,10,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{ fontFamily: F.ui, fontSize: 9, fontWeight: 500, letterSpacing: '0.08em', color: C.muted }}>{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <div style={{ marginBottom: 36, position: 'relative', zIndex: 1 }}>
+        <div style={{
+          fontFamily: F.ui, fontSize: 9, fontWeight: 500,
+          letterSpacing: '0.25em', textTransform: 'uppercase',
+          color: C.gold, marginBottom: 12,
+        }}>STAY IN THE WEAVE</div>
+        <p style={{
+          fontFamily: F.ui, fontSize: 12, fontWeight: 400,
+          color: 'rgba(245,239,230,0.55)', lineHeight: 1.7, marginBottom: 14,
+        }}>Receive stories of new arrivals, weaver's notes, and seasonal lookbooks.</p>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          borderBottom: '1px solid rgba(212,136,10,0.3)', paddingBottom: 10,
+        }}>
+          <input type="email" placeholder="your.email@address" style={{
+            flex: 1, background: 'none', border: 'none', outline: 'none',
+            fontFamily: F.ui, fontSize: 12, color: C.ivory,
+          }} />
+          <span style={{ color: C.copper, fontSize: 16, lineHeight: 1 }}>→</span>
+        </div>
+        <div style={{
+          fontFamily: F.bn, fontSize: 11, fontWeight: 300,
+          color: 'rgba(212,136,10,0.5)', marginTop: 10,
+        }}>নতুন সংগ্রহের খবর সবার আগে</div>
+      </div>
+
+      {/* Accordions */}
+      <FooterAccordionRow title="SAREES" expanded={true} items={sarees} />
+      <FooterAccordionRow title="JEWELLERY" expanded={false} />
+      <FooterAccordionRow title="HELP" expanded={false} />
+
+      {/* Bottom bar — vertical stack */}
+      <div style={{
+        marginTop: 32, borderTop: '1px solid rgba(212,136,10,0.15)',
+        paddingTop: 24,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+        position: 'relative', zIndex: 1,
+      }}>
+        <span style={{ fontFamily: F.ui, fontSize: 11, color: 'rgba(245,239,230,0.3)', textAlign: 'center' }}>
+          © 2025 Sumam's Boutique. All rights reserved.
+        </span>
+        <span style={{ fontFamily: F.ui, fontSize: 11, color: 'rgba(212,136,10,0.4)' }}>
+          Made in Bengal · <span style={{ fontFamily: F.bn }}>বাংলায় তৈরি</span>
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {['RAZORPAY','STRIPE','VISA','MASTERCARD','UPI'].map(m => (
+            <span key={m} style={{
+              fontFamily: F.ui, fontSize: 9, fontWeight: 400,
+              letterSpacing: '0.16em', textTransform: 'uppercase',
+              color: 'rgba(245,239,230,0.4)',
+              border: '0.5px solid rgba(245,239,230,0.25)', padding: '4px 8px',
+            }}>{m}</span>
+          ))}
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ─── APP ─── */
+function App() {
+  return (
+    <div style={{
+      width: 390,
+      background: C.ivory,
+      display: 'flex', flexDirection: 'column',
+      boxShadow: '0 0 60px rgba(0,0,0,0.45)',
+      minHeight: '100vh',
+    }}>
+      <MobileNav />
+      <PageHeader />
+      <FilterSortBar />
+      <ProductGrid />
+      <Pagination />
+      <MobileFooter />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

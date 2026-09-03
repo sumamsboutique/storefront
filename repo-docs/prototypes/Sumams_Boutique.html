@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sumam's Boutique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&family=Hind:wght@300;400&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: #F5EFE6;
+  color: #1C0A06;
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+}
+@keyframes marqueeScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  white-space: nowrap;
+  animation: marqueeScroll 30s linear infinite;
+  will-change: transform;
+}
+.marquee-track:hover { animation-play-state: paused; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1C0A06; }
+::-webkit-scrollbar-thumb { background: #8C6A55; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ─── TWEAKS PANEL (inlined) ─── */
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.88);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:22px;text-align:center}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none;cursor:pointer}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+    border-radius:50%;background:#fff;border:.5px solid rgba(0,0,0,.12);
+    box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:pointer}
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:pointer;padding:0;flex-shrink:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s;
+    display:block;pointer-events:none}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = useState(defaults);
+  const setTweak = useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null ?
+    keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+  }, []);
+  return { tweaks: values, setTweak };
+}
+
+function TweaksPanel({ children }) {
+  const [open, setOpen] = useState(false);
+  const dragRef = useRef(null);
+  const offsetRef = useRef({ x: 16, y: 16 });
+
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (e?.data?.type === '__activate_edit_mode') setOpen(true);
+      if (e?.data?.type === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX,sy = e.clientY;
+    const startR = window.innerWidth - r.right;
+    const startB = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      const x = Math.max(8, startR - (ev.clientX - sx));
+      const y = Math.max(8, startB - (ev.clientY - sy));
+      offsetRef.current = { x, y };
+      panel.style.right = x + 'px';
+      panel.style.bottom = y + 'px';
+    };
+    const up = () => {window.removeEventListener('mousemove', move);window.removeEventListener('mouseup', up);};
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel"
+      style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>Tweaks</b>
+          <button className="twk-x" onMouseDown={(e) => e.stopPropagation()} onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>);
+
+}
+
+function TweakSection({ title }) {
+  return <div className="twk-sect">{title}</div>;
+}
+
+function TweakSlider({ label, value, min, max, step = 1, unit = '', onChange }) {
+  return (
+    <div className="twk-row">
+      <div className="twk-lbl"><span>{label}</span><span className="twk-val">{value}{unit}</span></div>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+      value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </div>);
+
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+      onClick={() => onChange(!value)}><i /></button>
+    </div>);
+
+}
+
+/* ─── BRAND TOKENS ─── */
+const C = {
+  dark: '#1C0A06',
+  copper: '#BF5E18',
+  ivory: '#F5EFE6',
+  gold: '#D4880A',
+  muted: '#8C6A55',
+  cream: '#EDE3D6'
+};
+
+/* ─── ALPONA COMPONENTS ─── */
+function AlponaHero({ size = 80, opacity = 0.25 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 80 80" fill="none" style={{ opacity }}>
+      <polygon points="40,4 76,40 40,76 4,40" stroke={C.gold} strokeWidth="0.5" fill="none" />
+      <polygon points="40,12 68,40 40,68 12,40" stroke={C.gold} strokeWidth="0.5" fill="none" />
+      <polygon points="40,20 60,40 40,60 20,40" stroke={C.gold} strokeWidth="0.4" fill="none" />
+      <ellipse cx="40" cy="27" rx="5" ry="10" stroke={C.gold} strokeWidth="0.5" fill="none" transform="rotate(0,40,40)" />
+      <ellipse cx="40" cy="27" rx="5" ry="10" stroke={C.gold} strokeWidth="0.5" fill="none" transform="rotate(90,40,40)" />
+      <ellipse cx="40" cy="27" rx="5" ry="10" stroke={C.gold} strokeWidth="0.5" fill="none" transform="rotate(180,40,40)" />
+      <ellipse cx="40" cy="27" rx="5" ry="10" stroke={C.gold} strokeWidth="0.5" fill="none" transform="rotate(270,40,40)" />
+      <circle cx="40" cy="40" r="2" stroke={C.gold} strokeWidth="0.5" fill="none" />
+      <circle cx="40" cy="8" r="1" fill={C.gold} opacity="0.6" />
+      <circle cx="72" cy="40" r="1" fill={C.gold} opacity="0.6" />
+      <circle cx="40" cy="72" r="1" fill={C.gold} opacity="0.6" />
+      <circle cx="8" cy="40" r="1" fill={C.gold} opacity="0.6" />
+    </svg>);
+
+}
+
+function AlponaDivider() {
+  return (
+    <svg width="320" height="24" viewBox="0 0 320 24" fill="none" style={{ opacity: 0.5 }}>
+      <line x1="0" y1="12" x2="126" y2="12" stroke={C.copper} strokeWidth="0.75" />
+      <polygon points="132,12 138,7 144,12 138,17" stroke={C.gold} strokeWidth="0.5" fill="none" />
+      <ellipse cx="160" cy="6" rx="4" ry="8" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(0,160,12)" />
+      <ellipse cx="160" cy="6" rx="4" ry="8" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(90,160,12)" />
+      <ellipse cx="160" cy="6" rx="4" ry="8" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(180,160,12)" />
+      <ellipse cx="160" cy="6" rx="4" ry="8" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(270,160,12)" />
+      <circle cx="160" cy="12" r="1.5" stroke={C.gold} strokeWidth="0.5" fill="none" />
+      <polygon points="176,12 182,7 188,12 182,17" stroke={C.gold} strokeWidth="0.5" fill="none" />
+      <line x1="194" y1="12" x2="320" y2="12" stroke={C.copper} strokeWidth="0.75" />
+    </svg>);
+
+}
+
+/* ─── NAV ICONS ─── */
+function IconSearch() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.8 }}>
+      <circle cx="7.5" cy="7.5" r="5" />
+      <line x1="11.5" y1="11.5" x2="16" y2="16" />
+    </svg>);
+
+}
+function IconAccount() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.8 }}>
+      <circle cx="9" cy="6.5" r="3" />
+      <path d="M2.5 17c0-3.5 2.9-6.5 6.5-6.5s6.5 3 6.5 6.5" />
+    </svg>);
+
+}
+function IconCart() {
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex' }}>
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.8 }}>
+        <path d="M1.5 1.5h2.3l2.2 9.2a1 1 0 00.97.8h7.5a1 1 0 00.97-.76L17 6H4.5" />
+        <circle cx="7.5" cy="14.5" r="1.2" fill={C.ivory} stroke="none" style={{ opacity: 0.8 }} />
+        <circle cx="13.5" cy="14.5" r="1.2" fill={C.ivory} stroke="none" style={{ opacity: 0.8 }} />
+      </svg>
+      <span style={{
+        position: 'absolute', top: -5, right: -6,
+        background: C.copper, color: C.ivory,
+        fontSize: 8, fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
+        width: 14, height: 14, borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>1</span>
+    </div>);
+
+}
+
+/* ─── NAVBAR ─── */
+function NavLink({ label }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        position: 'relative', cursor: 'pointer',
+        fontFamily: "'DM Sans', sans-serif",
+        fontSize: 11, fontWeight: 400, letterSpacing: '0.18em',
+        color: hov ? C.gold : 'rgba(245,239,230,0.70)',
+        transition: 'color 0.25s', paddingBottom: 3, userSelect: 'none',
+        textTransform: 'uppercase'
+      }}>
+      
+      {label}
+      <span style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: 1,
+        background: C.gold,
+        transform: hov ? 'scaleX(1)' : 'scaleX(0)',
+        transformOrigin: 'left',
+        transition: 'transform 0.25s ease'
+      }} />
+    </div>);
+
+}
+
+function Navbar({ isMobile }) {
+  return (
+    <nav style={{
+      position: 'sticky', top: 0, zIndex: 100,
+      width: '100%', height: isMobile ? 56 : 64,
+      background: C.dark,
+      borderBottom: '1px solid rgba(212,136,10,0.18)',
+      display: 'flex', alignItems: 'center',
+      padding: isMobile ? '0 20px' : '0 32px'
+    }}>
+      {/* LEFT */}
+      {isMobile ?
+      <div style={{ flex: 1, display: 'flex' }}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.8 }}>
+            <line x1="2" y1="5" x2="18" y2="5" /><line x1="2" y1="10" x2="18" y2="10" /><line x1="2" y1="15" x2="18" y2="15" />
+          </svg>
+        </div> :
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 28, flex: 1 }}>
+          {['SAREES', 'JEWELLERY', 'COLLECTIONS', 'STORY'].map((l) => <NavLink key={l} label={l} />)}
+        </div>
+      }
+
+      {/* CENTER — logo */}
+      <div style={{
+        position: isMobile ? 'absolute' : 'static',
+        left: isMobile ? '50%' : 'auto',
+        transform: isMobile ? 'translateX(-50%)' : 'none',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        flex: isMobile ? 0 : '0 0 auto'
+      }}>
+        <img
+          src="uploads/logo_transparent.png"
+          alt="Sumam's Boutique"
+          style={{ ...{
+              height: isMobile ? 46 : 56,
+
+              maxWidth: isMobile ? 140 : 180,
+
+              display: 'block', objectFit: "contain", width: "101px"
+            }, width: "132px", height: "84px" }} />
+        
+      </div>
+
+      {/* RIGHT — icons */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, flex: 1, justifyContent: 'flex-end' }}>
+        {!isMobile &&
+        <>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}><IconSearch /></button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}><IconAccount /></button>
+          </>
+        }
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}><IconCart /></button>
+      </div>
+    </nav>);
+
+}
+
+/* ─── HERO DATA ─── */
+const SLIDES = [
+{
+  id: 1,
+  gradient: 'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)',
+  eyebrow: 'FEATURED COLLECTION · বসন্ত ২০২৫',
+  bengali: 'বসন্তের রঙে রাঙা',
+  parts: [
+  'The Spring Edit — Draped in ',
+  { italic: true, copper: true, text: 'Heritage' }],
+
+  subtitle: 'A curated story of bloom-season weaves and gold.',
+  cta: 'SHOP THE COLLECTION'
+},
+{
+  id: 2,
+  gradient: 'linear-gradient(155deg, #1C0A06, #4A2010, #8C6A55)',
+  eyebrow: 'BENARASI · বেনারসি',
+  bengali: 'রাজকীয় বেনারসি',
+  parts: [
+  'Royal Crimson, ',
+  { italic: true, copper: true, text: 'Handwoven' },
+  ' in Varanasi'],
+
+  subtitle: 'Pure silk. Kadwa Jangla weave. Wedding-ready.',
+  cta: 'SHOP BENARASI'
+},
+{
+  id: 3,
+  gradient: 'linear-gradient(155deg, #2A1008, #5A2A14, #D4880A)',
+  eyebrow: 'TANT · তাঁত',
+  bengali: 'বাংলার মাটির ছোঁয়া',
+  parts: [
+  'Everyday ',
+  { italic: true, copper: true, text: 'Tant' },
+  ', Woven on Bengali Looms'],
+
+  subtitle: 'Breathable cotton handlooms from Shantipur.',
+  cta: 'SHOP TANT'
+},
+{
+  id: 4,
+  gradient: 'linear-gradient(155deg, #3D1C0A, #6B2E0E, #C4611A)',
+  eyebrow: 'TEMPLE JEWELLERY · মন্দির গহনা',
+  bengali: 'ঐতিহ্যের গহনা',
+  parts: [
+  'Heirloom ',
+  { italic: true, copper: true, text: 'Temple' },
+  ' Pieces in Antique Gold'],
+
+  subtitle: "Hand-cast designs inspired by Bengal's terracotta temples.",
+  cta: 'SHOP JEWELLERY'
+}];
+
+
+const SLIDE_DURATION = 5000;
+
+/* ─── HERO ─── */
+function Hero({ tweaks }) {
+  const [active, setActive] = useState(0);
+  const [prog, setProg] = useState(0);
+  const startRef = useRef(null);
+  const rafRef = useRef(null);
+  const autoPlay = tweaks.heroAutoAdvance;
+
+  const goTo = useCallback((i) => {
+    setActive(i);
+    setProg(0);
+    startRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const tick = (ts) => {
+      if (!startRef.current) startRef.current = ts;
+      const p = Math.min((ts - startRef.current) / SLIDE_DURATION, 1);
+      setProg(p);
+      if (p >= 1) {setActive((a) => (a + 1) % SLIDES.length);setProg(0);startRef.current = null;} else
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => rafRef.current && cancelAnimationFrame(rafRef.current);
+  }, [active, autoPlay]);
+
+  const slide = SLIDES[active];
+
+  return (
+    <section style={{ position: 'relative', width: '100%', height: '88vh', minHeight: 580, maxHeight: 820, overflow: 'hidden', background: C.dark }}>
+      {/* Slides */}
+      {SLIDES.map((s, i) =>
+      <div key={s.id} style={{
+        position: 'absolute', inset: 0,
+        opacity: i === active ? 1 : 0,
+        transition: 'opacity 0.9s ease',
+        pointerEvents: i === active ? 'auto' : 'none'
+      }}>
+          {/* Gradient bg */}
+          <div style={{ position: 'absolute', inset: 0, background: s.gradient }} />
+          {/* Grain overlay */}
+          <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+          backgroundSize: '300px 300px',
+          opacity: 0.04, mixBlendMode: 'overlay', pointerEvents: 'none'
+        }} />
+          {/* Scrim */}
+          <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(105deg, rgba(28,10,6,0.65) 0%, rgba(28,10,6,0.30) 45%, transparent 75%)',
+          pointerEvents: 'none'
+        }} />
+        </div>
+      )}
+
+      {/* Content block */}
+      <div style={{
+        position: 'absolute', top: 0, bottom: 0, left: 0,
+        width: '100%', display: 'flex', alignItems: 'center',
+        paddingLeft: 'clamp(40px,7vw,100px)',
+        zIndex: 2
+      }}>
+        <div style={{ maxWidth: 540 }}>
+          {/* Eyebrow */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ width: 32, height: 1, background: C.gold, flexShrink: 0 }} />
+            <span style={{
+              fontFamily: "'DM Sans', sans-serif", fontSize: 10,
+              letterSpacing: '0.28em', textTransform: 'uppercase', color: C.gold
+            }}>{slide.eyebrow}</span>
+          </div>
+          {/* Bengali headline */}
+          <div style={{
+            fontFamily: "'Hind', sans-serif", fontSize: 22,
+            fontWeight: 300, letterSpacing: '0.04em',
+            color: 'rgba(212,136,10,0.85)',
+            marginBottom: 8, lineHeight: 1.3,
+            transition: 'opacity 0.4s'
+          }}>{slide.bengali}</div>
+          {/* English headline */}
+          <h1 style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 'clamp(40px,4.2vw,60px)',
+            fontWeight: 300, lineHeight: 1.08,
+            color: C.ivory, margin: 0
+          }}>
+            {slide.parts.map((p, j) =>
+            typeof p === 'string' ?
+            <span key={j}>{p}</span> :
+            <em key={j} style={{ fontStyle: 'italic', color: C.copper }}>{p.text}</em>
+            )}
+          </h1>
+          {/* Subtitle */}
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif", fontSize: 15,
+            fontWeight: 300, letterSpacing: '0.03em',
+            color: 'rgba(245,239,230,0.72)',
+            marginTop: 18, lineHeight: 1.65
+          }}>{slide.subtitle}</p>
+          {/* CTA */}
+          <button
+            style={{
+              marginTop: 32,
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              background: C.copper, color: C.ivory,
+              border: 'none', borderRadius: 0,
+              padding: '14px 32px',
+              fontFamily: "'DM Sans', sans-serif", fontSize: 11,
+              fontWeight: 500, letterSpacing: '0.18em',
+              textTransform: 'uppercase', cursor: 'pointer',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#A0501A'}
+            onMouseLeave={(e) => e.currentTarget.style.background = C.copper}>
+            
+            {slide.cta}<span style={{ fontSize: 14, lineHeight: 1 }}>→</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Alpona accent bottom-right */}
+      <div style={{ position: 'absolute', bottom: 56, right: 24, zIndex: 2, pointerEvents: 'none' }}>
+        <AlponaHero size={80} opacity={0.22} />
+      </div>
+
+      {/* Slide controls */}
+      <div style={{
+        position: 'absolute', bottom: 28, left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        zIndex: 10
+      }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {SLIDES.map((_, i) =>
+          <div key={i} onClick={() => goTo(i)} style={{
+            width: 60, height: 2,
+            background: 'rgba(245,239,230,0.22)',
+            cursor: 'pointer', position: 'relative', overflow: 'hidden'
+          }}>
+              {i === active &&
+            <div style={{
+              position: 'absolute', top: 0, left: 0, height: '100%',
+              width: `${prog * 100}%`, background: C.copper
+            }} />
+            }
+              {i < active &&
+            <div style={{ position: 'absolute', inset: 0, background: C.copper, opacity: 0.45 }} />
+            }
+            </div>
+          )}
+        </div>
+        <span style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontStyle: 'italic', fontSize: 12,
+          color: C.gold, letterSpacing: '0.06em'
+        }}>0{active + 1} — 04</span>
+      </div>
+
+      {/* Prev / Next */}
+      {[['←', () => goTo((active - 1 + 4) % 4), 'left'], ['→', () => goTo((active + 1) % 4), 'right']].map(([arrow, fn, side]) =>
+      <button key={side} onClick={fn} style={{
+        position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+        [side]: 20, zIndex: 10,
+        background: 'rgba(28,10,6,0.32)',
+        border: '1px solid rgba(212,136,10,0.28)',
+        color: 'rgba(245,239,230,0.7)',
+        width: 40, height: 40,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', fontSize: 16,
+        fontFamily: "'Cormorant Garamond', serif",
+        transition: 'background 0.2s'
+      }}
+      onMouseEnter={(e) => {e.currentTarget.style.background = 'rgba(191,94,24,0.5)';e.currentTarget.style.color = C.ivory;}}
+      onMouseLeave={(e) => {e.currentTarget.style.background = 'rgba(28,10,6,0.32)';e.currentTarget.style.color = 'rgba(245,239,230,0.7)';}}>
+        {arrow}</button>
+      )}
+    </section>);
+
+}
+
+/* ─── SLIDE THUMBNAILS ─── */
+function SlideThumbnails() {
+  return (
+    <div style={{ background: '#130704', padding: '28px 32px 36px', borderTop: '1px solid rgba(212,136,10,0.1)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <div style={{ width: 20, height: 1, background: 'rgba(212,136,10,0.35)' }} />
+        <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(212,136,10,0.45)' }}>
+          Hero slide reference — all four slides
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(212,136,10,0.12)' }} />
+      </div>
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+        {SLIDES.map((s, i) =>
+        <div key={s.id} style={{
+          flex: '1 1 220px', maxWidth: 280, height: 160,
+          position: 'relative', overflow: 'hidden',
+          border: i === 0 ? '1px solid rgba(191,94,24,0.5)' : '1px solid rgba(212,136,10,0.15)'
+        }}>
+            <div style={{ position: 'absolute', inset: 0, background: s.gradient }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(105deg, rgba(28,10,6,0.55), transparent)' }} />
+            <div style={{ position: 'absolute', inset: 0, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.gold, marginBottom: 4 }}>
+                {s.eyebrow.split(' · ')[0]}
+              </div>
+              <div style={{ fontFamily: "'Hind',sans-serif", fontSize: 13, fontWeight: 300, color: 'rgba(212,136,10,0.85)', marginBottom: 4 }}>
+                {s.bengali}
+              </div>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, fontWeight: 300, color: C.ivory, lineHeight: 1.25 }}>
+                {s.parts.map((p, j) =>
+              typeof p === 'string' ? <span key={j}>{p}</span> : <em key={j} style={{ color: C.copper }}>{p.text}</em>
+              )}
+              </div>
+            </div>
+            <div style={{ position: 'absolute', top: 10, right: 12, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 11, color: 'rgba(212,136,10,0.55)' }}>0{i + 1}</div>
+            {i === 0 &&
+          <div style={{ position: 'absolute', top: 10, left: 12, background: C.copper, fontFamily: "'DM Sans',sans-serif", fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.ivory, padding: '3px 7px' }}>ACTIVE</div>
+          }
+          </div>
+        )}
+      </div>
+    </div>);
+
+}
+
+/* ─── MARQUEE ─── */
+const MARQUEE_ITEMS = [
+{ en: 'Benarasi', bn: 'বেনারসি' },
+{ en: 'Tant', bn: 'তাঁত' },
+{ en: 'Muslin', bn: 'মসলিন' },
+{ en: 'Kantha', bn: 'কাঁথা' },
+{ en: 'Free Shipping Above ₹5,000' },
+{ en: 'Silk', bn: 'সিল্ক' },
+{ en: 'Temple Jewellery', bn: 'মন্দির গহনা' },
+{ en: 'Handwoven Heritage', bn: 'হস্তনির্মিত ঐতিহ্য' }];
+
+
+function Marquee() {
+  const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+  return (
+    <div style={{
+      width: '100%', height: 38,
+      background: C.copper,
+      borderTop: '1px solid rgba(212,136,10,0.4)',
+      borderBottom: '1px solid rgba(212,136,10,0.4)',
+      overflow: 'hidden', display: 'flex', alignItems: 'center'
+    }}>
+      <div className="marquee-track" style={{ gap: 0 }}>
+        {items.map((item, i) =>
+        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, paddingLeft: 8 }}>
+            <span style={{
+            fontFamily: "'DM Sans',sans-serif", fontSize: 11,
+            fontWeight: 400, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: C.ivory
+          }}>{item.en}</span>
+            {item.bn &&
+          <span style={{
+            fontFamily: "'Hind',sans-serif", fontSize: 13,
+            fontWeight: 300, color: 'rgba(245,239,230,0.78)'
+          }}>{item.bn}</span>
+          }
+            <span style={{ color: 'rgba(245,239,230,0.4)', fontSize: 14, paddingLeft: 8 }}>·</span>
+          </span>
+        )}
+      </div>
+    </div>);
+
+}
+
+/* ─── PRODUCT CARDS ─── */
+const PRODUCTS = [
+{
+  id: 1, large: true,
+  badge: 'NEW ARRIVAL', badgeColor: C.copper,
+  gradient: 'linear-gradient(145deg, #2A0D06, #6B2E0E 35%, #BF5E18 70%, #8B3A14)',
+  name: 'Royal Crimson Benarasi',
+  sub: 'Pure Silk · Handwoven · Varanasi',
+  price: '₹24,500',
+  label: 'Benarasi silk — rich crimson with gold zari'
+},
+{
+  id: 2, large: false,
+  badge: null,
+  gradient: 'linear-gradient(145deg, #EDE3D6, #D4B896 40%, #B8956A 70%, #8C6A55)',
+  name: 'Ivory Tant Handloom',
+  sub: 'Cotton Tant · West Bengal',
+  price: '₹4,800',
+  label: 'Tant cotton — ivory with delicate border'
+},
+{
+  id: 3, large: false,
+  badge: 'FEATURED', badgeColor: C.gold,
+  gradient: 'linear-gradient(145deg, #1C2E40, #2E5068 40%, #4A7A9B 70%, #6A98B8)',
+  name: 'Indigo Kantha Stitch',
+  sub: 'Kantha Embroidery · Hand-stitched',
+  price: '₹8,200',
+  label: 'Kantha silk — indigo with hand embroidery'
+}];
+
+
+function HeartIcon({ filled }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill={filled ? C.copper : 'none'} stroke={filled ? C.copper : C.ivory} strokeWidth="1.2">
+      <path d="M7 12.5S1 8.5 1 4.8A3 3 0 017 2.9 3 3 0 0113 4.8C13 8.5 7 12.5 7 12.5z" />
+    </svg>);
+
+}
+
+function ProductCard({ product, gridHeight }) {
+  const [hov, setHov] = useState(false);
+  const imgHeight = product.large ? gridHeight * 0.74 : gridHeight * 0.5 * 0.78;
+
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: C.cream,
+        display: 'flex', flexDirection: 'column',
+        height: '100%', overflow: 'hidden',
+        cursor: 'pointer'
+      }}>
+      
+      {/* Image */}
+      <div style={{
+        position: 'relative',
+        height: imgHeight,
+        flexShrink: 0,
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: product.gradient,
+          transform: hov ? 'scale(1.04)' : 'scale(1)',
+          transition: 'transform 0.55s ease'
+        }} />
+        {/* Hover wash */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(28,10,6,0.22)',
+          opacity: hov ? 1 : 0,
+          transition: 'opacity 0.3s'
+        }} />
+        {/* Photo label */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none'
+        }}>
+          <div style={{
+            border: '1px dashed rgba(245,239,230,0.18)',
+            padding: '7px 12px',
+            textAlign: 'center',
+            maxWidth: '80%'
+          }}>
+            <div style={{
+              fontFamily: "'DM Sans',sans-serif", fontSize: 9,
+              letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: 'rgba(245,239,230,0.3)', lineHeight: 1.5
+            }}>
+              Saree photography —<br />{product.label}
+            </div>
+          </div>
+        </div>
+        {/* Badge */}
+        {product.badge &&
+        <div style={{
+          position: 'absolute', top: 14, left: 14,
+          background: product.badgeColor,
+          fontFamily: "'DM Sans',sans-serif", fontSize: 9,
+          fontWeight: 500, letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          color: C.ivory, padding: '4px 10px'
+        }}>{product.badge}</div>
+        }
+        {/* Wishlist */}
+        <button style={{
+          position: 'absolute', top: 12, right: 12,
+          width: 32, height: 32,
+          background: 'rgba(28,10,6,0.32)',
+          border: '1px solid rgba(245,239,230,0.18)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+          opacity: hov ? 1 : 0.6,
+          transition: 'opacity 0.2s'
+        }}>
+          <HeartIcon filled={hov} />
+        </button>
+        {/* Quick view */}
+        <div style={{
+          position: 'absolute', bottom: 14, left: '50%',
+          transform: `translateX(-50%) translateY(${hov ? 0 : 8}px)`,
+          opacity: hov ? 1 : 0,
+          transition: 'opacity 0.25s, transform 0.25s',
+          background: 'rgba(245,239,230,0.92)',
+          color: C.dark,
+          fontFamily: "'DM Sans',sans-serif", fontSize: 10,
+          fontWeight: 500, letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          padding: '8px 20px',
+          whiteSpace: 'nowrap',
+          cursor: 'pointer',
+          border: 'none'
+        }}>QUICK VIEW</div>
+      </div>
+
+      {/* Info */}
+      <div style={{
+        padding: '18px 20px 22px',
+        background: C.cream,
+        flex: 1,
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
+      }}>
+        <div>
+          <h3 style={{
+            fontFamily: "'Cormorant Garamond',serif", fontSize: 17,
+            fontWeight: 400, color: C.dark, marginBottom: 5, lineHeight: 1.3
+          }}>{product.name}</h3>
+          <p style={{
+            fontFamily: "'DM Sans',sans-serif", fontSize: 10,
+            fontWeight: 400, letterSpacing: '0.1em',
+            textTransform: 'uppercase', color: C.muted, lineHeight: 1.5
+          }}>{product.sub}</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <span style={{
+            fontFamily: "'DM Sans',sans-serif", fontSize: 15,
+            fontWeight: 500, color: C.copper
+          }}>{product.price}</span>
+          <button style={{
+            background: 'none',
+            border: `1px solid rgba(191,94,24,0.38)`,
+            color: C.copper,
+            fontFamily: "'DM Sans',sans-serif", fontSize: 9,
+            letterSpacing: '0.16em', textTransform: 'uppercase',
+            padding: '6px 12px', cursor: 'pointer',
+            transition: 'background 0.2s, color 0.2s',
+            borderRadius: 0
+          }}
+          onMouseEnter={(e) => {e.currentTarget.style.background = C.copper;e.currentTarget.style.color = C.ivory;}}
+          onMouseLeave={(e) => {e.currentTarget.style.background = 'none';e.currentTarget.style.color = C.copper;}}>
+            ADD TO BAG</button>
+        </div>
+      </div>
+    </div>);
+
+}
+
+/* ─── FEATURED COLLECTION ─── */
+function FeaturedCollection({ tweaks }) {
+  const gh = tweaks.gridHeight;
+  return (
+    <section style={{ background: C.ivory, padding: `96px clamp(32px,6vw,85px)` }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <span style={{
+              fontFamily: "'DM Sans',sans-serif", fontSize: 10,
+              fontWeight: 400, letterSpacing: '0.28em',
+              textTransform: 'uppercase', color: C.copper
+            }}>FEATURED SAREES</span>
+            <div style={{ width: 28, height: 1, background: C.copper }} />
+          </div>
+          <h2 style={{
+            fontFamily: "'Cormorant Garamond',serif",
+            fontSize: 'clamp(30px,3vw,42px)',
+            fontWeight: 300, color: C.dark, lineHeight: 1.15
+          }}>
+            The <em style={{ fontStyle: 'italic', color: C.copper }}>Season's</em> Finest Drapes
+          </h2>
+        </div>
+        <a href="#" style={{
+          fontFamily: "'DM Sans',sans-serif", fontSize: 10,
+          fontWeight: 400, letterSpacing: '0.2em',
+          textTransform: 'uppercase', color: C.copper,
+          textDecoration: 'none', borderBottom: `1px solid ${C.copper}`,
+          paddingBottom: 2, marginBottom: 6, whiteSpace: 'nowrap'
+        }}>View All Sarees →</a>
+      </div>
+
+      {/* Alpona divider */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '32px 0' }}>
+        <AlponaDivider />
+      </div>
+
+      {/* Asymmetric grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gridTemplateRows: `${gh * 0.5}px ${gh * 0.5}px`,
+        gap: 20
+      }}>
+        <div style={{ gridRow: '1 / 3' }}>
+          <ProductCard product={PRODUCTS[0]} gridHeight={gh} />
+        </div>
+        <div style={{ gridRow: '1 / 2' }}>
+          <ProductCard product={PRODUCTS[1]} gridHeight={gh} />
+        </div>
+        <div style={{ gridRow: '2 / 3' }}>
+          <ProductCard product={PRODUCTS[2]} gridHeight={gh} />
+        </div>
+      </div>
+    </section>);
+
+}
+
+/* ─── MOBILE REF ─── */
+function MobileReference({ show }) {
+  if (!show) return null;
+  return (
+    <div style={{ background: '#130704', padding: '28px 32px 36px', borderTop: '1px solid rgba(212,136,10,0.1)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <div style={{ width: 20, height: 1, background: 'rgba(212,136,10,0.35)' }} />
+        <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(212,136,10,0.45)' }}>
+          Mobile nav reference — 390px
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(212,136,10,0.12)' }} />
+      </div>
+      <div style={{ width: 390, border: '1px solid rgba(212,136,10,0.18)' }}>
+        <Navbar isMobile={true} />
+      </div>
+    </div>);
+
+}
+
+/* ═══════════════════════════════════════
+   SECTION 5 — BROWSE BY CATEGORY
+════════════════════════════════════════ */
+
+const SAREE_CATEGORIES = [
+  { id: 'benarasi', hero: true, bn: 'বেনারসি', en: 'Benarasi', gradient: 'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)', dark: true },
+  { id: 'tant',     bn: 'তাঁত',   en: 'Tant',     gradient: 'linear-gradient(175deg, #F5EFE6, #D4B896 50%, #8C6A55)', dark: false },
+  { id: 'muslin',   bn: 'মসলিন',  en: 'Muslin',   gradient: 'linear-gradient(175deg, #EDE3D6, #C4A87A 60%, #8C6A55)', dark: false },
+  { id: 'silk',     bn: 'সিল্ক',  en: 'Silk',     gradient: 'linear-gradient(175deg, #2A1008, #6B2E0E 50%, #BF5E18)', dark: true },
+  { id: 'kantha',   bn: 'কাঁথা',  en: 'Kantha',   gradient: 'linear-gradient(175deg, #1C0A06, #4A2010 50%, #8C6A55)', dark: true },
+  { id: 'jamdani',  bn: 'জামদানি', en: 'Jamdani',  gradient: 'linear-gradient(175deg, #EDE3D6, #BFA678 60%, #6B5238)', dark: false },
+  { id: 'garad',    bn: 'গরদ',   en: 'Garad',    gradient: 'linear-gradient(175deg, #F5EFE6, #E8D5B0 50%, #BF5E18)', dark: false },
+];
+
+const JEWELLERY_CATEGORIES = [
+  { id: 'temple',       bn: 'মন্দির গহনা',  en: 'Temple',       gradient: 'linear-gradient(175deg, #1C0A06, #4A2010 50%, #BF5E18)', dark: true },
+  { id: 'contemporary', bn: 'সমসাময়িক',     en: 'Contemporary', gradient: 'linear-gradient(175deg, #2A1008, #5A2A14 50%, #D4880A)', dark: true },
+  { id: 'gold-plated',  bn: 'সোনার মোড়ক',  en: 'Gold-Plated',  gradient: 'linear-gradient(175deg, #1C1406, #4A3810 50%, #D4880A)', dark: true },
+];
+
+function CategoryTileHero({ cat }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ gridRow: '1 / 3', position: 'relative', overflow: 'hidden', cursor: 'pointer', minHeight: 420 }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2.5, background: C.gold, zIndex: 2 }} />
+      <div style={{ position: 'absolute', inset: 0, background: cat.gradient, transform: hov ? 'scale(1.03)' : 'scale(1)', transition: 'transform 0.55s ease' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,10,6,0.62) 0%, transparent 60%)', pointerEvents: 'none' }} />
+      {hov && <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,10,6,0.18)', transition: 'opacity 0.3s' }} />}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ border: '1px dashed rgba(245,239,230,0.15)', padding: '8px 14px' }}>
+          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,239,230,0.3)', textAlign: 'center' }}>
+            Saree photography —<br />Benarasi hero
+          </div>
+        </div>
+      </div>
+      <div style={{ position: 'absolute', bottom: 28, left: 28, zIndex: 3 }}>
+        <div style={{ fontFamily: "'Hind',sans-serif", fontSize: 22, fontWeight: 300, color: `rgba(212,136,10,0.85)`, marginBottom: 4, lineHeight: 1.2 }}>{cat.bn}</div>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, fontWeight: 400, color: C.ivory, lineHeight: 1.1, marginBottom: 12 }}>{cat.en}</div>
+        <a href="#" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: "'DM Sans',sans-serif", fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.gold, textDecoration: 'none', borderBottom: `1px solid ${C.gold}`, paddingBottom: 2 }}>Explore →</a>
+      </div>
+    </div>
+  );
+}
+
+function CategoryTileSmall({ cat, showHover = false }) {
+  const [hov, setHov] = useState(showHover);
+  const accentColor = cat.dark ? C.gold : C.copper;
+  const nameColor = cat.dark ? C.ivory : C.dark;
+  const bnColor = cat.dark ? `rgba(212,136,10,0.85)` : C.muted;
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => !showHover && setHov(false)}
+      style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer', minHeight: 200 }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, height: 2.5, background: accentColor, zIndex: 2, width: hov ? '100%' : '0%', transition: 'width 0.35s ease' }} />
+      <div style={{ position: 'absolute', inset: 0, background: cat.gradient, transform: hov ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.5s ease' }} />
+      {cat.dark && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,10,6,0.55) 0%, transparent 55%)', pointerEvents: 'none' }} />}
+      {!cat.dark && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', background: 'linear-gradient(to top, rgba(237,227,214,0.85) 0%, transparent 100%)', pointerEvents: 'none' }} />}
+      {hov && <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,10,6,0.15)' }} />}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ border: `1px dashed ${cat.dark ? 'rgba(245,239,230,0.12)' : 'rgba(28,10,6,0.1)'}`, padding: '6px 10px' }}>
+          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: cat.dark ? 'rgba(245,239,230,0.25)' : 'rgba(28,10,6,0.2)', textAlign: 'center' }}>
+            Saree photography<br />{cat.en}
+          </div>
+        </div>
+      </div>
+      <div style={{ position: 'absolute', bottom: 16, left: 16, zIndex: 3 }}>
+        <div style={{ fontFamily: "'Hind',sans-serif", fontSize: 14, fontWeight: 300, color: bnColor, marginBottom: 3, lineHeight: 1.2 }}>{cat.bn}</div>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontWeight: 400, color: nameColor, lineHeight: 1.1 }}>{cat.en}</div>
+      </div>
+    </div>
+  );
+}
+
+function JewelleryCategoryTile({ cat }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer', aspectRatio: '1 / 1.4' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, height: 2.5, background: C.gold, zIndex: 2, width: hov ? '100%' : '0%', transition: 'width 0.35s ease' }} />
+      <div style={{ position: 'absolute', inset: 0, background: cat.gradient, transform: hov ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.5s ease' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,10,6,0.6) 0%, transparent 55%)', pointerEvents: 'none' }} />
+      {hov && <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,10,6,0.18)' }} />}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ border: '1px dashed rgba(245,239,230,0.12)', padding: '6px 12px' }}>
+          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(245,239,230,0.25)', textAlign: 'center' }}>
+            Jewellery photography<br />{cat.en}
+          </div>
+        </div>
+      </div>
+      <div style={{ position: 'absolute', bottom: 20, left: 20, zIndex: 3 }}>
+        <div style={{ fontFamily: "'Hind',sans-serif", fontSize: 14, fontWeight: 300, color: `rgba(212,136,10,0.85)`, marginBottom: 3 }}>{cat.bn}</div>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 400, color: C.ivory }}>{cat.en}</div>
+      </div>
+    </div>
+  );
+}
+
+function SubHeader({ bn, en }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+      <span style={{ fontFamily: "'Hind',sans-serif", fontSize: 11, fontWeight: 400, color: C.gold }}>{bn}</span>
+      <div style={{ width: 16, height: 1, background: `rgba(212,136,10,0.45)` }} />
+      <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 400, letterSpacing: '0.25em', textTransform: 'uppercase', color: C.muted }}>{en}</span>
+    </div>
+  );
+}
+
+function BrowseByCategory() {
+  const small = SAREE_CATEGORIES.filter(c => !c.hero);
+  return (
+    <section style={{ background: C.cream, padding: `96px clamp(32px,6vw,85px)` }}>
+      {/* Header */}
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 400, letterSpacing: '0.28em', textTransform: 'uppercase', color: C.copper }}>BROWSE BY CATEGORY</span>
+          <div style={{ width: 28, height: 1, background: C.copper }} />
+        </div>
+        <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(30px,3vw,42px)', fontWeight: 300, color: C.dark, lineHeight: 1.15 }}>
+          Sarees &amp; <em style={{ fontStyle: 'italic', color: C.copper }}>Jewellery</em>
+        </h2>
+        <div style={{ marginTop: 16 }}>
+          <SubHeader bn="শাড়ি" en="SAREES" />
+        </div>
+      </div>
+
+      {/* Saree grid — asymmetric */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: 'auto auto auto', gap: 12, marginBottom: 0 }}>
+        {/* Hero tile — row 1+2, col 1 */}
+        <CategoryTileHero cat={SAREE_CATEGORIES[0]} />
+        {/* Row 1, cols 2+3 */}
+        <CategoryTileSmall cat={small[0]} />
+        <CategoryTileSmall cat={small[1]} />
+        {/* Row 2, cols 2+3 */}
+        <CategoryTileSmall cat={small[2]} showHover={true} />
+        <CategoryTileSmall cat={small[3]} />
+        {/* Row 3, cols 1+2 spanning half each */}
+        <div style={{ gridColumn: '1 / 2' }}><CategoryTileSmall cat={small[4]} /></div>
+        <div style={{ gridColumn: '2 / 4' }}><CategoryTileSmall cat={small[5]} /></div>
+      </div>
+
+      {/* One-of-one promise */}
+      <div style={{ textAlign: 'center', marginTop: 48, marginBottom: 0 }}>
+        <div style={{ width: 60, height: 1, background: C.copper, margin: '0 auto 20px' }} />
+        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 16, color: C.muted, letterSpacing: '0.02em', lineHeight: 1.6 }}>
+          "Each piece, woven once. When it's gone, it's gone."
+        </p>
+      </div>
+
+      {/* Jewellery sub-header */}
+      <div style={{ marginTop: 48, marginBottom: 24 }}>
+        <SubHeader bn="গহনা" en="JEWELLERY" />
+      </div>
+
+      {/* Jewellery grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+        {JEWELLERY_CATEGORIES.map(cat => <JewelleryCategoryTile key={cat.id} cat={cat} />)}
+      </div>
+
+      <div style={{ height: 32 }} />
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════
+   SAREE-BORDER DIVIDER
+════════════════════════════════════════ */
+function SareeBorderDivider() {
+  return (
+    <div style={{ width: '100%', height: 12, background: C.dark, position: 'relative', overflow: 'hidden' }}>
+      {/* Diamond pattern */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} preserveAspectRatio="none">
+        {Array.from({ length: 40 }).map((_, i) => (
+          <polygon key={i} points={`${i * 36 + 18},2 ${i * 36 + 26},6 ${i * 36 + 18},10 ${i * 36 + 10},6`}
+            fill="none" stroke={C.gold} strokeWidth="0.4" opacity="0.18" />
+        ))}
+      </svg>
+      {/* Three lines */}
+      <div style={{ position: 'absolute', top: '25%', left: 0, right: 0, height: 0.5, background: C.gold, opacity: 0.55 }} />
+      <div style={{ position: 'absolute', top: '60%', left: 0, right: 0, height: 1.5, background: C.copper, opacity: 0.75 }} />
+      <div style={{ position: 'absolute', top: '90%', left: 0, right: 0, height: 0.5, background: C.gold, opacity: 0.55 }} />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════
+   SECTION 6 — OUR HERITAGE
+════════════════════════════════════════ */
+function OurHeritage() {
+  return (
+    <section style={{ background: C.dark, padding: `112px clamp(32px,6vw,85px)`, position: 'relative', overflow: 'hidden' }}>
+      {/* Linen noise */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`, backgroundSize: '200px 200px', opacity: 0.03, pointerEvents: 'none' }} />
+
+      {/* Eyebrow */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 56 }}>
+        <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 400, letterSpacing: '0.28em', textTransform: 'uppercase', color: C.gold }}>OUR HERITAGE</span>
+        <div style={{ width: 28, height: 1, background: C.gold }} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+        {/* LEFT — founder image */}
+        <div style={{ position: 'relative', aspectRatio: '4/5', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(155deg, #2A1008, #BF5E18)' }} />
+          {/* Inset frame */}
+          <div style={{ position: 'absolute', inset: 12, border: '1px solid rgba(212,136,10,0.4)', zIndex: 2, pointerEvents: 'none' }} />
+          {/* Watermark Bengali */}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+            <span style={{ fontFamily: "'Hind',sans-serif", fontSize: 64, fontWeight: 300, color: C.ivory, opacity: 0.3, letterSpacing: '0.04em', userSelect: 'none' }}>সুমাম</span>
+          </div>
+          {/* Photo label */}
+          <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 3, pointerEvents: 'none' }}>
+            <div style={{ border: '1px dashed rgba(245,239,230,0.15)', padding: '6px 14px' }}>
+              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,239,230,0.3)', textAlign: 'center' }}>
+                Founder Sumam at the<br />Shantiniketan loom
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — text */}
+        <div style={{ maxWidth: 480 }}>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(28px,2.8vw,38px)', fontWeight: 300, color: C.ivory, lineHeight: 1.2, marginBottom: 28 }}>
+            A Boutique Born from <em style={{ fontStyle: 'italic', color: C.copper }}>Love</em> of Weave
+          </h2>
+
+          {/* Pull quote */}
+          <blockquote style={{ borderLeft: `2px solid ${C.copper}`, paddingLeft: 20, marginBottom: 24 }}>
+            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 22, fontWeight: 300, color: `rgba(245,239,230,0.95)`, lineHeight: 1.5 }}>
+              "Each saree we curate carries a piece of Shantiniketan — the same red soil where Tagore once walked, the same looms that have hummed for generations."
+            </p>
+          </blockquote>
+
+          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: 300, color: `rgba(245,239,230,0.70)`, lineHeight: 1.8, marginBottom: 16 }}>
+            Sumam's Boutique began not as a business, but as a search — for sarees that still held the warmth of Bengali earth, the patience of handloom weavers, and the quiet grace of traditions passed down through generations.
+          </p>
+          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: 300, color: `rgba(245,239,230,0.70)`, lineHeight: 1.8 }}>
+            We travel each season to artisan families in Shantiniketan, Murshidabad, Bishnupur, and Shantipur — sourcing weaves that carry not just thread, but memory. Every piece is one-of-one. Once gone, never woven again.
+          </p>
+
+          {/* Signature */}
+          <div style={{ marginTop: 28 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 18, color: C.copper }}>— Sumam</div>
+            <div style={{ fontFamily: "'Hind',sans-serif", fontSize: 13, fontWeight: 300, color: `rgba(212,136,10,0.60)`, marginTop: 4 }}>— সুমাম</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════
+   SECTION 7 — JEWELLERY SPOTLIGHT
+════════════════════════════════════════ */
+const JEWELLERY_PRODUCTS = [
+  {
+    id: 1, tag: 'TEMPLE COLLECTION',
+    gradient: 'linear-gradient(165deg, #4A2010, #8B3A14 40%, #C4611A 70%, #7A2C0C)',
+    label: 'Lakshmi temple necklace, antique gold finish',
+    name: 'Lakshmi Temple Necklace',
+    price: '₹3,200',
+  },
+  {
+    id: 2, tag: 'CONTEMPORARY', hover: true,
+    gradient: 'linear-gradient(165deg, #5A2A14, #8B5E10 40%, #D4880A 70%, #4A3810)',
+    label: 'Hammered copper cuff bangle',
+    name: 'Hammered Copper Cuff',
+    price: '₹1,800',
+  },
+  {
+    id: 3, tag: 'GOLD-PLATED',
+    gradient: 'linear-gradient(165deg, #4A3810, #8B5E10 40%, #E8A820 70%, #BF5E18)',
+    label: 'Bengali bridal choker set',
+    name: 'Bengali Choker Set',
+    price: '₹2,600',
+  },
+];
+
+function JewelleryCard({ product }) {
+  const [hov, setHov] = useState(product.hover || false);
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => !product.hover && setHov(false)}
+      style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+      {/* Image */}
+      <div style={{ position: 'relative', aspectRatio: '3/4', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: product.gradient, transform: hov ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.5s ease' }} />
+        {hov && <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,10,6,0.22)', transition: 'opacity 0.3s' }} />}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ border: '1px dashed rgba(245,239,230,0.15)', padding: '7px 12px', maxWidth: '75%' }}>
+            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(245,239,230,0.28)', textAlign: 'center', lineHeight: 1.5 }}>
+              {product.label}
+            </div>
+          </div>
+        </div>
+        {hov && (
+          <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', background: 'rgba(245,239,230,0.92)', color: C.dark, fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px 20px', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}>
+            QUICK VIEW
+          </div>
+        )}
+        {/* Wishlist */}
+        <button style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, background: 'rgba(28,10,6,0.32)', border: '1px solid rgba(245,239,230,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: hov ? 1 : 0.6, transition: 'opacity 0.2s' }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill={hov ? C.copper : 'none'} stroke={hov ? C.copper : C.ivory} strokeWidth="1.2">
+            <path d="M7 12.5S1 8.5 1 4.8A3 3 0 017 2.9 3 3 0 0113 4.8C13 8.5 7 12.5 7 12.5z" />
+          </svg>
+        </button>
+      </div>
+      {/* Info panel */}
+      <div style={{ background: C.cream, padding: '18px 20px 22px' }}>
+        <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 400, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.copper, marginBottom: 10 }}>{product.tag}</div>
+        <h3 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 17, fontWeight: 400, color: C.dark, marginBottom: 8, lineHeight: 1.3 }}>{product.name}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 15, fontWeight: 500, color: C.copper }}>{product.price}</span>
+          <button style={{ background: 'none', border: `1px solid rgba(191,94,24,0.38)`, color: C.copper, fontFamily: "'DM Sans',sans-serif", fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 12px', cursor: 'pointer', borderRadius: 0 }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.copper; e.currentTarget.style.color = C.ivory; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = C.copper; }}>
+            ADD TO BAG
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JewellerySpotlight() {
+  return (
+    <section style={{ background: C.dark, padding: `64px clamp(32px,6vw,85px) 96px`, position: 'relative', overflow: 'hidden' }}>
+      {/* Linen noise */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`, backgroundSize: '200px 200px', opacity: 0.03, pointerEvents: 'none' }} />
+
+      {/* Alpona divider above */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 64 }}>
+        <AlponaDivider />
+      </div>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 400, letterSpacing: '0.28em', textTransform: 'uppercase', color: C.gold }}>JEWELLERY · গহনা</span>
+            <div style={{ width: 28, height: 1, background: C.gold }} />
+          </div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(28px,2.8vw,38px)', fontWeight: 300, color: C.ivory, lineHeight: 1.15, marginBottom: 12 }}>
+            The <em style={{ fontStyle: 'italic', color: C.gold }}>Golden</em> Touch
+          </h2>
+          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: 300, color: `rgba(245,239,230,0.65)`, lineHeight: 1.6 }}>
+            Heirloom pieces, hand-cast and never repeated
+          </p>
+        </div>
+        <a href="#" style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 400, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.gold, textDecoration: 'none', borderBottom: `1px solid ${C.gold}`, paddingBottom: 2, marginBottom: 6, whiteSpace: 'nowrap' }}>
+          View All Jewellery →
+        </a>
+      </div>
+
+      {/* Product cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
+        {JEWELLERY_PRODUCTS.map(p => <JewelleryCard key={p.id} product={p} />)}
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════
+   SECTION 8 — INSTAGRAM STRIP
+════════════════════════════════════════ */
+const IG_TILES = [
+  'linear-gradient(145deg, #BF5E18, #7A2C0C)',
+  'linear-gradient(145deg, #D4880A, #8B4510)',
+  'linear-gradient(145deg, #8C6A55, #3D1C0A)',
+  'linear-gradient(145deg, #2A1008, #6B2E0E)',
+  'linear-gradient(145deg, #EDE3D6, #C4A87A)',
+  'linear-gradient(145deg, #3D1C0A, #BF5E18)',
+];
+
+function InstagramStrip() {
+  const [hovIdx, setHovIdx] = useState(null);
+  return (
+    <section style={{ background: C.cream, padding: `80px clamp(32px,6vw,85px)` }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, fontWeight: 400, letterSpacing: '0.28em', textTransform: 'uppercase', color: C.copper }}>FOLLOW @SUMAMSBOUTIQUE</span>
+            <div style={{ width: 28, height: 1, background: C.copper }} />
+          </div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(28px,2.8vw,38px)', fontWeight: 300, color: C.dark, lineHeight: 1.15 }}>
+            As Seen on <em style={{ fontStyle: 'italic', color: C.copper }}>Instagram</em>
+          </h2>
+        </div>
+        <a href="#" style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: C.copper, textDecoration: 'none', borderBottom: `1px solid ${C.copper}`, paddingBottom: 2, marginBottom: 6, whiteSpace: 'nowrap' }}>
+          @sumamsboutique →
+        </a>
+      </div>
+
+      {/* Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 4, marginLeft: `calc(-1 * clamp(32px,6vw,85px))`, marginRight: `calc(-1 * clamp(32px,6vw,85px))` }}>
+        {IG_TILES.map((grad, i) => (
+          <div key={i}
+            onMouseEnter={() => setHovIdx(i)}
+            onMouseLeave={() => setHovIdx(null)}
+            style={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', cursor: 'pointer' }}>
+            <div style={{ position: 'absolute', inset: 0, background: grad, transform: hovIdx === i ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.4s ease' }} />
+            {hovIdx === i && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,10,6,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.ivory} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" />
+                  <circle cx="12" cy="12" r="5" />
+                  <circle cx="17.5" cy="6.5" r="1.2" fill={C.ivory} stroke="none" />
+                </svg>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════
+   SECTION 9 — FOOTER
+════════════════════════════════════════ */
+function SocialIcon({ label }) {
+  const [hov, setHov] = useState(false);
+  const icons = {
+    Instagram: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <rect x="2" y="2" width="20" height="20" rx="5" />
+        <circle cx="12" cy="12" r="5" />
+        <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+    Facebook: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+      </svg>
+    ),
+    WhatsApp: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+      </svg>
+    ),
+    YouTube: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.95A29 29 0 0023 12a29 29 0 00-.46-5.58z" />
+        <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  };
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ width: 32, height: 32, border: `1px solid rgba(212,136,10,${hov ? '0.8' : '0.3'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: hov ? C.gold : C.muted, transition: 'color 0.2s, border-color 0.2s' }}>
+      {icons[label]}
+    </div>
+  );
+}
+
+const FOOTER_SAREES = ['Benarasi / বেনারসি','Tant / তাঁত','Muslin / মসলিন','Kantha / কাঁথা','Silk / সিল্ক','Jamdani / জামদানি','Garad / গরদ'];
+const FOOTER_JEWELLERY = ['Temple Jewellery / মন্দির গহনা','Contemporary / সমসাময়িক','Gold-Plated / সোনার মোড়ক','Bridal Sets'];
+const FOOTER_HELP = ['Our Story','Shipping & Returns','Size Guide','Care Instructions','Contact Us','FAQs'];
+const PAYMENT_METHODS = ['RAZORPAY','STRIPE','VISA','MASTERCARD','UPI'];
+
+function FooterColTitle({ children }) {
+  return <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: '0.25em', textTransform: 'uppercase', color: C.gold, marginBottom: 16 }}>{children}</div>;
+}
+function FooterLink({ children }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <a href="#" onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ display: 'block', fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: hov ? C.gold : 'rgba(245,239,230,0.55)', textDecoration: 'none', lineHeight: 1.6, marginBottom: 8, transition: 'color 0.2s' }}>
+      {children}
+    </a>
+  );
+}
+
+function Footer() {
+  const [email, setEmail] = useState('');
+  return (
+    <footer style={{ background: C.dark, padding: `80px clamp(32px,6vw,85px) 0`, borderTop: '1px solid rgba(212,136,10,0.18)', position: 'relative', overflow: 'hidden' }}>
+      {/* Watermark logo */}
+      <div style={{ position: 'absolute', right: '-4%', top: '50%', transform: 'translateY(-50%)', width: 480, opacity: 0.07, pointerEvents: 'none', zIndex: 0 }}>
+        <img src="uploads/logo_transparent.png" alt="" style={{ width: '100%', filter: `sepia(1) saturate(3) hue-rotate(-10deg) brightness(0.7)` }} />
+      </div>
+
+      {/* Five columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr 1.4fr', gap: 40, position: 'relative', zIndex: 1 }}>
+        {/* Col 1 — Brand */}
+        <div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.copper, marginBottom: 6 }}>SUMAM'S BOUTIQUE</div>
+          <div style={{ fontFamily: "'Hind',sans-serif", fontSize: 12, fontWeight: 300, color: `rgba(212,136,10,0.60)`, marginBottom: 16, letterSpacing: '0.02em' }}>বাংলার ঐতিহ্যের শাড়ি ও গহনা</div>
+          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, fontStyle: 'italic', color: C.muted, lineHeight: 1.7, marginBottom: 24, maxWidth: 260 }}>
+            Heritage sarees &amp; jewellery, curated with love from Bengal.
+          </p>
+          <div style={{ display: 'flex', gap: 12 }}>
+            {['Instagram','Facebook','WhatsApp','YouTube'].map(s => <SocialIcon key={s} label={s} />)}
+          </div>
+        </div>
+
+        {/* Col 2 — Sarees */}
+        <div>
+          <FooterColTitle>Sarees</FooterColTitle>
+          {FOOTER_SAREES.map(l => <FooterLink key={l}>{l}</FooterLink>)}
+        </div>
+
+        {/* Col 3 — Jewellery */}
+        <div>
+          <FooterColTitle>Jewellery</FooterColTitle>
+          {FOOTER_JEWELLERY.map(l => <FooterLink key={l}>{l}</FooterLink>)}
+        </div>
+
+        {/* Col 4 — Help */}
+        <div>
+          <FooterColTitle>Help</FooterColTitle>
+          {FOOTER_HELP.map(l => <FooterLink key={l}>{l}</FooterLink>)}
+        </div>
+
+        {/* Col 5 — Newsletter */}
+        <div>
+          <FooterColTitle>Stay in the Weave</FooterColTitle>
+          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: 'rgba(245,239,230,0.55)', lineHeight: 1.7, marginBottom: 16, maxWidth: 280 }}>
+            Receive stories of new arrivals, weaver's notes, and seasonal lookbooks.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(212,136,10,0.30)', paddingBottom: 8 }}>
+            <input
+              type="email"
+              placeholder="your.email@address"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: C.ivory, '::placeholder': { color: C.muted } }}
+            />
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.copper, fontSize: 16, lineHeight: 1, padding: 0 }}>→</button>
+          </div>
+          <div style={{ fontFamily: "'Hind',sans-serif", fontSize: 11, fontWeight: 300, color: `rgba(212,136,10,0.50)`, marginTop: 10, letterSpacing: '0.04em' }}>
+            নতুন সংগ্রহের খবর সবার আগে
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div style={{ marginTop: 40, borderTop: '1px solid rgba(212,136,10,0.15)', paddingTop: 24, paddingBottom: 32, position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: 'rgba(245,239,230,0.30)' }}>
+            © 2025 Sumam's Boutique. All rights reserved.
+          </span>
+          <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: 'rgba(212,136,10,0.35)' }}>
+            Made in Bengal · <span style={{ fontFamily: "'Hind',sans-serif" }}>বাংলায় তৈরি</span>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {PAYMENT_METHODS.map(m => (
+              <span key={m} style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,239,230,0.40)', border: '0.5px solid rgba(245,239,230,0.25)', padding: '4px 8px' }}>{m}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ─── ROOT APP ─── */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "heroAutoAdvance": true,
+  "gridHeight": 780,
+  "showSlideThumbs": true,
+  "showMobileRef": true
+} /*EDITMODE-END*/;
+
+function App() {
+  const { tweaks, setTweak } = useTweaks(TWEAK_DEFAULTS);
+
+  return (
+    <div style={{ minWidth: 320 }}>
+      <Navbar isMobile={false} />
+      <Hero tweaks={tweaks} />
+      <Marquee />
+      <FeaturedCollection tweaks={tweaks} />
+      {tweaks.showSlideThumbs && <SlideThumbnails />}
+      <MobileReference show={tweaks.showMobileRef} />
+      <BrowseByCategory />
+      <SareeBorderDivider />
+      <OurHeritage />
+      <JewellerySpotlight />
+      <InstagramStrip />
+      <Footer />
+
+      <TweaksPanel>
+        <TweakSection title="Hero" />
+        <TweakToggle
+          label="Auto-advance slides"
+          value={tweaks.heroAutoAdvance}
+          onChange={(v) => setTweak('heroAutoAdvance', v)} />
+        
+        <TweakSection title="Featured Grid" />
+        <TweakSlider
+          label="Grid height"
+          value={tweaks.gridHeight}
+          min={480} max={960} step={20} unit="px"
+          onChange={(v) => setTweak('gridHeight', v)} />
+        
+        <TweakSection title="Reference panels" />
+        <TweakToggle
+          label="Show slide thumbnails"
+          value={tweaks.showSlideThumbs}
+          onChange={(v) => setTweak('showSlideThumbs', v)} />
+        
+        <TweakToggle
+          label="Show mobile nav"
+          value={tweaks.showMobileRef}
+          onChange={(v) => setTweak('showMobileRef', v)} />
+        
+      </TweaksPanel>
+    </div>);
+
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

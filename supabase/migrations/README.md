@@ -1,0 +1,3 @@
+-- Sumam's Boutique — Supabase schema migrations
+-- Apply in order. Phase 5 (Data layer) wires real tables.
+-- Placeholder for the first migration: 0000_initial.sql

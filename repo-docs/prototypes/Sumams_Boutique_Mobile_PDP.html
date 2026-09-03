@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Royal Crimson Benarasi — Mobile PDP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&family=Hind:wght@300;400&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #1a1a1a; font-family: 'DM Sans', sans-serif; }
+.mpdp-scroll::-webkit-scrollbar { display: none; }
+.mpdp-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const C = {
+  dark:   '#1C0A06',
+  copper: '#BF5E18',
+  ivory:  '#F5EFE6',
+  gold:   '#D4880A',
+  muted:  '#8C6A55',
+  cream:  '#EDE3D6',
+  whatsapp: '#25D366',
+};
+const F = {
+  display: "'Cormorant Garamond', serif",
+  ui:      "'DM Sans', sans-serif",
+  bn:      "'Hind', sans-serif",
+};
+
+/* ── PRIMITIVES ── */
+function PhotoPlaceholder({ gradient, label, aspect = '3/4' }) {
+  return (
+    <div style={{ position: 'relative', width: '100%', aspectRatio: aspect, background: gradient, overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ border: '1px dashed rgba(245,239,230,0.25)', padding: '12px 16px', maxWidth: '80%' }}>
+          <div style={{ fontFamily: F.ui, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,239,230,0.5)', textAlign: 'center', lineHeight: 1.6 }}>{label}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SareeBorderDivider() {
+  return (
+    <div style={{ width: '100%', height: 12, background: C.dark, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} preserveAspectRatio="none">
+        {Array.from({ length: 30 }).map((_, i) => (
+          <polygon key={i} points={`${i*14+7},2 ${i*14+11},6 ${i*14+7},10 ${i*14+3},6`}
+            fill="none" stroke={C.gold} strokeWidth="0.4" opacity="0.18" />
+        ))}
+      </svg>
+      <div style={{ position: 'absolute', top: '20%', left: 0, right: 0, height: 0.5, background: C.gold, opacity: 0.55 }} />
+      <div style={{ position: 'absolute', top: '55%', left: 0, right: 0, height: 1.5, background: C.copper, opacity: 0.75 }} />
+      <div style={{ position: 'absolute', top: '88%', left: 0, right: 0, height: 0.5, background: C.gold, opacity: 0.55 }} />
+    </div>
+  );
+}
+
+function AlponaDivider() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0 0' }}>
+      <svg width="240" height="20" viewBox="0 0 240 20" fill="none" style={{ opacity: 0.45 }}>
+        <line x1="0" y1="10" x2="88" y2="10" stroke={C.copper} strokeWidth="0.75" />
+        <polygon points="94,10 100,6 106,10 100,14" stroke={C.gold} strokeWidth="0.5" fill="none" />
+        <ellipse cx="120" cy="5" rx="3.5" ry="7" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(0,120,10)" />
+        <ellipse cx="120" cy="5" rx="3.5" ry="7" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(90,120,10)" />
+        <ellipse cx="120" cy="5" rx="3.5" ry="7" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(180,120,10)" />
+        <ellipse cx="120" cy="5" rx="3.5" ry="7" stroke={C.copper} strokeWidth="0.5" fill="none" transform="rotate(270,120,10)" />
+        <circle cx="120" cy="10" r="1.5" stroke={C.gold} strokeWidth="0.5" fill="none" />
+        <polygon points="134,10 140,6 146,10 140,14" stroke={C.gold} strokeWidth="0.5" fill="none" />
+        <line x1="152" y1="10" x2="240" y2="10" stroke={C.copper} strokeWidth="0.75" />
+      </svg>
+    </div>
+  );
+}
+
+/* ── MOBILE NAV (sticky) ── */
+function MobileNav() {
+  return (
+    <div style={{ width: '100%', height: 56, background: C.dark, borderBottom: '1px solid rgba(212,136,10,0.18)', display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0, position: 'relative', zIndex: 10 }}>
+      <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.85 }}>
+          <line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" />
+        </svg>
+      </div>
+      <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
+        <img src="uploads/logo_transparent.png" alt="Sumam's Boutique" style={{ height: 36, width: 'auto', maxWidth: 120, objectFit: 'contain' }} />
+      </div>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+        <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.85 }}>
+            <circle cx="9.5" cy="9.5" r="6" /><line x1="14" y1="14" x2="19" y2="19" />
+          </svg>
+        </div>
+        <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke={C.ivory} strokeWidth="1.25" strokeLinecap="round" style={{ opacity: 0.85 }}>
+            <path d="M2 2h2.5l2.5 10a1 1 0 001 .8h8a1 1 0 001-.8L19 6H5" />
+            <circle cx="9" cy="17.5" r="1.3" fill={C.ivory} stroke="none" />
+            <circle cx="15" cy="17.5" r="1.3" fill={C.ivory} stroke="none" />
+          </svg>
+          <div style={{ position: 'absolute', top: 6, right: 6, width: 14, height: 14, borderRadius: '50%', background: C.copper, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: F.ui, fontSize: 8, color: C.ivory, fontWeight: 500 }}>1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 1. BREADCRUMB ── */
+function Breadcrumb() {
+  return (
+    <div style={{ background: C.ivory, padding: '12px 20px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      {[
+        { label: 'Sarees', link: true },
+        { label: '/', sep: true },
+        { label: 'Benarasi', link: true },
+        { label: '/', sep: true },
+        { label: 'Royal Crimson Benarasi', current: true },
+      ].map((item, i) => {
+        if (item.sep) return <span key={i} style={{ fontFamily: F.ui, fontSize: 10, color: 'rgba(140,106,85,0.5)', margin: '0 6px', letterSpacing: '0.1em' }}>{item.label}</span>;
+        return (
+          <span key={i} style={{
+            fontFamily: F.ui, fontSize: 10, fontWeight: 400,
+            letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: item.link ? C.copper : C.dark,
+            borderBottom: item.link ? `1px solid rgba(191,94,24,0.4)` : 'none',
+            paddingBottom: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden', textOverflow: 'ellipsis',
+            maxWidth: item.current ? 200 : 'none',
+          }}>{item.label}</span>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── 2. GALLERY (vertical stack) ── */
+function Gallery() {
+  const images = [
+    { gradient: 'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)', label: 'SAREE PHOTOGRAPHY — FULL DRAPE ON MODEL · ELEGANT POSE WITH VARANASI-STYLE PILLAR BACKDROP' },
+    { gradient: 'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)', label: 'SAREE PHOTOGRAPHY — PALLU DETAIL · CLOSE-UP OF GOLD ZARI BORDER WORK' },
+  ];
+  return (
+    <div style={{ background: C.ivory, padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+      {images.map((img, i) => (
+        <PhotoPlaceholder key={i} gradient={img.gradient} label={img.label} aspect="3/4" />
+      ))}
+    </div>
+  );
+}
+
+/* ── 3. PRODUCT INFO + 4. ACTIONS + 5. PINCODE + 6. ABOUT ── */
+function ProductInfo() {
+  const [wishlist, setWishlist] = useState(false);
+  return (
+    <div style={{ background: C.ivory, padding: '24px 20px 0', flexShrink: 0 }}>
+      {/* Eyebrow */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <div style={{ width: 20, height: 1, background: C.copper }} />
+        <span style={{ fontFamily: F.ui, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.copper }}>BENARASI · BENGALI HERITAGE WEAVE</span>
+      </div>
+      {/* Name */}
+      <h1 style={{ fontFamily: F.display, fontSize: 26, fontWeight: 400, color: C.dark, lineHeight: 1.15, marginBottom: 6 }}>Royal Crimson Benarasi</h1>
+      {/* Sub-meta */}
+      <div style={{ fontFamily: F.ui, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted }}>PURE SILK · HANDWOVEN · VARANASI</div>
+      {/* Price row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+        <span style={{ fontFamily: F.display, fontSize: 24, fontWeight: 400, color: C.copper }}>₹24,500</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="7" height="7" viewBox="0 0 8 8"><rect x="1" y="1" width="6" height="6" fill={C.copper} transform="rotate(45,4,4)" /></svg>
+          <span style={{ fontFamily: F.ui, fontSize: 9, fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.copper }}>ONLY 1 PIECE — ONE OF ONE</span>
+        </div>
+      </div>
+      <div style={{ fontFamily: F.ui, fontSize: 11, fontWeight: 300, color: 'rgba(140,106,85,0.7)', marginTop: 4 }}>Inclusive of all taxes · MRP</div>
+
+      {/* Actions Row 1 */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+        <button style={{ flex: 1, height: 48, background: C.dark, color: C.ivory, border: 'none', fontFamily: F.ui, fontSize: 11, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Add to Bag</button>
+        <button onClick={() => setWishlist(w => !w)} style={{ width: 48, height: 48, background: 'transparent', border: `1px solid ${C.copper}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <svg width="18" height="18" viewBox="0 0 20 20" fill={wishlist ? C.copper : 'none'} stroke={C.copper} strokeWidth="1.4">
+            <path d="M10 17.5S2.5 12.5 2.5 7A4 4 0 0110 3.85 4 4 0 0117.5 7c0 5.5-7.5 10.5-7.5 10.5z" />
+          </svg>
+        </button>
+      </div>
+      {/* Actions Row 2 — WhatsApp */}
+      <button style={{ width: '100%', height: 48, background: C.whatsapp, color: '#FFFFFF', border: 'none', marginTop: 8, fontFamily: F.ui, fontSize: 11, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M11.998 2.003C6.476 2.003 2 6.479 2 12.001c0 1.762.457 3.45 1.33 4.931L2 22l5.218-1.299A9.955 9.955 0 0012 21.999c5.522 0 9.998-4.476 9.998-9.998 0-5.523-4.476-9.998-9.998-9.998zm0 18.286a8.27 8.27 0 01-4.208-1.154l-.303-.18-3.098.772.794-3.001-.198-.311A8.265 8.265 0 013.73 12c0-4.568 3.714-8.282 8.268-8.282 4.555 0 8.267 3.714 8.267 8.282 0 4.567-3.712 8.289-8.267 8.289z"/>
+        </svg>
+        Chat on WhatsApp
+      </button>
+
+      {/* Pincode */}
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: 16 }}>
+        <input type="text" placeholder="Enter pincode for delivery" style={{ flex: 1, height: 40, background: 'none', border: 'none', borderBottom: '1px solid rgba(140,106,85,0.3)', outline: 'none', fontFamily: F.ui, fontSize: 12, color: C.dark }} />
+        <button style={{ height: 40, padding: '0 16px', background: 'none', border: `1px solid ${C.copper}`, color: C.copper, fontFamily: F.ui, fontSize: 10, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', marginLeft: 8 }}>CHECK</button>
+      </div>
+
+      {/* About */}
+      <div style={{ marginTop: 28 }}>
+        <div style={{ fontFamily: F.display, fontSize: 22, fontWeight: 400, color: C.dark }}>About This Saree</div>
+        <div style={{ width: 28, height: 1, background: C.copper, margin: '12px 0 16px' }} />
+        <p style={{ fontFamily: F.ui, fontSize: 14, fontWeight: 300, color: 'rgba(28,10,6,0.8)', lineHeight: 1.75 }}>
+          A regal Benarasi handwoven in the Kadwa Jangla technique, where each motif is woven separately into the fabric — never stitched on. The crimson silk is hand-dyed using traditional methods, with intricate 24-carat gold zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Varanasi.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ── 7. ACCORDIONS ── */
+function AccordionRow({ title, expanded, children }) {
+  const [open, setOpen] = useState(expanded || false);
+  return (
+    <div>
+      <div onClick={() => setOpen(o => !o)} style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: '1px solid rgba(140,106,85,0.25)' }}>
+        <span style={{ fontFamily: F.ui, fontSize: 12, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.dark }}>{title}</span>
+        <span style={{ fontFamily: F.ui, fontSize: 16, color: C.muted, lineHeight: 1, width: 16, textAlign: 'center' }}>{open ? '×' : '+'}</span>
+      </div>
+      {open && (
+        <div style={{ padding: '24px 0', borderBottom: '1px solid rgba(140,106,85,0.25)' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Accordions() {
+  return (
+    <div style={{ background: C.ivory, padding: '24px 20px 0', flexShrink: 0 }}>
+      <AccordionRow title="Fabric & Weave" expanded={true}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {['Pure Mulberry Silk','Banarasi Kadwa Jangla weave','24-carat gold zari work'].map(item => (
+            <div key={item} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ color: C.copper, fontSize: 10 }}>·</span>
+              <span style={{ fontFamily: F.ui, fontSize: 13, fontWeight: 300, color: 'rgba(28,10,6,0.8)', lineHeight: 1.7 }}>{item}</span>
+            </div>
+          ))}
+        </div>
+      </AccordionRow>
+      <AccordionRow title="Occasion" expanded={false} />
+      <AccordionRow title="Dimensions" expanded={false} />
+      <AccordionRow title="Care" expanded={false} />
+    </div>
+  );
+}
+
+/* ── 9. TRUST STRIP (2x2 grid) ── */
+const TRUST_ITEMS = [
+  { type: 'auth',    title: 'AUTHENTICITY CERTIFIED',  sub: 'Each piece, hand-verified by Sumam' },
+  { type: 'ship',    title: 'FREE SHIPPING',            sub: 'On orders above ₹5,000' },
+  { type: 'returns', title: '7-DAY RETURNS',            sub: 'Easy returns, subject to inspection' },
+  { type: 'chat',    title: 'WHATSAPP SUPPORT',         sub: 'Personal assistance from our boutique' },
+];
+function TrustIcon({ type }) {
+  const s = { stroke: C.gold, strokeWidth: 1, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' };
+  const icons = {
+    auth: <svg width="28" height="28" viewBox="0 0 28 28" {...s}><polygon points="14,3 17,9 24,10 19,15 20.5,22 14,18.5 7.5,22 9,15 4,10 11,9" /><polyline points="10,14 13,17 18,11" /></svg>,
+    ship: <svg width="28" height="28" viewBox="0 0 28 28" {...s}><rect x="3" y="8" width="17" height="12" rx="1" /><polyline points="20,12 25,12 25,20 20,20" /><circle cx="8" cy="21" r="2" /><circle cx="18" cy="21" r="2" /><line x1="3" y1="12" x2="8" y2="12" /></svg>,
+    returns: <svg width="28" height="28" viewBox="0 0 28 28" {...s}><path d="M5 14A9 9 0 1 0 7 8.5" /><polyline points="3,6 7,9 10,6" /></svg>,
+    chat: <svg width="28" height="28" viewBox="0 0 28 28" {...s}><path d="M5 6h18a1 1 0 011 1v11a1 1 0 01-1 1H9l-5 4V7a1 1 0 011-1z" /><line x1="10" y1="11" x2="18" y2="11" /><line x1="10" y1="15" x2="15" y2="15" /></svg>,
+  };
+  return icons[type];
+}
+function TrustStrip() {
+  return (
+    <div style={{ background: C.cream, padding: '40px 20px', borderTop: '1px solid rgba(212,136,10,0.3)', borderBottom: '1px solid rgba(212,136,10,0.3)', flexShrink: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {TRUST_ITEMS.map(item => (
+          <div key={item.type} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '4px' }}>
+            <div style={{ marginBottom: 10 }}><TrustIcon type={item.type} /></div>
+            <div style={{ fontFamily: F.ui, fontSize: 11, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.dark, marginBottom: 4, lineHeight: 1.3 }}>{item.title}</div>
+            <div style={{ fontFamily: F.ui, fontSize: 10, fontWeight: 300, color: C.muted, lineHeight: 1.5 }}>{item.sub}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── SHARED CARDS ── */
+function ProductImage({ gradient, label }) {
+  return (
+    <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', background: gradient, overflow: 'hidden' }}>
+      {/* Wishlist always visible */}
+      <div style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, background: 'rgba(245,239,230,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={C.dark} strokeWidth="1.2">
+          <path d="M7 12.5S1 8.5 1 4.8A3 3 0 017 2.9 3 3 0 0113 4.8C13 8.5 7 12.5 7 12.5z" />
+        </svg>
+      </div>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ border: '1px dashed rgba(245,239,230,0.22)', padding: '7px 12px', maxWidth: '82%' }}>
+          <div style={{ fontFamily: F.ui, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,239,230,0.4)', textAlign: 'center', lineHeight: 1.5 }}>{label}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JewelleryCard({ tag, gradient, label, name, price, width }) {
+  return (
+    <div style={{ width, flexShrink: 0, scrollSnapAlign: 'start' }}>
+      <ProductImage gradient={gradient} label={label} />
+      <div style={{ background: C.cream, padding: '16px 16px 18px' }}>
+        <div style={{ fontFamily: F.ui, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.copper, marginBottom: 8 }}>{tag}</div>
+        <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 400, color: C.dark, marginBottom: 12, lineHeight: 1.3 }}>{name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: F.ui, fontSize: 14, fontWeight: 500, color: C.copper }}>{price}</span>
+          <button style={{ height: 32, padding: '0 12px', background: 'none', border: `1px solid rgba(191,94,24,0.45)`, color: C.copper, fontFamily: F.ui, fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase' }}>ADD TO BAG</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SareeCard({ badge, badgeColor, gradient, label, name, sub, price, width }) {
+  return (
+    <div style={{ width, flexShrink: 0, scrollSnapAlign: 'start' }}>
+      <div style={{ position: 'relative' }}>
+        <ProductImage gradient={gradient} label={label} />
+        {badge && <div style={{ position: 'absolute', top: 14, left: 14, background: badgeColor, fontFamily: F.ui, fontSize: 9, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.ivory, padding: '4px 10px', zIndex: 2 }}>{badge}</div>}
+      </div>
+      <div style={{ background: C.cream, padding: '16px 16px 18px' }}>
+        <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 400, color: C.dark, marginBottom: 4, lineHeight: 1.3 }}>{name}</div>
+        <div style={{ fontFamily: F.ui, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 12 }}>{sub}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: F.ui, fontSize: 14, fontWeight: 500, color: C.copper }}>{price}</span>
+          <button style={{ height: 32, padding: '0 12px', background: 'none', border: `1px solid rgba(191,94,24,0.45)`, color: C.copper, fontFamily: F.ui, fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase' }}>ADD TO BAG</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 10. STYLE THIS WITH ── */
+const JEWELLERY = [
+  { tag: 'TEMPLE COLLECTION', gradient: 'linear-gradient(165deg, #4A2010, #8B3A14 40%, #C4611A 70%, #7A2C0C)', label: 'JEWELLERY PHOTOGRAPHY — LAKSHMI TEMPLE NECKLACE · ANTIQUE GOLD FINISH', name: 'Lakshmi Temple Necklace', price: '₹3,200' },
+  { tag: 'GOLD-PLATED',       gradient: 'linear-gradient(165deg, #4A3810, #8B5E10 40%, #E8A820 70%, #BF5E18)', label: 'JEWELLERY PHOTOGRAPHY — GOLDEN MAANGTIKKA · FOREHEAD ORNAMENT', name: 'Heirloom Maangtikka', price: '₹1,950' },
+  { tag: 'TEMPLE COLLECTION', gradient: 'linear-gradient(165deg, #5A2A14, #8B3A14 40%, #C4611A 70%, #4A2010)', label: 'JEWELLERY PHOTOGRAPHY — TEMPLE EARRINGS · DROP STYLE', name: 'Drop Temple Earrings', price: '₹2,400' },
+];
+
+function StyleThisWith() {
+  const cardW = Math.round(390 * 0.7); // ~70vw
+  return (
+    <div style={{ background: C.ivory, paddingTop: 56, flexShrink: 0 }}>
+      <div style={{ padding: '0 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ width: 20, height: 1, background: C.copper }} />
+          <span style={{ fontFamily: F.ui, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.copper }}>HAND-CURATED PAIRINGS</span>
+        </div>
+        <h2 style={{ fontFamily: F.display, fontSize: 30, fontWeight: 300, color: C.dark, lineHeight: 1.15, marginBottom: 8 }}>
+          <em style={{ fontStyle: 'italic', color: C.copper }}>Style</em> This With
+        </h2>
+        <p style={{ fontFamily: F.ui, fontSize: 14, fontWeight: 300, color: 'rgba(28,10,6,0.7)', lineHeight: 1.7 }}>
+          Jewellery pieces personally chosen by Sumam to complement this saree.
+        </p>
+        <AlponaDivider />
+      </div>
+      <div className="mpdp-scroll" style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', paddingLeft: 20, marginTop: 24, paddingBottom: 4 }}>
+        {JEWELLERY.map((p, i) => <JewelleryCard key={i} {...p} width={cardW} />)}
+        <div style={{ width: 4, flexShrink: 0 }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── 12. MORE FROM BENARASI ── */
+const RELATED = [
+  { badge: 'NEW ARRIVAL', badgeColor: C.copper, gradient: 'linear-gradient(145deg, #14301E, #1F5236 50%, #4A8B68)', label: 'SAREE PHOTOGRAPHY — EMERALD BENARASI · DEEP GREEN WITH SILVER ZARI', name: 'Emerald Benarasi Silk', sub: 'PURE SILK · HANDWOVEN · VARANASI', price: '₹26,800' },
+  { badge: null, gradient: 'linear-gradient(145deg, #1C0A06, #4A2010 50%, #BF5E18)', label: 'SAREE PHOTOGRAPHY — DEEP MAROON BENARASI · CLASSIC PALLU', name: 'Maroon Heritage Benarasi', sub: 'PURE SILK · HANDWOVEN · VARANASI', price: '₹22,400' },
+  { badge: 'FEATURED', badgeColor: C.gold, gradient: 'linear-gradient(145deg, #EDE3D6, #D4B896 50%, #BFA678)', label: 'SAREE PHOTOGRAPHY — IVORY BENARASI · GOLD ZARI DETAILING', name: 'Ivory Royal Benarasi', sub: 'PURE SILK · HANDWOVEN · VARANASI', price: '₹28,500' },
+  { badge: null, gradient: 'linear-gradient(145deg, #3D1C0A, #8B3A14 50%, #C4611A)', label: 'SAREE PHOTOGRAPHY — RUST BENARASI · ANTIQUE GOLD WORK', name: 'Rust Antique Benarasi', sub: 'PURE SILK · HANDWOVEN · VARANASI', price: '₹19,800' },
+];
+
+function MoreFromBenarasi() {
+  const cardW = Math.round(390 * 0.7);
+  return (
+    <div style={{ background: C.ivory, paddingTop: 56, paddingBottom: 56, flexShrink: 0 }}>
+      <div style={{ padding: '0 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ width: 20, height: 1, background: C.copper }} />
+          <span style={{ fontFamily: F.ui, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.copper }}>RELATED SAREES</span>
+        </div>
+        <h2 style={{ fontFamily: F.display, fontSize: 30, fontWeight: 300, color: C.dark, lineHeight: 1.15 }}>
+          More from <em style={{ fontStyle: 'italic', color: C.copper }}>Benarasi</em>
+        </h2>
+        <a href="#" style={{ display: 'inline-block', marginTop: 8, fontFamily: F.ui, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.copper, textDecoration: 'none', borderBottom: `1px solid ${C.copper}`, paddingBottom: 2 }}>VIEW ALL BENARASI SAREES →</a>
+      </div>
+      <div className="mpdp-scroll" style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', paddingLeft: 20, marginTop: 24 }}>
+        {RELATED.map((p, i) => <SareeCard key={i} {...p} width={cardW} />)}
+        <div style={{ width: 4, flexShrink: 0 }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── 13. MOBILE FOOTER (compact) ── */
+function FooterAccordionRow({ title, expanded = false, items = [] }) {
+  return (
+    <div style={{ borderTop: '1px solid rgba(212,136,10,0.15)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0' }}>
+        <span style={{ fontFamily: F.ui, fontSize: 9, fontWeight: 500, letterSpacing: '0.25em', textTransform: 'uppercase', color: C.gold }}>{title}</span>
+        <span style={{ fontFamily: F.ui, fontSize: 14, color: C.gold, opacity: 0.7 }}>{expanded ? '−' : '+'}</span>
+      </div>
+      {expanded && items.length > 0 && (
+        <div style={{ paddingBottom: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {items.map(l => <a key={l} href="#" style={{ fontFamily: F.ui, fontSize: 13, color: 'rgba(245,239,230,0.55)', textDecoration: 'none', lineHeight: 1.6 }}>{l}</a>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileFooter() {
+  return (
+    <div style={{ background: C.dark, padding: '64px 20px 24px', borderTop: '1px solid rgba(212,136,10,0.18)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', right: '-10%', top: '50%', transform: 'translateY(-50%)', width: 280, opacity: 0.06, pointerEvents: 'none' }}>
+        <img src="uploads/logo_transparent.png" alt="" style={{ width: '100%' }} />
+      </div>
+      <div style={{ marginBottom: 32, position: 'relative' }}>
+        <div style={{ fontFamily: F.display, fontSize: 22, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.copper, marginBottom: 6 }}>SUMAM'S BOUTIQUE</div>
+        <div style={{ fontFamily: F.bn, fontSize: 12, fontWeight: 300, color: 'rgba(212,136,10,0.6)', marginBottom: 16 }}>বাংলার ঐতিহ্যের শাড়ি ও গহনা</div>
+        <p style={{ fontFamily: F.ui, fontSize: 11, fontStyle: 'italic', color: C.muted, lineHeight: 1.7, marginBottom: 24 }}>Heritage sarees &amp; jewellery, curated with love from Bengal.</p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          {['IG','FB','WA','YT'].map(s => (
+            <div key={s} style={{ width: 36, height: 36, border: '1px solid rgba(212,136,10,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: F.ui, fontSize: 9, letterSpacing: '0.08em', color: C.muted }}>{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginBottom: 32, position: 'relative' }}>
+        <div style={{ fontFamily: F.ui, fontSize: 9, fontWeight: 500, letterSpacing: '0.25em', textTransform: 'uppercase', color: C.gold, marginBottom: 12 }}>STAY IN THE WEAVE</div>
+        <p style={{ fontFamily: F.ui, fontSize: 12, color: 'rgba(245,239,230,0.55)', lineHeight: 1.7, marginBottom: 16 }}>Receive stories of new arrivals, weaver's notes, and seasonal lookbooks.</p>
+        <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(212,136,10,0.3)', paddingBottom: 8, gap: 8 }}>
+          <input type="email" placeholder="your.email@address" style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontFamily: F.ui, fontSize: 12, color: C.ivory }} />
+          <span style={{ color: C.copper, fontSize: 16 }}>→</span>
+        </div>
+      </div>
+      <FooterAccordionRow title="SAREES" expanded={true} items={['Benarasi / বেনারসি','Tant / তাঁত','Muslin / মসলিন','Kantha / কাঁথা','Silk / সিল্ক']} />
+      <FooterAccordionRow title="JEWELLERY" expanded={false} />
+      <FooterAccordionRow title="HELP" expanded={false} />
+      <div style={{ marginTop: 40, borderTop: '1px solid rgba(212,136,10,0.15)', paddingTop: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
+        <span style={{ fontFamily: F.ui, fontSize: 11, color: 'rgba(245,239,230,0.3)', textAlign: 'center' }}>© 2025 Sumam's Boutique. All rights reserved.</span>
+        <span style={{ fontFamily: F.ui, fontSize: 11, color: 'rgba(212,136,10,0.35)' }}>Made in Bengal · <span style={{ fontFamily: F.bn }}>বাংলায় তৈরি</span></span>
+      </div>
+    </div>
+  );
+}
+
+/* ── STICKY BOTTOM BAR ── */
+function StickyBottomBar() {
+  return (
+    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 64, background: C.dark, borderTop: '1px solid rgba(212,136,10,0.12)', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: 12, zIndex: 50 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: F.ui, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(212,136,10,0.6)', marginBottom: 2 }}>₹24,500</div>
+        <div style={{ fontFamily: F.display, fontSize: 14, color: C.ivory, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Royal Crimson Benarasi</div>
+      </div>
+      <button style={{ height: 48, padding: '0 24px', background: C.copper, color: C.ivory, border: 'none', fontFamily: F.ui, fontSize: 10, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', flexShrink: 0 }}>ADD TO BAG</button>
+    </div>
+  );
+}
+
+/* ── PDP COMPOSED ── */
+function MobilePDP({ withStickyBar = false }) {
+  return (
+    <div style={{ width: 390, background: C.ivory, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <MobileNav />
+      <Breadcrumb />
+      <Gallery />
+      <ProductInfo />
+      <Accordions />
+      <SareeBorderDivider />
+      <TrustStrip />
+      <StyleThisWith />
+      <SareeBorderDivider />
+      <MoreFromBenarasi />
+      <MobileFooter />
+      {withStickyBar && <StickyBottomBar />}
+    </div>
+  );
+}
+
+/* ── 844-tall scroll-state crops for the canvas ── */
+function PDPViewport({ scrollTop, label, withSticky }) {
+  return (
+    <div style={{ width: 390, height: 844, position: 'relative', overflow: 'hidden', background: C.ivory, flexShrink: 0 }}>
+      <div style={{ position: 'absolute', top: -scrollTop, left: 0, width: 390 }}>
+        <MobilePDP />
+      </div>
+      {withSticky && <StickyBottomBar />}
+    </div>
+  );
+}
+
+/* ── ROOT (Design Canvas) ── */
+function Root() {
+  return (
+    <DesignCanvas title="Sumam's Boutique — Mobile PDP">
+      <DCSection id="full" title="Full PDP — Royal Crimson Benarasi (390 × full scroll)">
+        <DCArtboard id="pdp-full" label="01 PDP — Full Scroll" width={390} height={5400}>
+          <MobilePDP />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="states" title="Viewport states (390 × 844) — sticky bar appears past inline CTA">
+        <DCArtboard id="vp-1" label="02 Top of page · sticky bar hidden" width={390} height={844}>
+          <PDPViewport scrollTop={0} withSticky={false} />
+        </DCArtboard>
+        <DCArtboard id="vp-2" label="03 Mid-scroll · sticky ADD TO BAG visible" width={390} height={844}>
+          <PDPViewport scrollTop={1400} withSticky={true} />
+        </DCArtboard>
+        <DCArtboard id="vp-3" label="04 Trust strip · sticky still visible" width={390} height={844}>
+          <PDPViewport scrollTop={2200} withSticky={true} />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>
