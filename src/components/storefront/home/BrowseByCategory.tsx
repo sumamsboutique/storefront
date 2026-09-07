@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Reveal } from '@/lib/reveal'
 import type { BbcContent } from '@/lib/data'
@@ -58,7 +59,7 @@ function HeroTile({ cat }: { cat: Cat }) {
     >
       <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gold z-20" />
       {cat.image ? (
-        <img src={cat.image} alt={cat.en} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500" style={{ transform: hov ? 'scale(1.03)' : 'scale(1)' }} />
+        <Image fill src={cat.image} alt={cat.en} sizes="(min-width: 768px) 33vw, 50vw" className="object-cover transition-transform duration-500" style={{ transform: hov ? 'scale(1.03)' : 'scale(1)' }} />
       ) : (
         <div className="absolute inset-0 transition-transform duration-500" style={{ background: cat.gradient, transform: hov ? 'scale(1.03)' : 'scale(1)' }} />
       )}
@@ -98,7 +99,7 @@ function SmallTile({ cat, showHover = false }: { cat: Cat; showHover?: boolean }
         style={{ background: barColor, width: hov ? '100%' : '0%' }}
       />
       {cat.image ? (
-        <img src={cat.image} alt={cat.en} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500" style={{ transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
+        <Image fill src={cat.image} alt={cat.en} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-transform duration-500" style={{ transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
       ) : (
         <div className="absolute inset-0 transition-transform duration-500" style={{ background: cat.gradient, transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
       )}
@@ -132,7 +133,7 @@ function MobileTile({ cat, height }: { cat: Cat; height?: string | number }) {
       style={{ height: height ?? '100%' }}
     >
       {cat.image ? (
-        <img src={cat.image} alt={cat.en} className="absolute inset-0 h-full w-full object-cover" />
+        <Image fill src={cat.image} alt={cat.en} sizes="(min-width: 768px) 33vw, 50vw" className="object-cover" />
       ) : (
         <div className="absolute inset-0" style={{ background: cat.gradient }} />
       )}
@@ -161,7 +162,7 @@ function MobileHeroTile({ hero }: { hero: Cat }) {
     <Link href="/sarees" className="relative w-full h-[219px] overflow-hidden block bg-cream">
       <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gold" />
       {c.image ? (
-        <img src={c.image} alt={c.en} className="absolute inset-0 h-full w-full object-cover" />
+        <Image fill src={c.image} alt={c.en} sizes="(min-width: 768px) 33vw, 50vw" className="object-cover" />
       ) : (
         <div className="absolute inset-0" style={{ background: c.gradient }} />
       )}
@@ -190,7 +191,7 @@ function JewelleryCategoryTile({ cat }: { cat: Cat }) {
     >
       <div className="absolute top-0 left-0 h-[2.5px] bg-gold z-20 transition-all duration-300" style={{ width: hov ? '100%' : '0%' }} />
       {cat.image ? (
-        <img src={cat.image} alt={cat.en} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500" style={{ transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
+        <Image fill src={cat.image} alt={cat.en} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-transform duration-500" style={{ transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
       ) : (
         <div className="absolute inset-0 transition-transform duration-500" style={{ background: cat.gradient, transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
       )}
@@ -210,7 +211,7 @@ function MobileJewelleryTile({ cat }: { cat: Cat }) {
     <Link href="/jewellery" className="relative w-full h-[196px] overflow-hidden block bg-cream">
       <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gold" />
       {cat.image ? (
-        <img src={cat.image} alt={cat.en} className="absolute inset-0 h-full w-full object-cover" />
+        <Image fill src={cat.image} alt={cat.en} sizes="(min-width: 768px) 33vw, 50vw" className="object-cover" />
       ) : (
         <div className="absolute inset-0" style={{ background: cat.gradient }} />
       )}

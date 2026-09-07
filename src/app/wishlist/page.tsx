@@ -1,6 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
+import Navbar from '@/components/storefront/Navbar'
+import Footer from '@/components/storefront/Footer'
 import { CATALOG } from '@/lib/catalog'
 import { useWishlist } from '@/lib/store'
 import { PAD, Eyebrow } from '@/components/shared/primitives'
@@ -13,8 +16,10 @@ export default function Wishlist() {
   const items = CATALOG.filter((p) => ids.includes(p.id))
 
   return (
-    <div className="min-h-screen bg-ivory">
-      <div className={cn(PAD)}>
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-ivory">
+        <div className={cn(PAD)}>
         <div className="pt-[26px]">
           <Eyebrow label="Saved for later" hairline={false} />
           <h1 className="mt-2 font-display text-[clamp(30px,4vw,42px)] font-light text-dark">
@@ -35,6 +40,9 @@ export default function Wishlist() {
               <div key={p.id} className="group relative">
                 <Link href={`/products/${p.slug}`} className="block">
                   <div className="relative aspect-[3/4] w-full overflow-hidden" style={{ background: p.gradient }}>
+                    {p.images?.[0] && (
+                    <Image fill src={p.images[0]} alt={p.name} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
+                  )}
                     <span className="absolute left-3 top-3 bg-copper px-2 py-0.5 font-ui text-[8px] tracking-[0.14em] text-ivory uppercase">{p.type === 'jewel' ? 'JEWELLERY' : 'SAREE'}</span>
                   </div>
                   <div className="bg-cream p-3">
@@ -56,6 +64,8 @@ export default function Wishlist() {
           </div>
         )}
       </div>
-    </div>
+      </main>
+      <Footer />
+    </>
   )
 }

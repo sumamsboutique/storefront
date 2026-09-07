@@ -1,5 +1,6 @@
 import Navbar from '@/components/storefront/Navbar'
 import Footer from '@/components/storefront/Footer'
+import Image from 'next/image'
 import { SareeBorderDivider, AlponaDivider, PAD } from '@/components/shared/primitives'
 import { cn } from '@/lib/cn'
 import { getAllProducts } from '@/lib/data'
@@ -11,24 +12,28 @@ const COLLECTIONS = [
     href: '/sarees',
     desc: 'Showstopping Benarasi & garad for the big day.',
     gradient: 'linear-gradient(155deg,#2A0D06,#7A2C0C 50%,#BF5E18)',
+    image: '/Banners/banarasi-saree.png',
   },
   {
     name: 'Festive Weaves',
     href: '/sarees',
     desc: 'Puja-ready silk, tant & jamdani with a golden glow.',
     gradient: 'linear-gradient(160deg,#3D1408,#6B2310 40%,#BF5E18 70%,#D4880A)',
+    image: '/Banners/spring-edit.jpeg',
   },
   {
     name: 'Everyday Heritage',
     href: '/sarees',
     desc: 'Breathable muslin & kantha for daily grace.',
     gradient: 'linear-gradient(170deg,#EDE3D6,#C9B488 50%,#8E6F4A)',
+    image: '/Banners/tant-saree.jpeg',
   },
   {
     name: 'Temple Jewellery',
     href: '/jewellery',
     desc: 'Antique-gold craft, hand-finished to last.',
     gradient: 'linear-gradient(165deg,#4A2010,#8B3A14 40%,#C4611A 70%,#7A2C0C)',
+    image: '/Banners/temple-jewellery.jpeg',
   },
 ]
 
@@ -52,6 +57,7 @@ export default async function Collections() {
         {COLLECTIONS.map((c) => (
           <a key={c.name} href={c.href} className="group block">
             <div className="relative flex aspect-[4/3] items-end overflow-hidden p-6" style={{ background: c.gradient }}>
+              <Image fill src={c.image} alt={c.name} sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
               <div className="absolute inset-0 bg-[rgba(28,10,6,0.25)] transition-opacity group-hover:opacity-0" />
               <div className="relative">
                 <div className="font-display text-3xl font-light text-ivory">{c.name}</div>

@@ -58,11 +58,11 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
         <Eyebrow label={d.eyebrow} color="text-gold" cn="md:hidden" />
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-[60px] items-center">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] gap-6 md:gap-[60px] items-center">
           {/* LEFT — founder image */}
           <Reveal as="div">
           <div>
-            <div className="relative w-full aspect-[4/5] overflow-hidden">
+            <div className="relative w-full aspect-[5/6] overflow-hidden">
               <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, #2A1008, #BF5E18)' }} />
               <div className="absolute inset-3 border border-[rgba(212,136,10,0.4)] z-20 pointer-events-none" />
               <div className="absolute inset-0 flex items-center justify-center z-10">

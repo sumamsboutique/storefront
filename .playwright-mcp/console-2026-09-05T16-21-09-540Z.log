@@ -1,0 +1,15 @@
+[    2185ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   10117ms] [WARNING] Image with src "/logo_transparent.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/installHook.js:0
+[   34011ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   38235ms] [LOG] [Fast Refresh] done in 4214ms @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   39955ms] [LOG] [Fast Refresh] done in 4214ms @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   41680ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   41893ms] [WARNING] Image with src "/logo_transparent.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/installHook.js:0
+[   47847ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   48083ms] [LOG] [Fast Refresh] done in 313ms @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   48356ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   48549ms] [LOG] [Fast Refresh] done in 295ms @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[   49496ms] [WARNING] Image with src "/Banners/spring-edit.jpeg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/installHook.js:0
+[   49711ms] [WARNING] Image with src "/Banners/banarasi-saree.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/installHook.js:0

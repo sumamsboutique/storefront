@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import Image from 'next/image'
 import { cn } from '@/lib/cn'
 
 // PDP card — single column used in Style This With / More From strips.
@@ -26,27 +26,23 @@ export function PdpCard({
   badgeColor?: string
   images?: string[]
 }) {
-  const [hov, setHov] = useState(false)
   const img = images?.[0]
   return (
-    <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      className="group flex w-full flex-col"
-    >
+    <div className="group flex w-full flex-col">
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-cream">
         {img ? (
-          <img
+          <Image
+            fill
             src={img}
             alt={name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out"
-            style={{ transform: hov ? 'scale(1.03)' : 'scale(1)' }}
+            sizes="(min-width: 768px) 33vw, 50vw"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />
         ) : (
           <>
             <div
-              className="absolute inset-0 transition-transform duration-500 ease-out"
-              style={{ background: gradient, transform: hov ? 'scale(1.03)' : 'scale(1)' }}
+              className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+              style={{ background: gradient }}
             />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <span className="max-w-[80%] border border-dashed border-[rgba(245,239,230,0.22)] px-3 py-1.5 text-center font-sans text-[9px] uppercase leading-[1.5] tracking-[0.12em] text-[rgba(245,239,230,0.4)]">
@@ -55,7 +51,7 @@ export function PdpCard({
             </div>
           </>
         )}
-        {hov && <div className="absolute inset-0 bg-[rgba(28,10,6,0.22)]" />}
+        <div className="pointer-events-none absolute inset-0 bg-[rgba(28,10,6,0.22)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         {badge && (
           <span
             className="absolute left-3.5 top-3.5 z-10 px-2.5 py-1 font-sans text-[9px] font-medium uppercase tracking-[0.18em] text-ivory"
@@ -64,19 +60,9 @@ export function PdpCard({
             {badge}
           </span>
         )}
-        <button
-          aria-label="Add to wishlist"
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center bg-[rgba(245,239,230,0.88)]"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1C0A06" strokeWidth="1.2">
-            <path d="M7 12.5S1 8.5 1 4.8A3 3 0 017 2.9 3 3 0 0113 4.8C13 8.5 7 12.5 7 12.5z" />
-          </svg>
-        </button>
-        {hov && (
-          <span className="absolute bottom-3.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap bg-[rgba(245,239,230,0.92)] px-5 py-2 font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-dark">
-            Quick View
-          </span>
-        )}
+        <span className="pointer-events-none absolute bottom-3.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap bg-[rgba(245,239,230,0.92)] px-5 py-2 font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-dark opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          Quick View
+        </span>
       </div>
       <div className={cn('flex flex-col bg-cream p-5 pb-[22px]', sub ? '' : '!pt-[18px]')}>
         {tag && <div className="mb-2.5 font-sans text-[10px] uppercase tracking-[0.2em] text-copper">{tag}</div>}

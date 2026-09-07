@@ -3,12 +3,33 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { InstagramGlyph, FacebookGlyph, WhatsAppGlyph, YouTubeGlyph } from '@/components/icons'
+import { subscribeNewsletter } from '@/lib/newsletter'
 import { cn } from '@/lib/cn'
 import type { FooterContent } from '@/lib/data'
 
-const FOOTER_SAREES = ['Benarasi / বেনারসি', 'Tant / তাঁত', 'Muslin / মসলিন', 'Kantha / কাঁথা', 'Silk / সিল্ক', 'Jamdani / জামদানি', 'Garad / গরদ']
-const FOOTER_JEWELLERY = ['Temple Jewellery / মন্দির গহনা', 'Contemporary / সমসাময়িক', 'Gold-Plated / সোনার মোড়ক', 'Bridal Sets']
-const FOOTER_HELP = ['Our Story', 'Shipping & Returns', 'Size Guide', 'Care Instructions', 'Contact Us', 'FAQs']
+const FOOTER_SAREES = [
+  { label: 'Benarasi / বেনারসি', href: '/sarees?weave=Benarasi' },
+  { label: 'Tant / তাঁত', href: '/sarees?weave=Tant' },
+  { label: 'Muslin / মসলিন', href: '/sarees?weave=Muslin' },
+  { label: 'Kantha / কাঁথা', href: '/sarees?weave=Kantha' },
+  { label: 'Silk / সিল্ক', href: '/sarees?weave=Silk' },
+  { label: 'Jamdani / জামদানি', href: '/sarees?weave=Jamdani' },
+  { label: 'Garad / গরদ', href: '/sarees?weave=Garad' },
+]
+const FOOTER_JEWELLERY = [
+  { label: 'Temple Jewellery / মন্দির গহনা', href: '/jewellery?weave=Temple' },
+  { label: 'Contemporary / সমসাময়িক', href: '/jewellery?weave=Contemporary' },
+  { label: 'Gold-Plated / সোনার মোড়ক', href: '/jewellery?weave=Gold-Plated' },
+  { label: 'Bridal Sets', href: '/jewellery' },
+]
+const FOOTER_HELP = [
+  { label: 'Our Story', href: '/story' },
+  { label: 'Shipping & Returns', href: '/shipping-returns' },
+  { label: 'Size Guide', href: '/size-guide' },
+  { label: 'Care Instructions', href: '/care-instructions' },
+  { label: 'Contact Us', href: '/contact' },
+  { label: 'FAQs', href: '/faqs' },
+]
 const PAYMENT_METHODS = ['RAZORPAY', 'STRIPE', 'VISA', 'MASTERCARD', 'UPI']
 
 const DEFAULT_FOOTER: FooterContent = {
@@ -36,32 +57,35 @@ const SOCIALS = [
 ]
 
 function SocialLink({ Icon, label }: { Icon: (p: { className?: string }) => React.ReactNode; label: string }) {
-  const [hov, setHov] = useState(false)
   return (
-    <a
-      href="#"
+    <span
       aria-label={label}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      className="w-8 h-8 flex items-center justify-center cursor-pointer transition-colors duration-200"
-      style={{ border: `1px solid rgba(212,136,10,${hov ? '0.8' : '0.3'})`, color: hov ? '#D4880A' : '#8C6A55' }}
+      className="flex h-8 w-8 items-center justify-center"
+      style={{ border: '1px solid rgba(212,136,10,0.3)', color: '#8C6A55' }}
     >
       <Icon className="w-3.5 h-3.5" />
-    </a>
+    </span>
   )
 }
 
-function FooterLink({ children }: { children: React.ReactNode }) {
+function FooterLink({ item }: { item: { label: string; href?: string } }) {
   const [hov, setHov] = useState(false)
+  if (!item.href) {
+    return (
+      <span className="block font-sans text-xs mb-2 leading-[1.6]" style={{ color: 'rgba(245,239,230,0.55)' }}>
+        {item.label}
+      </span>
+    )
+  }
   return (
     <a
-      href="#"
+      href={item.href}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       className="block font-sans text-xs mb-2 no-underline transition-colors duration-200 leading-[1.6]"
       style={{ color: hov ? '#D4880A' : 'rgba(245,239,230,0.55)' }}
     >
-      {children}
+      {item.label}
     </a>
   )
 }
@@ -74,26 +98,48 @@ function FooterColTitle({ children }: { children: React.ReactNode }) {
 
 function Newsletter({ footer }: { footer: FooterContent }) {
   const [email, setEmail] = useState('')
+  const [done, setDone] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) return
+    const res = await subscribeNewsletter(email)
+    if ('error' in res) {
+      setDone(false)
+      setMsg(res.error)
+    } else {
+      setDone(true)
+      setMsg('Welcome to the weave! Check your inbox.')
+    }
+  }
+
   return (
     <div>
       <FooterColTitle>{footer.newsletter.title}</FooterColTitle>
       <p className="font-sans text-xs text-[rgba(245,239,230,0.55)] leading-[1.7] mb-4 max-w-[280px]">
         {footer.newsletter.body}
       </p>
-      <div className="flex items-center gap-3 pb-2" style={{ borderBottom: '1px solid rgba(212,136,10,0.30)' }}>
+      <form
+        onSubmit={submit}
+        className="flex items-center gap-3 pb-2"
+        style={{ borderBottom: '1px solid rgba(212,136,10,0.30)' }}
+      >
         <input
+          suppressHydrationWarning
           type="email"
           placeholder="your.email@address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          aria-label="Email for newsletter"
           className="flex-1 bg-transparent border-0 outline-none font-sans text-xs text-ivory placeholder:text-muted"
         />
-        <button className="bg-transparent border-0 cursor-pointer text-copper text-base leading-none p-0" aria-label="Subscribe">
+        <button suppressHydrationWarning className="bg-transparent border-0 cursor-pointer text-copper text-base leading-none p-0" aria-label="Subscribe">
           →
         </button>
-      </div>
+      </form>
       <div className="mt-2.5 font-bengali text-[11px] font-light text-[rgba(212,136,10,0.50)] tracking-[0.04em]">
-        {footer.newsletter.noteBn}
+        {done ? msg : msg || footer.newsletter.noteBn}
       </div>
     </div>
   )
@@ -101,7 +147,7 @@ function Newsletter({ footer }: { footer: FooterContent }) {
 
 function MobileAccordion() {
   const [open, setOpen] = useState<string>('SAREES')
-  const rows: { title: string; items: string[] }[] = [
+  const rows: { title: string; items: { label: string; href?: string }[] }[] = [
     { title: 'SAREES', items: FOOTER_SAREES },
     { title: 'JEWELLERY', items: FOOTER_JEWELLERY },
     { title: 'HELP', items: FOOTER_HELP },
@@ -119,11 +165,17 @@ function MobileAccordion() {
           </div>
           {open === r.title && (
             <div className="pb-4 flex flex-col gap-3">
-              {r.items.map((l) => (
-                <a key={l} href="#" className="font-sans text-[13px] text-[rgba(245,239,230,0.55)] no-underline leading-[1.6]">
-                  {l}
-                </a>
-              ))}
+              {r.items.map((l) =>
+                l.href ? (
+                  <a key={l.label} href={l.href} className="font-sans text-[13px] text-[rgba(245,239,230,0.55)] no-underline leading-[1.6]">
+                    {l.label}
+                  </a>
+                ) : (
+                  <span key={l.label} className="font-sans text-[13px] text-[rgba(245,239,230,0.55)] leading-[1.6]">
+                    {l.label}
+                  </span>
+                ),
+              )}
             </div>
           )}
         </div>
@@ -185,15 +237,15 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
         <BrandBlock footer={footer} />
         <div>
           <FooterColTitle>Sarees</FooterColTitle>
-          {FOOTER_SAREES.map((l) => <FooterLink key={l}>{l}</FooterLink>)}
+          {FOOTER_SAREES.map((l) => <FooterLink key={l.label} item={l} />)}
         </div>
         <div>
           <FooterColTitle>Jewellery</FooterColTitle>
-          {FOOTER_JEWELLERY.map((l) => <FooterLink key={l}>{l}</FooterLink>)}
+          {FOOTER_JEWELLERY.map((l) => <FooterLink key={l.label} item={l} />)}
         </div>
         <div>
           <FooterColTitle>Help</FooterColTitle>
-          {FOOTER_HELP.map((l) => <FooterLink key={l}>{l}</FooterLink>)}
+          {FOOTER_HELP.map((l) => <FooterLink key={l.label} item={l} />)}
         </div>
         <Newsletter footer={footer} />
       </div>

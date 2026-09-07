@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { AlponaMotif } from '@/components/shared/primitives'
 
@@ -128,10 +129,10 @@ export default function Hero({ slides: slidesProp }: { slides?: HeroSlide[] }) {
         >
           <div className="absolute inset-0" style={{ background: s.gradient }} />
           {s.imageMobile && (
-            <img src={s.imageMobile} alt="" className="absolute inset-0 h-full w-full object-cover md:hidden" />
+            <Image fill src={s.imageMobile} alt="" sizes="100vw" className="object-cover md:hidden" />
           )}
           {s.image && (
-            <img src={s.image} alt="" className="absolute inset-0 hidden h-full w-full object-cover md:block" />
+            <Image fill src={s.image} alt="" sizes="100vw" className="object-cover hidden md:block" />
           )}
           <div
             className="absolute inset-0 pointer-events-none opacity-[0.04] mix-blend-overlay"
@@ -246,6 +247,7 @@ export default function Hero({ slides: slidesProp }: { slides?: HeroSlide[] }) {
       ).map(([arrow, idx, side]) => (
         <button
           key={side}
+          suppressHydrationWarning
           onClick={() => goTo(idx)}
           className="hidden md:flex absolute top-1/2 -translate-y-1/2 z-30 bg-[rgba(28,10,6,0.32)] border border-[rgba(212,136,10,0.28)] text-[rgba(245,239,230,0.7)] w-10 h-10 items-center justify-center cursor-pointer text-base font-display hover:bg-copper/50 hover:text-ivory transition-colors"
           style={side === 'left' ? { left: 20 } : { right: 20 }}

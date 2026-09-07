@@ -10,9 +10,8 @@ import { IconSearch } from '@/components/icons'
 import { cn } from '@/lib/cn'
 
 const LIMIT = 12
-const WEAVE_FILTERS = WEAVES.slice(0, 7)
 
-function PriceCheck({ label, lo, hi, active, onToggle }: { label: string; lo?: number; hi?: number; active: boolean; onToggle: () => void }) {
+function PriceCheck({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) {
   return (
     <label className="group flex cursor-pointer items-center gap-2.5">
       <span
@@ -58,14 +57,18 @@ function PageHeader({ keyword, title, count }: { keyword: string; title: string;
   )
 }
 
-const SORTS = ['Featured', 'Price: Low to High', 'Price: High to Low', 'Newest'] as const
+const SORTS = ['Featured', 'Price: Low to High', 'Price: High to Low'] as const
 
 export default function Plp({ products, keyword, title, types = ['saree'] }: { products: CatalogProduct[]; keyword: string; title: string; types?: CatalogProduct['type'][] }) {
   const params = useSearchParams()
   const q = params.get('q') ?? ''
 
   const [term, setTerm] = useState(q)
-  const [weaves, setWeaves] = useState<string[]>([])
+  const [weaves, setWeaves] = useState<string[]>(() => {
+    const w = params.get('weave')
+    return w ? w.split(',').filter(Boolean) : []
+  })
+  const [stock, setStock] = useState<'all' | 'in' | 'sold'>('all')
   const [price, setPrice] = useState<number | null>(null)
   const [sort, setSort] = useState<(typeof SORTS)[number]>('Featured')
   const [showMobileFilters, setShowMobileFilters] = useState(false)
@@ -79,6 +82,8 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
     const t = term.trim().toLowerCase()
     if (t) list = list.filter((p) => (p.name + ' ' + p.weave + ' ' + (p.sub || '')).toLowerCase().includes(t))
     if (weaves.length) list = list.filter((p) => weaves.includes(p.weave))
+    if (stock === 'in') list = list.filter((p) => !p.sold)
+    if (stock === 'sold') list = list.filter((p) => p.sold)
     if (price !== null) {
       const [lo, hi] = price === 1 ? [0, 5000] : price === 2 ? [5000, 15000] : price === 3 ? [15000, 30000] : [30000, Infinity]
       list = list.filter((p) => p.priceNum >= lo && (hi === Infinity || p.priceNum < hi))
@@ -86,7 +91,12 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
     if (sort === 'Price: Low to High') list = [...list].sort((a, b) => a.priceNum - b.priceNum)
     if (sort === 'Price: High to Low') list = [...list].sort((a, b) => b.priceNum - a.priceNum)
     return list
-  }, [products, types, term, weaves, price, sort])
+  }, [products, types, term, weaves, stock, price, sort])
+
+  const weaveOptions = useMemo(
+    () => WEAVES.filter((w) => products.some((p) => types.includes(p.type) && p.weave === w)),
+    [products, types],
+  )
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / LIMIT))
   const safePage = Math.min(page, pageCount)
@@ -122,13 +132,12 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
       {showMobileFilters && (
         <div className="border-b border-[rgba(140,106,85,0.2)] px-5 py-4 md:hidden">
           <FilterGroup title="Weave">
-            {WEAVE_FILTERS.map((w) => (
+            {weaveOptions.map((w) => (
               <PriceCheck
                 key={w}
                 label={w}
                 active={weaves.includes(w)}
                 onToggle={() => toggleWeave(w)}
-                lo={0}
               />
             ))}
           </FilterGroup>
@@ -147,7 +156,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
             <Eyebrow label="Filters" hairline={false} />
           </div>
           <FilterGroup title="Weave">
-            {WEAVE_FILTERS.map((w) => (
+            {weaveOptions.map((w) => (
               <PriceCheck key={w} label={w} active={weaves.includes(w)} onToggle={() => toggleWeave(w)} />
             ))}
           </FilterGroup>
@@ -157,8 +166,8 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
             ))}
           </FilterGroup>
           <FilterGroup title="Availability" defaultOpen={false}>
-            <PriceCheck label="In stock only" active={false} onToggle={() => {}} />
-            <PriceCheck label="Sold" active={false} onToggle={() => {}} />
+            <PriceCheck label="In stock only" active={stock === 'in'} onToggle={() => setStock(stock === 'in' ? 'all' : 'in')} />
+            <PriceCheck label="Sold" active={stock === 'sold'} onToggle={() => setStock(stock === 'sold' ? 'all' : 'sold')} />
           </FilterGroup>
         </aside>
 

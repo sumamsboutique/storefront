@@ -3,6 +3,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem } from './types'
+import { CATALOG } from './catalog'
 
 export interface CartLine {
   id: string // productId + option discriminator
@@ -13,8 +14,14 @@ export interface CartLine {
   priceNum: number
   gradient: string
   label: string
+  image?: string
   qty: number
 }
+
+const CART_IMG = new Map(CATALOG.map((p) => [p.id, p.images?.[0]]))
+
+// Image for a cart line — falls back to the catalog so older persisted carts still show photos.
+export const cartImage = (line: CartLine) => line.image ?? CART_IMG.get(line.productId)
 
 interface CartStore {
   items: CartLine[]

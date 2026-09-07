@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { CATALOG } from '@/lib/catalog'
@@ -58,6 +59,9 @@ export default function SearchResults() {
           {results.map((p) => (
             <Link key={p.id} href={`/products/${p.slug}`} className="group block">
               <div className="relative aspect-[3/4] w-full overflow-hidden" style={{ background: p.gradient }}>
+                {p.images?.[0] && (
+                <Image fill src={p.images[0]} alt={p.name} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
+              )}
                 <span className="absolute left-3 top-3 bg-copper px-2 py-0.5 font-ui text-[8px] tracking-[0.14em] text-ivory uppercase">
                   {p.type === 'jewel' ? 'JEWELLERY' : 'SAREE'}
                 </span>

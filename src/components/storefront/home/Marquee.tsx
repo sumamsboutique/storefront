@@ -3,7 +3,7 @@ const MARQUEE_ITEMS: { en: string; bn?: string }[] = [
   { en: 'Tant', bn: 'তাঁত' },
   { en: 'Muslin', bn: 'মসলিন' },
   { en: 'Kantha', bn: 'কাঁথা' },
-  { en: 'Free Shipping Above ₹5,000' },
+  { en: 'Free Shipping Above ₹10,000' },
   { en: 'Silk', bn: 'সিল্ক' },
   { en: 'Temple Jewellery', bn: 'মন্দির গহনা' },
   { en: 'Handwoven Heritage', bn: 'হস্তনির্মিত ঐতিহ্য' },

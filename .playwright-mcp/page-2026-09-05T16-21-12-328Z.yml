@@ -1,0 +1,178 @@
+- generic [ref=f1e1]:
+  - main [ref=f1e2]:
+    - navigation [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - link "SAREES" [ref=f1e5] [cursor=pointer]:
+          - /url: /sarees
+        - link "JEWELLERY" [ref=f1e6] [cursor=pointer]:
+          - /url: /jewellery
+        - link "COLLECTIONS" [ref=f1e7] [cursor=pointer]:
+          - /url: /collections
+        - link "STORY" [ref=f1e8] [cursor=pointer]:
+          - /url: /story
+      - link "Sumam's Boutique home" [ref=f1e10] [cursor=pointer]:
+        - /url: /
+        - img "Sumam's Boutique" [ref=f1e11]
+      - generic [ref=f1e12]:
+        - link "Search" [ref=f1e13] [cursor=pointer]:
+          - /url: /search
+        - link "Account" [ref=f1e17] [cursor=pointer]:
+          - /url: /account
+        - button "Open shopping bag" [ref=f1e21] [cursor=pointer]
+    - generic [ref=f1e26]:
+      - generic [ref=f1e27]: Curated edits
+      - heading [level=1] [ref=f1e30]:
+        - text: Our
+        - emphasis [ref=f1e31]: Collections
+    - generic [ref=f1e41]:
+      - link "Bridal Edit Showstopping Benarasi & garad for the big day." [ref=f1e42] [cursor=pointer]:
+        - /url: /sarees
+        - generic [ref=f1e45]:
+          - generic [ref=f1e46]: Bridal Edit
+          - paragraph [ref=f1e47]: Showstopping Benarasi & garad for the big day.
+      - link "Festive Weaves Puja-ready silk, tant & jamdani with a golden glow." [ref=f1e48] [cursor=pointer]:
+        - /url: /sarees
+        - generic [ref=f1e51]:
+          - generic [ref=f1e52]: Festive Weaves
+          - paragraph [ref=f1e53]: Puja-ready silk, tant & jamdani with a golden glow.
+      - link "Everyday Heritage Breathable muslin & kantha for daily grace." [ref=f1e54] [cursor=pointer]:
+        - /url: /sarees
+        - generic [ref=f1e57]:
+          - generic [ref=f1e58]: Everyday Heritage
+          - paragraph [ref=f1e59]: Breathable muslin & kantha for daily grace.
+      - link "Temple Jewellery Antique-gold craft, hand-finished to last." [ref=f1e60] [cursor=pointer]:
+        - /url: /jewellery
+        - generic [ref=f1e63]:
+          - generic [ref=f1e64]: Temple Jewellery
+          - paragraph [ref=f1e65]: Antique-gold craft, hand-finished to last.
+    - generic [ref=f1e66]:
+      - generic [ref=f1e67]:
+        - generic [ref=f1e68]:
+          - text: Bridal
+          - emphasis [ref=f1e69]: Picks
+        - link "View all →" [ref=f1e70] [cursor=pointer]:
+          - /url: /sarees
+      - generic [ref=f1e71]:
+        - link "Devika Silk Drape Add to wishlist Devika Silk Drape Silk · Bridal ₹52,000 Add to Bag" [ref=f1e72] [cursor=pointer]:
+          - /url: /products/devika-silk-drape
+          - generic [ref=f1e74]:
+            - img "Devika Silk Drape" [ref=f1e75]
+            - button "Add to wishlist" [ref=f1e76]
+          - generic [ref=f1e79]:
+            - generic [ref=f1e80]: Devika Silk Drape
+            - generic [ref=f1e81]: Silk · Bridal
+            - generic [ref=f1e82]:
+              - generic [ref=f1e83]: ₹52,000
+              - button "Add to Bag" [ref=f1e84]
+        - link "Royal Crimson Benarasi Add to wishlist Royal Crimson Benarasi Benarasi · Bridal ₹24,500 Add to Bag" [ref=f1e85] [cursor=pointer]:
+          - /url: /products/royal-crimson-benarasi
+          - generic [ref=f1e87]:
+            - img "Royal Crimson Benarasi" [ref=f1e88]
+            - button "Add to wishlist" [ref=f1e89]
+          - generic [ref=f1e92]:
+            - generic [ref=f1e93]: Royal Crimson Benarasi
+            - generic [ref=f1e94]: Benarasi · Bridal
+            - generic [ref=f1e95]:
+              - generic [ref=f1e96]: ₹24,500
+              - button "Add to Bag" [ref=f1e97]
+        - link "Ivory Royal Benarasi Featured Add to wishlist Ivory Royal Benarasi Benarasi · Bridal ₹28,500 Add to Bag" [ref=f1e98] [cursor=pointer]:
+          - /url: /products/ivory-royal-benarasi
+          - generic [ref=f1e100]:
+            - img "Ivory Royal Benarasi" [ref=f1e101]
+            - generic [ref=f1e102]: Featured
+            - button "Add to wishlist" [ref=f1e103]
+          - generic [ref=f1e106]:
+            - generic [ref=f1e107]: Ivory Royal Benarasi
+            - generic [ref=f1e108]: Benarasi · Bridal
+            - generic [ref=f1e109]:
+              - generic [ref=f1e110]: ₹28,500
+              - button "Add to Bag" [ref=f1e111]
+        - link "Drop Temple Earrings Add to wishlist Temple Collection Drop Temple Earrings ₹2,400 Add to Bag" [ref=f1e112] [cursor=pointer]:
+          - /url: /products/drop-temple-earrings
+          - generic [ref=f1e114]:
+            - img "Drop Temple Earrings" [ref=f1e115]
+            - button "Add to wishlist" [ref=f1e116]
+          - generic [ref=f1e119]:
+            - generic [ref=f1e120]: Temple Collection
+            - generic [ref=f1e121]: Drop Temple Earrings
+            - generic [ref=f1e122]:
+              - generic [ref=f1e123]: ₹2,400
+              - button "Add to Bag" [ref=f1e124]
+    - generic [ref=f1e170]:
+      - generic [ref=f1e171]:
+        - generic [ref=f1e172]:
+          - generic [ref=f1e173]: SUMAM'S BOUTIQUE
+          - generic [ref=f1e174]: বাংলার ঐতিহ্যের শাড়ি ও গহনা
+          - paragraph [ref=f1e175]: Heritage sarees & jewellery, curated with love from Bengal.
+          - generic [ref=f1e176]:
+            - generic "Instagram" [ref=f1e177]
+            - generic "Facebook" [ref=f1e182]
+            - generic "WhatsApp" [ref=f1e185]
+            - generic "YouTube" [ref=f1e188]
+        - generic [ref=f1e192]:
+          - generic [ref=f1e193]: Sarees
+          - link "Benarasi / বেনারসি" [ref=f1e194] [cursor=pointer]:
+            - /url: /sarees?weave=Benarasi
+          - link "Tant / তাঁত" [ref=f1e195] [cursor=pointer]:
+            - /url: /sarees?weave=Tant
+          - link "Muslin / মসলিন" [ref=f1e196] [cursor=pointer]:
+            - /url: /sarees?weave=Muslin
+          - link "Kantha / কাঁথা" [ref=f1e197] [cursor=pointer]:
+            - /url: /sarees?weave=Kantha
+          - link "Silk / সিল্ক" [ref=f1e198] [cursor=pointer]:
+            - /url: /sarees?weave=Silk
+          - link "Jamdani / জামদানি" [ref=f1e199] [cursor=pointer]:
+            - /url: /sarees?weave=Jamdani
+          - link "Garad / গরদ" [ref=f1e200] [cursor=pointer]:
+            - /url: /sarees?weave=Garad
+        - generic [ref=f1e201]:
+          - generic [ref=f1e202]: Jewellery
+          - link "Temple Jewellery / মন্দির গহনা" [ref=f1e203] [cursor=pointer]:
+            - /url: /jewellery?weave=Temple
+          - link "Contemporary / সমসাময়িক" [ref=f1e204] [cursor=pointer]:
+            - /url: /jewellery?weave=Contemporary
+          - link "Gold-Plated / সোনার মোড়ক" [ref=f1e205] [cursor=pointer]:
+            - /url: /jewellery?weave=Gold-Plated
+          - link "Bridal Sets" [ref=f1e206] [cursor=pointer]:
+            - /url: /jewellery
+        - generic [ref=f1e207]:
+          - generic [ref=f1e208]: Help
+          - link "Our Story" [ref=f1e209] [cursor=pointer]:
+            - /url: /story
+          - link "Shipping & Returns" [ref=f1e210] [cursor=pointer]:
+            - /url: /shipping-returns
+          - link "Size Guide" [ref=f1e211] [cursor=pointer]:
+            - /url: /size-guide
+          - link "Care Instructions" [ref=f1e212] [cursor=pointer]:
+            - /url: /care-instructions
+          - link "Contact Us" [ref=f1e213] [cursor=pointer]:
+            - /url: /contact
+          - link "FAQs" [ref=f1e214] [cursor=pointer]:
+            - /url: /faqs
+        - generic [ref=f1e215]:
+          - generic [ref=f1e216]: Stay in the Weave
+          - paragraph [ref=f1e217]: Receive stories of new arrivals, weaver's notes, and seasonal lookbooks.
+          - generic [ref=f1e218]:
+            - textbox "your.email@address" [ref=f1e219]
+            - button "Subscribe" [ref=f1e220] [cursor=pointer]: →
+          - generic [ref=f1e221]: নতুন সংগ্রহের খবর সবার আগে
+      - generic [ref=f1e223]:
+        - generic [ref=f1e224]: © 2025 Sumam’s Boutique. All rights reserved.
+        - generic [ref=f1e225]: Made in Bengal · বাংলায় তৈরি
+        - generic [ref=f1e226]:
+          - generic [ref=f1e227]: RAZORPAY
+          - generic [ref=f1e228]: STRIPE
+          - generic [ref=f1e229]: VISA
+          - generic [ref=f1e230]: MASTERCARD
+          - generic [ref=f1e231]: UPI
+  - dialog "Shopping bag" [ref=f1e232]:
+    - banner [ref=f1e233]:
+      - generic [ref=f1e234]: Shopping Bag · 0
+      - button "Close bag" [ref=f1e237] [cursor=pointer]: ×
+    - generic [ref=f1e238]:
+      - heading "Your bag is empty" [level=3] [ref=f1e242]
+      - paragraph [ref=f1e243]: Discover handpicked sarees & jewellery from Bengal.
+      - link "Shop Sarees" [ref=f1e244] [cursor=pointer]:
+        - /url: /sarees
+  - button "Open Next.js Dev Tools" [ref=f1e250] [cursor=pointer]
+  - alert [ref=f1e254]

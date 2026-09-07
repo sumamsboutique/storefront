@@ -23,7 +23,7 @@ export function Reveal({
     const el = ref.current
     if (!el) return
     if (typeof IntersectionObserver === 'undefined') {
-      setVisible(true)
+      queueMicrotask(() => setVisible(true))
       return
     }
     const io = new IntersectionObserver(

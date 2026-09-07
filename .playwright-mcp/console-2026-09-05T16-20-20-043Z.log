@@ -1,0 +1,5 @@
+[    2263ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0gca_next_dist_1we2xod._.js:776
+[    2922ms] [WARNING] Image with src "/logo_transparent.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/installHook.js:0
+[   29779ms] A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+[   29780ms] A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+[   29781ms] A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received

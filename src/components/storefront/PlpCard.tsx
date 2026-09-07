@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import type { CatalogProduct } from '@/lib/catalog'
 import { HeartIcon } from '@/components/icons'
@@ -22,7 +23,7 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
           className="relative aspect-[3/4] w-full overflow-hidden bg-cream"
         >
           {img ? (
-            <img src={img} alt={name} className="absolute inset-0 h-full w-full object-cover" />
+            <Image fill src={img} alt={name} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
           ) : (
             <div className="absolute inset-0" style={{ background: gradient }} />
           )}
@@ -66,7 +67,7 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
             <button
               onClick={(e) => {
                 e.preventDefault()
-                add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label })
+                add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
               }}
               className="h-8 border border-[rgba(191,94,24,0.45)] px-3 font-ui text-[9px] tracking-[0.16em] text-copper uppercase"
             >

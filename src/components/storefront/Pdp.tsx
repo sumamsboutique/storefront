@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import type { CatalogProduct } from '@/lib/catalog'
 import { CATALOG, JEWELLERY } from '@/lib/catalog'
@@ -56,7 +57,7 @@ function accordionCopy(p: CatalogProduct) {
   const care = isSaree
     ? ['Dry clean only', 'Store wrapped in muslin cloth', 'Avoid direct sunlight', 'Do not iron directly on zari']
     : ['Wipe with a soft cloth', 'Keep away from water and perfume', 'Store in the original pouch']
-  const shipping = ['Free shipping above ₹5,000', 'Delivers within 5–7 business days', 'International shipping available', '7–day return window', 'One-of-one items: returns subject to inspection']
+  const shipping = ['Free shipping above ₹10,000', 'Delivers within 5–7 business days', 'International shipping available', '7–day return window', 'One-of-one items: returns subject to inspection']
   return { fabric, occasion, dimensions, care, shipping }
 }
 
@@ -133,7 +134,7 @@ function Gallery({ p }: { p: CatalogProduct }) {
                 : 'border border-transparent opacity-50 hover:opacity-80'
             )}
           >
-            <img src={src} alt="" className="h-full w-full object-cover" />
+            <Image fill src={src} alt="" sizes="96px" className="object-cover" />
           </button>
         ))}
       </div>
@@ -141,11 +142,13 @@ function Gallery({ p }: { p: CatalogProduct }) {
       {/* Hero image */}
       <div className="relative flex-1 overflow-hidden bg-cream">
         <div className="group relative aspect-[3/4] w-full">
-          <img
+          <Image
             key={active}
+            fill
             src={displayShots[active]}
             alt={p.name}
-            className="absolute inset-0 h-full w-full object-cover opacity-0 animate-[fadeIn_0.4s_ease-out_forwards] group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+            sizes="100vw"
+            className="object-cover opacity-0 animate-[fadeIn_0.4s_ease-out_forwards] group-hover:scale-[1.02] transition-transform duration-700 ease-out"
           />
         </div>
       </div>
@@ -190,7 +193,7 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
   const wished = has(p.id)
   const sub = p.type === 'jewel' ? p.tag : p.sub
   const copy = accordionCopy(p)
-  const addItem = () => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label })
+  const addItem = () => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] })
 
   return (
     <div className="flex flex-col gap-8 lg:flex-[0_0_40%]">
@@ -262,17 +265,6 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
           </svg>
           Chat on WhatsApp
         </a>
-
-        <div className="flex items-center">
-          <input
-            type="text"
-            placeholder="Enter pincode for delivery"
-            className="h-10 flex-1 border-b border-[rgba(140,106,85,0.3)] bg-transparent font-sans text-xs text-dark outline-none"
-          />
-          <button className="h-10 shrink-0 border border-copper px-5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-copper">
-            Check
-          </button>
-        </div>
       </div>
 
       {/* D — Description */}
@@ -360,7 +352,7 @@ function TrustIcon({ n }: { n: number }) {
 
 const TRUST_ITEMS = [
   { n: 0, title: 'Authenticity Certified', sub: 'Each piece, hand-verified by Sumam' },
-  { n: 1, title: 'Free Shipping', sub: 'On orders above ₹5,000' },
+  { n: 1, title: 'Free Shipping', sub: 'On orders above ₹10,000' },
   { n: 2, title: '7-Day Returns', sub: 'Easy returns, subject to inspection' },
   { n: 3, title: 'WhatsApp Support', sub: 'Personal assistance from our boutique' },
 ] as const
@@ -461,7 +453,7 @@ function StickyBar({ p }: { p: CatalogProduct }) {
         <div className="truncate font-display text-sm text-ivory">{p.name}</div>
       </div>
       <button
-        onClick={() => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label })}
+        onClick={() => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] })}
         disabled={p.sold}
         className="h-12 shrink-0 bg-copper px-6 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-ivory"
       >

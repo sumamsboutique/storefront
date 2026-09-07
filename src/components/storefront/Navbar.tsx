@@ -49,7 +49,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <button onClick={onClose} aria-label="Close menu" className="mb-8 self-end font-ui text-2xl leading-none text-gold">
+        <button suppressHydrationWarning onClick={onClose} aria-label="Close menu" className="mb-8 self-end font-ui text-2xl leading-none text-gold">
           ×
         </button>
         {NAV.map((l) => (
@@ -90,7 +90,7 @@ export default function Navbar() {
         </div>
         {/* LEFT — mobile hamburger */}
         <div className="flex md:hidden flex-1">
-          <button onClick={() => setMenuOpen(true)} aria-label="Open menu">
+          <button suppressHydrationWarning onClick={() => setMenuOpen(true)} aria-label="Open menu" className="text-[rgba(245,239,230,0.8)]">
             <IconMenu />
           </button>
         </div>
@@ -102,7 +102,7 @@ export default function Navbar() {
             <img
               src="/logo_transparent.png"
               alt="Sumam's Boutique"
-              className="h-14 w-[101px] md:h-14 md:w-[132px] object-contain"
+              className="h-14 w-auto object-contain"
             />
           </Link>
         </div>
@@ -115,7 +115,7 @@ export default function Navbar() {
           <Link href="/account" className="hidden md:flex bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)]" aria-label="Account">
             <IconAccount />
           </Link>
-          <button onClick={openCart} className="bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)] relative" aria-label="Open shopping bag">
+          <button suppressHydrationWarning onClick={openCart} className="bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)] relative" aria-label="Open shopping bag">
             <IconCart />
             {count > 0 && (
               <span className="absolute -top-[5px] -right-[6px] bg-copper text-ivory text-[8px] font-medium w-[14px] h-[14px] rounded-full flex items-center justify-center">

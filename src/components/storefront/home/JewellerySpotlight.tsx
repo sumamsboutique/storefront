@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { AlponaDivider } from '@/components/shared/primitives'
 import { HeartIcon } from '@/components/icons'
@@ -74,10 +75,12 @@ function JewelleryCard({ product }: { product: Jewellery }) {
       {/* Image — 3:4 */}
       <Link href={`/products/${product.slug}`} className="relative w-full aspect-[3/4] overflow-hidden block bg-cream">
         {product.images?.[0] ? (
-          <img
+          <Image
+            fill
             src={product.images[0]}
             alt={product.name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500"
+            sizes="(min-width: 768px) 40vw, 100vw"
+            className="object-cover transition-transform duration-500"
             style={{ transform: hov ? 'scale(1.04)' : 'scale(1)' }}
           />
         ) : (
@@ -97,6 +100,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
         )}
         {/* Wishlist */}
         <button
+          suppressHydrationWarning
           onClick={(e) => {
             e.preventDefault()
             wishlist.toggle(product.catalogId)
@@ -129,6 +133,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
         <div className="flex items-center justify-between">
           <span className="font-sans text-[15px] font-medium text-copper">{product.price}</span>
           <button
+            suppressHydrationWarning
             onClick={() =>
               add({
                 id: product.catalogId,
@@ -139,6 +144,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
                 priceNum: product.priceNum,
                 gradient: product.gradient,
                 label: product.label,
+                image: product.images?.[0],
               })
             }
             className="bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors hover:bg-copper hover:text-ivory"

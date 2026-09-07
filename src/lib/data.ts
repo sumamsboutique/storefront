@@ -163,6 +163,14 @@ export type FooterContent = {
   madeIn: string
   madeInBn: string
 }
+export type Testimonial = {
+  id: number
+  quote: string
+  name: string
+  detail: string
+  rating: number
+}
+export type TestimonialContent = Testimonial[]
 
 export type HomeContent = {
   hero: HeroSlide[]
@@ -171,6 +179,7 @@ export type HomeContent = {
   featured_collection: FeaturedProduct[]
   our_heritage: OurHeritageContent
   jewellery_spotlight: JewelSpotContent
+  testimonials: Testimonial[]
   instagram_strip: InstaContent
   footer: FooterContent
 }
@@ -182,6 +191,7 @@ const emptyHomeContent: HomeContent = {
   featured_collection: [],
   our_heritage: {} as OurHeritageContent,
   jewellery_spotlight: {} as JewelSpotContent,
+  testimonials: [],
   instagram_strip: {} as InstaContent,
   footer: {} as FooterContent,
 }
@@ -206,6 +216,7 @@ export async function getHomeContent(): Promise<HomeContent> {
     'featured_collection',
     'our_heritage',
     'jewellery_spotlight',
+    'testimonials',
     'instagram_strip',
     'footer',
   ] as const
@@ -220,6 +231,7 @@ export async function getHomeContent(): Promise<HomeContent> {
     else if (key === 'featured_collection') out.featured_collection = v as FeaturedProduct[]
     else if (key === 'our_heritage') out.our_heritage = v as OurHeritageContent
     else if (key === 'jewellery_spotlight') out.jewellery_spotlight = v as JewelSpotContent
+    else if (key === 'testimonials') out.testimonials = v as Testimonial[]
     else if (key === 'instagram_strip') out.instagram_strip = v as InstaContent
     else if (key === 'footer') out.footer = v as FooterContent
   })

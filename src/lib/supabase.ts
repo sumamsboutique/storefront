@@ -8,3 +8,11 @@ if (!url || !anonKey) {
 }
 
 export const supabase = createClient(url, anonKey)
+
+// ponytail: service-role client for trusted server code only (payments, webhooks).
+// Bypasses RLS — never import this into client components or 'use client' code.
+export function createServiceClient() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key, { auth: { persistSession: false } })
+}

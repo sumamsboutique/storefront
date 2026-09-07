@@ -6,6 +6,7 @@ import BrowseByCategory from '@/components/storefront/home/BrowseByCategory'
 import { SareeBorderDivider } from '@/components/shared/primitives'
 import OurHeritage from '@/components/storefront/home/OurHeritage'
 import JewellerySpotlight from '@/components/storefront/home/JewellerySpotlight'
+import Testimonials from '@/components/storefront/home/Testimonials'
 import InstagramStrip from '@/components/storefront/home/InstagramStrip'
 import Footer from '@/components/storefront/Footer'
 import { getHomeContent, getAllProducts } from '@/lib/data'
@@ -48,6 +49,7 @@ export default async function Home() {
       <SareeBorderDivider />
       <OurHeritage data={content.our_heritage} />
       <JewellerySpotlight data={content.jewellery_spotlight} />
+      <Testimonials data={content.testimonials} />
       <InstagramStrip data={content.instagram_strip} />
       <Footer footer={content.footer} />
     </main>

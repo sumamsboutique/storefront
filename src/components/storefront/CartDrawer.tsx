@@ -1,7 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
-import { useCart } from '@/lib/store'
+import { useCart, cartImage } from '@/lib/store'
 import { TrashIcon } from '@/components/icons'
 
 export function CartDrawer() {
@@ -65,12 +66,13 @@ export function CartDrawer() {
         ) : (
           <>
             <div className="flex-1 overflow-y-auto px-6">
-              {items.map((line) => (
+              {items.map((line) => {
+                const img = cartImage(line)
+                return (
                 <div key={line.id} className="flex gap-4 border-b border-[rgba(140,106,85,0.2)] py-5">
-                  <div
-                    className="aspect-[3/4] w-20 shrink-0"
-                    style={{ background: line.gradient }}
-                  />
+                  <div className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden bg-cream" style={{ background: line.gradient }}>
+                    {img && <Image fill src={img} alt={line.name} sizes="80px" className="object-cover" />}
+                  </div>
                   <div className="flex flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -95,7 +97,8 @@ export function CartDrawer() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
             <footer className="border-t border-[rgba(140,106,85,0.25)] px-6 py-5">
               <div className="flex items-center justify-between pb-4">
