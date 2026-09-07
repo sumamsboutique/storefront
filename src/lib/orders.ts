@@ -33,6 +33,7 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
   }
 
   const { address, items, coupon } = parsed.data
+  if (!supabase) return { error: 'Payments are unavailable right now.' }
   const { data, error } = await supabase.rpc('create_pending_order', {
     p_address: {
       name: address.name,

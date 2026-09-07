@@ -13,8 +13,8 @@ export async function subscribeNewsletter(input: unknown): Promise<SubscribeResu
     return { error: parsed.error.issues[0]?.message ?? 'Enter a valid email address.' }
   }
 
-  const { error } = await supabase
-    .from('newsletter_subscribers')
+  if (!supabase) return { error: 'Could not subscribe right now. Please try again.' }
+  const { error } = await supabase.from('newsletter_subscribers')
     .insert({ email: parsed.data.toLowerCase() })
 
   if (error) {

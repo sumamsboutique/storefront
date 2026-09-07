@@ -70,6 +70,8 @@ function toProduct(row: Row, parentOf: Map<string, string>): CatalogProduct {
 }
 
 async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, string> } | null> {
+  // ponytail: fall back to static CATALOG when Supabase env vars are absent (CI build).
+  if (!supabase) return null
   // PostgREST doesn't expose the categories self-FK, so resolve subcategory →
   // parent in JS from one small categories fetch instead of a nested join.
   const [{ data: cats, error: catErr }, { data, error }] = await Promise.all([
@@ -197,6 +199,7 @@ const emptyHomeContent: HomeContent = {
 }
 
 async function fetchContentBlock(key: string): Promise<unknown | null> {
+  if (!supabase) return null
   const { data, error } = await supabase
     .from('content_blocks')
     .select('content')

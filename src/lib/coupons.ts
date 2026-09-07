@@ -22,6 +22,7 @@ export async function validateCoupon(code: string, subtotal: number): Promise<Co
   const parsed = CodeSchema.safeParse(code)
   if (!parsed.success) return { ok: false, error: 'Invalid coupon code.', code: code.toUpperCase() }
 
+  if (!supabase) return { ok: false, error: 'Coupons are unavailable right now.', code: code.toUpperCase() }
   const { data, error } = await supabase.rpc('coupon_quote', {
     p_code: parsed.data.toUpperCase(),
     p_subtotal: Math.max(0, Math.round(subtotal)),
