@@ -20,7 +20,9 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com",
+              // ponytail: 'unsafe-eval' only in dev — React/Turbopack needs eval for
+              // dev callstacks/HMR. Next never evals in production mode.
+              `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.supabase.co https://*.razorpay.com",
               "font-src 'self' data:",
