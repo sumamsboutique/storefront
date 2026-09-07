@@ -68,20 +68,20 @@ export default async function AdminDashboardPage() {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Total Revenue */}
-        <div className="bg-[#FDFBF7] border border-[#DCC9A8]/70 p-5 shadow-[0_1px_3px_rgba(28,10,6,0.03)]">
+        <div className="bg-[#FDFBF7] border border-[#DCC9A8]/70 rounded-lg p-5 shadow-[0_1px_2px_rgba(28,10,6,0.04),0_10px_28px_-16px_rgba(28,10,6,0.12)]">
           <span className="font-sans text-[10px] uppercase tracking-widest text-muted block mb-1">
             Total Revenue
           </span>
           <div className="font-display text-2xl font-normal text-dark tracking-tight">
             ₹{kpis.totalRevenue.toLocaleString('en-IN')}
           </div>
-          <p className="font-sans text-[11px] text-muted/80 mt-1">
+          <p className="font-sans text-[11px] text-muted mt-1">
             Settled orders (paid & delivered)
           </p>
         </div>
 
         {/* Orders Count */}
-        <div className="bg-[#FDFBF7] border border-[#DCC9A8]/70 p-5 shadow-[0_1px_3px_rgba(28,10,6,0.03)]">
+        <div className="bg-[#FDFBF7] border border-[#DCC9A8]/70 rounded-lg p-5 shadow-[0_1px_2px_rgba(28,10,6,0.04),0_10px_28px_-16px_rgba(28,10,6,0.12)]">
           <span className="font-sans text-[10px] uppercase tracking-widest text-muted block mb-1">
             Orders
           </span>
@@ -95,13 +95,13 @@ export default async function AdminDashboardPage() {
               </span>
             )}
           </div>
-          <p className="font-sans text-[11px] text-muted/80 mt-1">
+          <p className="font-sans text-[11px] text-muted mt-1">
             All-time customer transactions
           </p>
         </div>
 
         {/* Active Products */}
-        <div className="bg-[#FDFBF7] border border-[#DCC9A8]/70 p-5 shadow-[0_1px_3px_rgba(28,10,6,0.03)]">
+        <div className="bg-[#FDFBF7] border border-[#DCC9A8]/70 rounded-lg p-5 shadow-[0_1px_2px_rgba(28,10,6,0.04),0_10px_28px_-16px_rgba(28,10,6,0.12)]">
           <span className="font-sans text-[10px] uppercase tracking-widest text-muted block mb-1">
             Catalog Products
           </span>
@@ -113,20 +113,20 @@ export default async function AdminDashboardPage() {
               / {kpis.totalProducts} total
             </span>
           </div>
-          <p className="font-sans text-[11px] text-muted/80 mt-1">
+          <p className="font-sans text-[11px] text-muted mt-1">
             Active handloom & jewellery items
           </p>
         </div>
 
         {/* Low Stock Alert */}
-        <div className="bg-[#FDFBF7] border border-[#DCC9A8]/70 p-5 shadow-[0_1px_3px_rgba(28,10,6,0.03)]">
+        <div className="bg-[#FBF3F1] border border-[#E8A59E]/70 rounded-lg p-5 shadow-[0_1px_2px_rgba(28,10,6,0.04),0_10px_28px_-16px_rgba(28,10,6,0.12)]">
           <span className="font-sans text-[10px] uppercase tracking-widest text-muted block mb-1">
             Low Stock Alerts
           </span>
           <div className="font-display text-2xl font-normal text-[#A62719]">
             {kpis.lowStockCount}
           </div>
-          <p className="font-sans text-[11px] text-muted/80 mt-1">
+          <p className="font-sans text-[11px] text-muted mt-1">
             Items at or below 3 units
           </p>
         </div>

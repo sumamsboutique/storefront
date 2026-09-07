@@ -64,3 +64,35 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ===== Admin panel design system ===== */
+/* Scoped to authenticated admin pages (AdminShell wrapper) so the
+   customer storefront above is completely untouched. */
+
+/* Consistent radii on every control without touching ~19 form files. */
+.admin-shell a,
+.admin-shell button {
+  border-radius: 0.375rem;
+}
+
+/* Keyboard focus: visible copper ring on links & buttons. */
+.admin-shell :focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
+
+/* Inputs/selects/textareas: copper ring on focus (overrides the weak
+   border-only focus many forms set inline). */
+.admin-shell input:not([type='checkbox']):not([type='radio']):focus,
+.admin-shell select:focus,
+.admin-shell textarea:focus {
+  outline: none;
+  border-color: var(--copper);
+  box-shadow: 0 0 0 2px rgba(191, 94, 24, 0.22);
+}
+
+.admin-shell input:not([type='checkbox']):not([type='radio']),
+.admin-shell select,
+.admin-shell textarea {
+  border-radius: 0.375rem;
+}

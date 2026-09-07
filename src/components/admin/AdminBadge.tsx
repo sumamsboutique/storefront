@@ -32,7 +32,7 @@ export function AdminBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-sans tracking-wide uppercase border',
+        'inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-sans tracking-wide uppercase border rounded',
         styles[variant],
         className
       )}

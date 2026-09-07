@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-ivory flex flex-col justify-center items-center px-4 py-12">
-      <div className="w-full max-w-md bg-[#FDFBF7] border border-[#DCC9A8] p-8 md:p-10 shadow-xl relative">
+      <div className="w-full max-w-md bg-[#FDFBF7] border border-[#DCC9A8] rounded-lg p-8 md:p-10 shadow-2xl relative overflow-hidden">
         {/* Decorative Alpona Corner */}
         <div className="absolute top-3 right-3 pointer-events-none">
           <AlponaMotif size={64} opacity={0.15} />
@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 p-3 bg-[#FDF2F0] border-l-4 border-[#C43828] text-xs font-sans text-[#7A1C12]">
+          <div className="mb-6 p-3 bg-[#FDF2F0] border border-[#E8A59E] rounded text-xs font-sans text-[#7A1C12]">
             {error}
           </div>
         )}
@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
               name="email"
               required
               placeholder="admin@sumamsboutique.com"
-              className="w-full px-3.5 py-2.5 bg-white border border-[#DCC9A8]/80 text-sm font-sans text-dark placeholder:text-muted/50 focus:outline-none focus:border-copper"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#DCC9A8]/80 rounded text-sm font-sans text-dark placeholder:text-muted/50 focus:border-copper focus:ring-2 focus:ring-copper/20 focus:outline-none"
             />
           </div>
 
@@ -73,14 +73,14 @@ export default function AdminLoginPage() {
               name="password"
               required
               placeholder="••••••••••••"
-              className="w-full px-3.5 py-2.5 bg-white border border-[#DCC9A8]/80 text-sm font-sans text-dark placeholder:text-muted/50 focus:outline-none focus:border-copper"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#DCC9A8]/80 rounded text-sm font-sans text-dark placeholder:text-muted/50 focus:border-copper focus:ring-2 focus:ring-copper/20 focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={isPending}
-            className="w-full py-3 bg-dark hover:bg-copper text-ivory font-sans text-xs font-medium uppercase tracking-[0.2em] transition-colors disabled:opacity-50 mt-2"
+            className="w-full py-3 bg-dark hover:bg-copper text-ivory font-sans text-xs font-medium uppercase tracking-[0.2em] transition-colors disabled:opacity-50 mt-2 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper"
           >
             {isPending ? 'Authenticating...' : 'Enter Admin Panel'}
           </button>

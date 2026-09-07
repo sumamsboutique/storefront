@@ -34,7 +34,7 @@ export function AdminModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm animate-fade-in">
       <div
-        className={`w-full ${maxWidth} bg-[#FDFBF7] border border-[#DCC9A8] shadow-2xl overflow-hidden transition-all duration-200`}
+        className={`w-full ${maxWidth} bg-[#FDFBF7] border border-[#DCC9A8] rounded-lg shadow-2xl overflow-hidden transition-all duration-200`}
         role="dialog"
         aria-modal="true"
       >

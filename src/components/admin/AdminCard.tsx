@@ -21,7 +21,7 @@ export function AdminCard({
   return (
     <div
       className={cn(
-        'bg-[#FDFBF7] border border-[#DCC9A8]/60 shadow-[0_1px_3px_rgba(28,10,6,0.04)]',
+        'bg-[#FDFBF7] border border-[#DCC9A8]/60 rounded-lg overflow-hidden shadow-[0_1px_2px_rgba(28,10,6,0.04),0_10px_28px_-16px_rgba(28,10,6,0.12)]',
         className
       )}
     >

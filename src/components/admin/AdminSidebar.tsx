@@ -163,7 +163,7 @@ export function AdminSidebar({
     <aside
       className={cn(
         'flex flex-col h-full bg-dark text-ivory border-r border-[#DCC9A8]/20 transition-all duration-300',
-        isCollapsed ? 'w-18' : 'w-64'
+        isCollapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Brand Header */}
@@ -183,7 +183,7 @@ export function AdminSidebar({
         </Link>
         <button
           onClick={onToggleCollapse}
-          className="hidden md:flex p-1.5 text-muted hover:text-ivory transition-colors"
+          className="hidden md:flex p-1.5 ml-1 text-muted hover:text-ivory hover:bg-white/10 rounded-lg transition-colors"
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? '→' : '←'}
@@ -204,9 +204,10 @@ export function AdminSidebar({
               href={item.href}
               onClick={onCloseMobile}
               className={cn(
-                'group flex items-center gap-3.5 px-3 py-2.5 text-xs font-sans tracking-wide transition-colors relative',
+                'group flex items-center gap-3.5 px-3 py-2.5 text-xs font-sans tracking-wide transition-colors rounded-lg',
+isCollapsed && 'justify-center px-0',
                 isActive
-                  ? 'bg-copper text-ivory font-medium'
+                  ? 'bg-copper text-ivory font-medium shadow-[inset_0_0_0_1px_rgba(212,136,10,0.4),0_2px_8px_-2px_rgba(191,94,24,0.5)]'
                   : 'text-ivory/70 hover:text-ivory hover:bg-white/5'
               )}
               title={isCollapsed ? item.label : undefined}

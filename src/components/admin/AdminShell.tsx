@@ -29,7 +29,7 @@ export function AdminShell({
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-ivory flex flex-col md:flex-row text-dark font-sans selection:bg-gold/20 selection:text-dark">
+      <div className="admin-shell min-h-screen bg-ivory flex flex-col md:flex-row text-dark font-sans selection:bg-gold/20 selection:text-dark">
         {/* Sidebar */}
         <AdminSidebar
           role={userRole}
