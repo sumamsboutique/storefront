@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import type { MediaFile } from '@/lib/admin/queries'
+import { deleteMediaByPath } from '@/lib/admin/actions'
 import { AdminCard } from '@/components/admin/AdminCard'
 import { useToast } from '@/components/admin/AdminToast'
 import { ConfirmModal } from '@/components/admin/AdminModal'
@@ -34,9 +35,19 @@ export function MediaManagerClient({
     setDeleteTarget(file)
   }
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!deleteTarget) return
-    success(`Removed asset "${deleteTarget.name}".`)
+    const res = await deleteMediaByPath({ path: deleteTarget.path })
+    if (!res.success) {
+      error(res.error || 'Failed to delete asset.')
+      setDeleteTarget(null)
+      return
+    }
+    success(
+      res.data?.managed_by_code
+        ? `"${deleteTarget.name}" is a code-bundled asset and cannot be removed at runtime.`
+        : `Removed asset "${deleteTarget.name}".`
+    )
     setDeleteTarget(null)
   }
 

@@ -129,10 +129,10 @@ export default function Hero({ slides: slidesProp }: { slides?: HeroSlide[] }) {
         >
           <div className="absolute inset-0" style={{ background: s.gradient }} />
           {s.imageMobile && (
-            <Image fill src={s.imageMobile} alt="" sizes="100vw" className="object-cover md:hidden" />
+            <Image fill src={s.imageMobile} alt="" sizes="(max-width: 767px) 100vw, 0px" priority={i === 0} className="object-cover md:hidden" />
           )}
           {s.image && (
-            <Image fill src={s.image} alt="" sizes="100vw" className="object-cover hidden md:block" />
+            <Image fill src={s.image} alt="" sizes="(max-width: 767px) 0px, 100vw" priority={i === 0} className="object-cover hidden md:block" />
           )}
           <div
             className="absolute inset-0 pointer-events-none opacity-[0.04] mix-blend-overlay"

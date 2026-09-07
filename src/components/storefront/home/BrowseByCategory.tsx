@@ -35,15 +35,9 @@ const SAREE_SMALL: Cat[] = [
   { id: 'garad', bn: 'গরদ', en: 'Garad', gradient: 'linear-gradient(175deg, #F5EFE6, #E8D5B0 50%, #BF5E18)', image: '/Products/Handlooms/shankha-garad-silk.png', dark: false },
 ]
 
-const JEWEL_CATS: Cat[] = [
-  { id: 'temple', bn: 'মন্দির গহনা', en: 'Temple', gradient: 'linear-gradient(175deg, #1C0A06, #4A2010 50%, #BF5E18)', image: '/Products/jewellery/lakshmi-temple-necklace.png', dark: true },
-  { id: 'contemporary', bn: 'সমসাময়িক', en: 'Contemporary', gradient: 'linear-gradient(175deg, #2A1008, #5A2A14 50%, #D4880A)', image: '/Products/jewellery/kolkata-contemporary-studs.png', dark: true },
-  { id: 'gold-plated', bn: 'সোনার মোড়ক', en: 'Gold-Plated', gradient: 'linear-gradient(175deg, #1C1406, #4A3810 50%, #D4880A)', image: '/Products/jewellery/heirloom-maangtikka.png', dark: true },
-]
-
 const DEFAULT: BbcContent = {
   sarees: { hero: SAREE_HERO, small: SAREE_SMALL },
-  jewellery: JEWEL_CATS,
+  jewellery: [],
 }
 
 /* Desktop hero tile — spans 2 rows */
@@ -178,52 +172,6 @@ function MobileHeroTile({ hero }: { hero: Cat }) {
   )
 }
 
-/* Desktop jewellery tile */
-function JewelleryCategoryTile({ cat }: { cat: Cat }) {
-  const [hov, setHov] = useState(false)
-  return (
-    <Link
-      href="/jewellery"
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      className="cursor-pointer relative overflow-hidden block bg-cream"
-      style={{ aspectRatio: '1 / 1.4' }}
-    >
-      <div className="absolute top-0 left-0 h-[2.5px] bg-gold z-20 transition-all duration-300" style={{ width: hov ? '100%' : '0%' }} />
-      {cat.image ? (
-        <Image fill src={cat.image} alt={cat.en} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-transform duration-500" style={{ transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
-      ) : (
-        <div className="absolute inset-0 transition-transform duration-500" style={{ background: cat.gradient, transform: hov ? 'scale(1.04)' : 'scale(1)' }} />
-      )}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(28,10,6,0.6) 0%, transparent 55%)' }} />
-      {hov && <div className="absolute inset-0 bg-[rgba(28,10,6,0.18)]" />}
-      <div className="absolute bottom-5 left-5 z-30">
-        <div className="font-bengali text-sm font-light text-[rgba(212,136,10,0.85)] mb-[3px]">{cat.bn}</div>
-        <div className="font-display text-xl font-normal text-ivory">{cat.en}</div>
-      </div>
-    </Link>
-  )
-}
-
-/* Mobile jewellery tile */
-function MobileJewelleryTile({ cat }: { cat: Cat }) {
-  return (
-    <Link href="/jewellery" className="relative w-full h-[196px] overflow-hidden block bg-cream">
-      <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gold" />
-      {cat.image ? (
-        <Image fill src={cat.image} alt={cat.en} sizes="(min-width: 768px) 33vw, 50vw" className="object-cover" />
-      ) : (
-        <div className="absolute inset-0" style={{ background: cat.gradient }} />
-      )}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(28,10,6,0.6) 0%, transparent 55%)' }} />
-      <div className="absolute bottom-4 left-4">
-        <div className="font-bengali text-[13px] font-light text-[rgba(212,136,10,0.85)] mb-[3px]">{cat.bn}</div>
-        <div className="font-display text-xl font-normal text-ivory">{cat.en}</div>
-      </div>
-    </Link>
-  )
-}
-
 function SubHeader({ bn, en }: { bn: string; en: string }) {
   return (
     <div className="flex items-center gap-3 mb-6">
@@ -236,7 +184,7 @@ function SubHeader({ bn, en }: { bn: string; en: string }) {
 
 export default function BrowseByCategory({ data }: { data?: BbcContent }) {
   const d = data && data.sarees?.hero?.en ? data : DEFAULT
-  const { sarees, jewellery } = d
+  const { sarees } = d
   return (
     <section className="bg-cream px-5 py-14 md:py-24 md:px-[clamp(32px,6vw,85px)]">
       {/* Header */}
@@ -294,27 +242,6 @@ export default function BrowseByCategory({ data }: { data?: BbcContent }) {
           &quot;Each piece, woven once. <br className="md:hidden" />
           When it&apos;s gone, it&apos;s gone.&quot;
         </p>
-      </div>
-      </Reveal>
-
-      {/* Jewellery sub-header */}
-      <Reveal delay={60}>
-      <div className="mt-12 mb-6">
-        <SubHeader bn="গহনা" en="JEWELLERY" />
-      </div>
-      <div className="hidden md:grid grid-cols-3 gap-3">
-        {jewellery.map((c) => (
-          <JewelleryCategoryTile key={c.id} cat={c} />
-        ))}
-      </div>
-
-      {/* Mobile jewellery tiles */}
-      <div className="md:hidden flex flex-col gap-3 mb-8">
-        {jewellery.map((c, i) => (
-          <div key={i}>
-            <MobileJewelleryTile cat={c} />
-          </div>
-        ))}
       </div>
       </Reveal>
 

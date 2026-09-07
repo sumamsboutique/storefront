@@ -115,5 +115,7 @@ export async function verifyRazorpayPayment(input: unknown): Promise<VerifyRazor
     .eq('id', order.id)
   if (updateError) return { error: updateError.message }
 
+  await supabase.rpc('fulfill_order_stock', { p_order_id: order.id })
+
   return { ok: true, orderId: order.id }
 }

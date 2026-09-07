@@ -1,7 +1,9 @@
 'use server'
 
+import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import {
   requireAdminOrStaff,
   requireAdmin,
@@ -19,6 +21,28 @@ import {
   type OrderStatus,
 } from './schemas'
 import { logAudit } from './audit'
+
+// ponytail: in-memory login throttle, per-instance only. Fine until we run
+// multiple server instances; swap for a shared store (Redis/DB) if that happens.
+const loginAttempts = new Map<string, { count: number; resetAt: number }>()
+const LOGIN_WINDOW_MS = 15 * 60 * 1000
+const LOGIN_MAX_ATTEMPTS = 5
+
+function loginThrottled(key: string): boolean {
+  const now = Date.now()
+  const entry = loginAttempts.get(key)
+  return Boolean(entry && entry.resetAt > now && entry.count >= LOGIN_MAX_ATTEMPTS)
+}
+
+function recordFailedLogin(key: string): void {
+  const now = Date.now()
+  const entry = loginAttempts.get(key)
+  if (!entry || entry.resetAt <= now) {
+    loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS })
+  } else {
+    loginAttempts.set(key, { count: entry.count + 1, resetAt: entry.resetAt })
+  }
+}
 
 export type ActionResult<T = unknown> = {
   success: boolean
@@ -38,6 +62,13 @@ export async function adminLoginAction(
     return { error: 'Please enter both email and password.' }
   }
 
+  const hdrs = await headers()
+  const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const emailKey = email.trim().toLowerCase()
+  if (loginThrottled(ip) || loginThrottled(emailKey)) {
+    return { error: 'Too many attempts. Please try again in 15 minutes.' }
+  }
+
   const supabase = await createAdminServerClient()
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email: email.trim(),
@@ -45,6 +76,8 @@ export async function adminLoginAction(
   })
 
   if (authError || !authData.user) {
+    recordFailedLogin(ip)
+    recordFailedLogin(emailKey)
     return { error: authError?.message || 'Invalid credentials.' }
   }
 
@@ -695,6 +728,43 @@ export async function updateUserRole(rawPayload: unknown): Promise<ActionResult>
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Role update failed' }
   }
+}
+
+// ── Media Library ────────────────────────────────────────────────────────────
+const mediaPathSchema = z.object({ path: z.string().trim().min(1) })
+
+// Deletes DB-backed product image rows for a path. Bundled repo assets return
+// managed_by_code so the UI doesn't pretend to delete git-tracked files.
+export async function deleteMediaByPath(rawPayload: unknown): Promise<ActionResult<{ managed_by_code?: boolean }>> {
+  const session = await requireAdmin()
+  const parsed = mediaPathSchema.safeParse(rawPayload)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message || 'Validation failed' }
+  }
+
+  const { path } = parsed.data
+  const supabase = await createAdminServerClient()
+
+  const { count, error: rowError } = await supabase
+    .from('product_images')
+    .select('id', { count: 'exact', head: true })
+    .eq('storage_path', path)
+  if (rowError) return { success: false, error: rowError.message }
+
+  if (!count || count === 0) {
+    return { success: true, data: { managed_by_code: true } }
+  }
+
+  const { error: deleteError } = await supabase
+    .from('product_images')
+    .delete()
+    .eq('storage_path', path)
+  if (deleteError) return { success: false, error: deleteError.message }
+
+  // ponytail: no audit row — record_id is uuid, media path is a string.
+
+  revalidatePath('/admin/media')
+  return { success: true }
 }
 
 // ── Store Settings ───────────────────────────────────────────────────────────

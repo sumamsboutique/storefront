@@ -16,12 +16,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  const event = JSON.parse(raw) as {
+  let event: {
     event?: string
     payload?: {
       payment?: { entity?: { id?: string; order_id?: string } }
       order?: { entity?: { id?: string } }
     }
+  }
+  try {
+    event = JSON.parse(raw) as typeof event
+  } catch {
+    return Response.json({ error: 'Malformed payload' }, { status: 400 })
   }
   if (event.event !== 'payment.captured' && event.event !== 'order.paid') {
     return Response.json({ ok: true })
@@ -47,6 +52,8 @@ export async function POST(request: Request) {
       .from('orders')
       .update({ status: 'paid', payment_reference: paymentId, updated_at: new Date().toISOString() })
       .eq('id', order.id)
+
+    await supabase.rpc('fulfill_order_stock', { p_order_id: order.id })
 
     // Confirmation email (only from the webhook — the client verify path
     // never sends, or customers would get duplicates).

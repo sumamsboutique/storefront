@@ -1,5 +1,6 @@
 import { getAdminSession } from '@/lib/admin/auth'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,10 @@ export default async function AdminRootLayout({
   children: React.ReactNode
 }) {
   const session = await getAdminSession()
+
+  if (!session) {
+    redirect('/admin/login')
+  }
 
   return (
     <AdminShell
