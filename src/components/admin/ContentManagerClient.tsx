@@ -8,6 +8,7 @@ import { AdminCard } from '@/components/admin/AdminCard'
 import { PublicationBadge } from '@/components/admin/AdminBadge'
 import { useToast } from '@/components/admin/AdminToast'
 import { saveContentBlock } from '@/lib/admin/actions'
+import { ContentBlockForm } from '@/components/admin/ContentBlockForm'
 
 const SECTIONS = [
   { key: 'hero', label: '1. Hero Banner Slides', desc: 'Main carousel slides, headline typography, and action links.' },
@@ -36,33 +37,23 @@ export function ContentManagerClient({
   // Find block for current tab
   const currentBlock = blocks.find((b) => b.section_key === activeTab)
 
-  // Local editor JSON string
-  const [jsonString, setJsonString] = useState(() => {
-    return currentBlock?.content
-      ? JSON.stringify(currentBlock.content, null, 2)
-      : '[]'
-  })
+  // Local draft editor value (the live block content object)
+  const [draft, setDraft] = useState<unknown>(() =>
+    currentBlock?.content != null ? currentBlock.content : undefined
+  )
 
-  // When active tab changes, update editor string
+  // When active tab changes, load that section's content
   const handleTabSelect = (key: string) => {
     setActiveTab(key)
     const b = blocks.find((x) => x.section_key === key)
-    setJsonString(b?.content ? JSON.stringify(b.content, null, 2) : '[]')
+    setDraft(b?.content != null ? b.content : undefined)
   }
 
   const handleSave = (publishNow: boolean) => {
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(jsonString)
-    } catch {
-      error('Invalid JSON. Please verify formatting before saving.')
-      return
-    }
-
     startTransition(async () => {
       const res = await saveContentBlock({
         section_key: activeTab,
-        content: parsed,
+        content: draft,
         publishNow,
       })
 
@@ -149,20 +140,14 @@ export function ContentManagerClient({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="block text-[11px] font-sans font-medium uppercase tracking-wider text-muted">
-                Structured JSON Content
+                Section Content
               </label>
               <span className="text-[10px] font-sans text-muted">
-                Strict storefront schema compliance
+                Saved as a draft until you publish
               </span>
             </div>
 
-            <textarea
-              rows={18}
-              value={jsonString}
-              onChange={(e) => setJsonString(e.target.value)}
-              className="w-full p-4 font-mono text-xs bg-[#1C0A06] text-[#F5EFE6] border border-[#DCC9A8]/40 focus:outline-none focus:border-copper leading-relaxed selection:bg-copper selection:text-white"
-              spellCheck={false}
-            />
+            <ContentBlockForm sectionKey={activeTab} value={draft} onChange={setDraft} />
 
             <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#DCC9A8]/40">
               <div className="text-[11px] font-sans text-muted">

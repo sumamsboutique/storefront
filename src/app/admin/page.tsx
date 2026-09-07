@@ -55,6 +55,13 @@ export default async function AdminDashboardPage() {
           >
             Orders
           </Link>
+          <Link
+            href="/admin/help"
+            title="Step-by-step guides for everyday tasks"
+            className="px-4 py-2 bg-[#FDFBF7] hover:bg-cream text-dark border border-[#DCC9A8] text-xs font-sans font-medium uppercase tracking-wider transition-colors"
+          >
+            Help?
+          </Link>
         </div>
       </div>
 
