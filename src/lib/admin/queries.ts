@@ -257,7 +257,13 @@ export async function getAdminProducts({
       .order('updated_at', { ascending: false })
       .range(from, to)
 
+    const noFilters = !search && !categoryId && !stockStatus && published === undefined && active === undefined
     if (error || !data || data.length === 0) {
+      // ponytail: fall back to CATALOG only when nothing is filtered — an empty
+      // *filtered* result is a real result, not a reason to dump every product.
+      if (!noFilters) {
+        return { products: [], total: 0 }
+      }
       // If table is empty or error, fallback to CATALOG mapped to AdminProductItem
       const items: AdminProductItem[] = CATALOG.map((c) => ({
         id: c.id,

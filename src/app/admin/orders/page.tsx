@@ -8,18 +8,19 @@ import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs'
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     search?: string
     status?: string
     page?: string
-  }
+  }>
 }) {
   await requireAdminOrStaff()
 
-  const page = parseInt(searchParams.page || '1') || 1
+  const sp = await searchParams
+  const page = parseInt(sp.page || '1') || 1
   const { orders, total } = await getAdminOrders({
-    search: searchParams.search,
-    status: searchParams.status,
+    search: sp.search,
+    status: sp.status,
     page,
     limit: 25,
   })

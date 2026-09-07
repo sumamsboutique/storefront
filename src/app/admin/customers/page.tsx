@@ -8,18 +8,19 @@ import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs'
 export default async function AdminCustomersPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     search?: string
     role?: string
     page?: string
-  }
+  }>
 }) {
   const session = await requireAdmin() // Admin-only route
 
-  const page = parseInt(searchParams.page || '1') || 1
+  const sp = await searchParams
+  const page = parseInt(sp.page || '1') || 1
   const { customers, total } = await getAdminCustomers({
-    search: searchParams.search,
-    role: searchParams.role,
+    search: sp.search,
+    role: sp.role,
     page,
     limit: 25,
   })

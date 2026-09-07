@@ -9,25 +9,26 @@ import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs'
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     search?: string
     categoryId?: string
     stockStatus?: string
     published?: string
     active?: string
     page?: string
-  }
+  }>
 }) {
   await requireAdminOrStaff()
 
-  const page = parseInt(searchParams.page || '1') || 1
+  const sp = await searchParams
+  const page = parseInt(sp.page || '1') || 1
   const [{ products, total }, categories] = await Promise.all([
     getAdminProducts({
-      search: searchParams.search,
-      categoryId: searchParams.categoryId,
-      stockStatus: searchParams.stockStatus,
-      published: searchParams.published,
-      active: searchParams.active,
+      search: sp.search,
+      categoryId: sp.categoryId,
+      stockStatus: sp.stockStatus,
+      published: sp.published,
+      active: sp.active,
       page,
       limit: 20,
     }),
