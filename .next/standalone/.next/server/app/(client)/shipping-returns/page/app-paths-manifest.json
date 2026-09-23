@@ -1,0 +1,3 @@
+{
+  "/(client)/shipping-returns/page": "app/(client)/shipping-returns/page.js"
+}

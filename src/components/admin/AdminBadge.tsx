@@ -9,6 +9,7 @@ export type BadgeVariant =
   | 'neutral'
   | 'copper'
   | 'gold'
+  | 'black'
 
 export function AdminBadge({
   children,
@@ -27,6 +28,7 @@ export function AdminBadge({
     warning: 'bg-[#FEF6E6] text-[#9A6207] border-[#FADBA2]',
     danger: 'bg-[#FDF0EE] text-[#A62719] border-[#F5BDB6]',
     info: 'bg-[#EBF2F7] text-[#1B5280] border-[#B7D4EA]',
+    black: 'bg-black text-white border-black font-semibold',
   }
 
   return (
@@ -63,7 +65,7 @@ export function StockBadge({ status }: { status: string }) {
     in_stock: { label: 'In Stock', variant: 'success' },
     low_stock: { label: 'Low Stock', variant: 'warning' },
     out_of_stock: { label: 'Out of Stock', variant: 'danger' },
-    sold: { label: 'Sold', variant: 'neutral' },
+    sold: { label: 'Sold', variant: 'black' },
   }
 
   const cfg = map[status] || { label: status, variant: 'neutral' }

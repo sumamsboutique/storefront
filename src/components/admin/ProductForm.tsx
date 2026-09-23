@@ -212,6 +212,16 @@ export function ProductForm({
                       </option>
                     ))}
                   </select>
+                  <div className="flex items-center justify-between mt-1 text-[10px] text-muted font-sans">
+                    <span>Taxonomy classification</span>
+                    <Link
+                      href="/admin/categories"
+                      target="_blank"
+                      className="text-copper hover:underline font-medium"
+                    >
+                      + Manage Categories
+                    </Link>
+                  </div>
                 </div>
               </div>
 

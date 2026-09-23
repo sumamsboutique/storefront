@@ -1,0 +1,4 @@
+{"timestamp":"00:00:04.839","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:01:32.689","source":"Server","level":"LOG","message":"○ Compiling / ..."}
+{"timestamp":"00:01:36.457","source":"Server","level":"WARN","message":"[data.ts] Supabase query failed or timed out. Tripping circuit breaker for 60s: \"Timeout after 1500ms\""}
+{"timestamp":"00:01:36.461","source":"Server","level":"WARN","message":"[data.ts] Supabase query failed or timed out. Tripping circuit breaker for 60s: \"Timeout after 1500ms\""}

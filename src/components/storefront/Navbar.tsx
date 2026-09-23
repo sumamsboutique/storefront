@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { IconSearch, IconAccount, IconCart, IconMenu } from '@/components/icons'
 import { cn } from '@/lib/cn'
 import { useCart } from '@/lib/store'
+import { useMounted } from '@/lib/useMounted'
 
 const NAV: { label: string; href: string }[] = [
   { label: 'SAREES', href: '/sarees' },
@@ -76,6 +77,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const mounted = useMounted()
   const count = useCart((s) => s.items.reduce((a, i) => a + i.qty, 0))
   const openCart = useCart((s) => s.open)
 
@@ -117,7 +119,7 @@ export default function Navbar() {
           </Link>
           <button suppressHydrationWarning onClick={openCart} className="bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)] relative" aria-label="Open shopping bag">
             <IconCart />
-            {count > 0 && (
+            {mounted && count > 0 && (
               <span className="absolute -top-[5px] -right-[6px] bg-copper text-ivory text-[8px] font-medium w-[14px] h-[14px] rounded-full flex items-center justify-center">
                 {count}
               </span>

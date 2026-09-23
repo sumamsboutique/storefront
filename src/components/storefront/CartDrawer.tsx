@@ -4,9 +4,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCart, cartImage } from '@/lib/store'
 import { TrashIcon } from '@/components/icons'
+import { useMounted } from '@/lib/useMounted'
 
 export function CartDrawer() {
-  const { items, isOpen, close, setQty, remove, subtotal, count } = useCart()
+  const mounted = useMounted()
+  const { items: rawItems, isOpen, close, setQty, remove, subtotal, count } = useCart()
+
+  const items = mounted ? rawItems : []
+  const cartCount = mounted ? count() : 0
+  const cartSubtotal = mounted ? subtotal() : 0
 
   const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
@@ -31,8 +37,8 @@ export function CartDrawer() {
         <header className="flex items-center justify-between border-b border-[rgba(140,106,85,0.25)] px-6 py-5">
           <div className="flex items-center gap-2">
             <span className="h-px w-5 bg-copper" />
-            <span className="font-ui text-[11px] tracking-[0.18em] text-dark uppercase">
-              Shopping Bag · {count()}
+            <span suppressHydrationWarning className="font-ui text-[11px] tracking-[0.18em] text-dark uppercase">
+              Shopping Bag · {cartCount}
             </span>
           </div>
           <button
@@ -103,7 +109,7 @@ export function CartDrawer() {
             <footer className="border-t border-[rgba(140,106,85,0.25)] px-6 py-5">
               <div className="flex items-center justify-between pb-4">
                 <span className="font-ui text-[11px] tracking-[0.18em] text-dark uppercase">Subtotal</span>
-                <span className="font-ui text-base font-medium text-dark">{fmt(subtotal())}</span>
+                <span className="font-ui text-base font-medium text-dark">{fmt(cartSubtotal)}</span>
               </div>
               <Link
                 href="/checkout"

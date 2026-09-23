@@ -1,0 +1,49 @@
+{
+  "node": {
+    "003b9c049975657b27626fa91b0487469f70604f42": {
+      "workers": {
+        "app/admin/coupons/page": {
+          "moduleId": 67970,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "adminLogoutAction",
+      "filename": "src/lib/admin/actions.ts"
+    },
+    "4037cb7155ef062ac527e9de40fb0f89c762845cfa": {
+      "workers": {
+        "app/admin/coupons/page": {
+          "moduleId": 67970,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "saveCoupon",
+      "filename": "src/lib/admin/actions.ts"
+    },
+    "60a8fa91ff33def366e4a0aad7bb31cdc0e13b9426": {
+      "workers": {
+        "app/admin/coupons/page": {
+          "moduleId": 67970,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "toggleCoupon",
+      "filename": "src/lib/admin/actions.ts"
+    },
+    "40839137b1d549d8ab30667135b06def10a3509111": {
+      "workers": {
+        "app/admin/coupons/page": {
+          "moduleId": 67970,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "deleteCoupon",
+      "filename": "src/lib/admin/actions.ts"
+    }
+  },
+  "edge": {}
+}

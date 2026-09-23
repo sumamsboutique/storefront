@@ -109,31 +109,83 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
     <div className="bg-ivory">
       <PageHeader keyword={keyword} title={title} count={filtered.length} />
 
-      {/* Mobile filter/sort bar */}
-      <div className="flex items-center gap-1 border-b border-[rgba(140,106,85,0.2)] pb-1 md:hidden">
-        <button onClick={() => setShowMobileFilters((v) => !v)} className="flex items-center gap-2 px-3 py-2 font-ui text-[10px] tracking-[0.18em] text-dark uppercase">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1C0A06" strokeWidth="1.2" strokeLinecap="round">
-            <path d="M2 3.5h10M4 7h6M6 10.5h2" />
-          </svg>
-          Filters
-        </button>
-        <span className="h-4 w-px bg-[rgba(140,106,85,0.25)]" />
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
-          className="flex-1 bg-transparent px-3 py-2 font-ui text-[10px] tracking-[0.18em] text-dark uppercase outline-none"
-          aria-label="Sort products"
-        >
-          {SORTS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <span className="ml-auto pr-3 font-ui text-[10px] text-muted">{filtered.length} items</span>
+      {/* Mobile Search & Filter Toolbar */}
+      <div className="border-b border-[rgba(140,106,85,0.2)] px-4 py-3 md:hidden space-y-2.5">
+        {/* Mobile Search Bar */}
+        <div className="relative flex items-center">
+          <span className="absolute left-3 text-copper pointer-events-none">
+            <IconSearch size={14} color="#BF5E18" />
+          </span>
+          <input
+            type="text"
+            value={term}
+            onChange={(e) => {
+              setTerm(e.target.value)
+              setPage(1)
+            }}
+            placeholder="Search weaves, sarees, motifs..."
+            className="w-full bg-cream/70 border border-[rgba(140,106,85,0.3)] pl-9 pr-8 py-2 font-ui text-xs text-dark placeholder:text-[rgba(28,10,6,0.45)] focus:outline-none focus:border-copper"
+          />
+          {term && (
+            <button
+              onClick={() => setTerm('')}
+              aria-label="Clear search"
+              className="absolute right-2.5 text-muted hover:text-dark text-sm px-1 leading-none"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        {/* Mobile Filter & Sort row */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMobileFilters((v) => !v)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 border font-ui text-[10px] tracking-[0.16em] uppercase transition-colors',
+              showMobileFilters || weaves.length > 0 || stock !== 'all' || price !== null
+                ? 'border-copper bg-copper text-ivory'
+                : 'border-[rgba(140,106,85,0.3)] bg-cream text-dark'
+            )}
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+              <path d="M2 3.5h10M4 7h6M6 10.5h2" />
+            </svg>
+            Filters {weaves.length + (stock !== 'all' ? 1 : 0) + (price !== null ? 1 : 0) > 0 && `(${weaves.length + (stock !== 'all' ? 1 : 0) + (price !== null ? 1 : 0)})`}
+          </button>
+
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
+            className="flex-1 bg-cream/70 border border-[rgba(140,106,85,0.3)] px-2.5 py-1.5 font-ui text-[10px] tracking-[0.14em] text-dark uppercase outline-none"
+            aria-label="Sort products"
+          >
+            {SORTS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <span className="font-ui text-[10px] text-muted whitespace-nowrap">{filtered.length} items</span>
+        </div>
       </div>
 
       {/* Mobile filter sheet */}
       {showMobileFilters && (
-        <div className="border-b border-[rgba(140,106,85,0.2)] px-5 py-4 md:hidden">
+        <div className="border-b border-[rgba(140,106,85,0.25)] bg-[#FAF6F0] px-5 py-4 md:hidden animate-fadeIn">
+          <div className="flex items-center justify-between pb-2 border-b border-[rgba(140,106,85,0.2)]">
+            <span className="font-ui text-xs font-semibold tracking-wider text-dark uppercase">Filter Collection</span>
+            {(weaves.length > 0 || stock !== 'all' || price !== null) && (
+              <button
+                onClick={() => {
+                  setWeaves([])
+                  setStock('all')
+                  setPrice(null)
+                }}
+                className="font-ui text-[10px] text-copper uppercase tracking-wider underline"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
           <FilterGroup title="Weave">
             {weaveOptions.map((w) => (
               <PriceCheck
@@ -149,14 +201,32 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               <PriceCheck key={l} label={l} active={price === i + 1} onToggle={() => setPrice(price === i + 1 ? null : i + 1)} />
             ))}
           </FilterGroup>
+          <FilterGroup title="Availability">
+            <PriceCheck label="All pieces" active={stock === 'all'} onToggle={() => setStock('all')} />
+            <PriceCheck label="In stock only" active={stock === 'in'} onToggle={() => setStock(stock === 'in' ? 'all' : 'in')} />
+            <PriceCheck label="Sold out" active={stock === 'sold'} onToggle={() => setStock(stock === 'sold' ? 'all' : 'sold')} />
+          </FilterGroup>
         </div>
       )}
 
       <div className="flex">
         {/* Desktop sidebar */}
         <aside className={cn(PAD, 'w-[268px] hidden shrink-0 md:block border-r border-[rgba(140,106,85,0.2)]')}>
-          <div className="pt-5 pb-2">
+          <div className="pt-5 pb-2 flex items-center justify-between">
             <Eyebrow label="Filters" hairline={false} />
+            {(weaves.length > 0 || stock !== 'all' || price !== null || term) && (
+              <button
+                onClick={() => {
+                  setWeaves([])
+                  setStock('all')
+                  setPrice(null)
+                  setTerm('')
+                }}
+                className="font-ui text-[10px] uppercase tracking-wider text-copper hover:underline"
+              >
+                Reset
+              </button>
+            )}
           </div>
           <FilterGroup title="Weave">
             {weaveOptions.map((w) => (
@@ -168,50 +238,90 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               <PriceCheck key={l as string} label={l as string} active={price === v} onToggle={() => setPrice(price === v ? null : (v as number))} />
             ))}
           </FilterGroup>
-          <FilterGroup title="Availability" defaultOpen={false}>
+          <FilterGroup title="Availability" defaultOpen={true}>
+            <PriceCheck label="All pieces" active={stock === 'all'} onToggle={() => setStock('all')} />
             <PriceCheck label="In stock only" active={stock === 'in'} onToggle={() => setStock(stock === 'in' ? 'all' : 'in')} />
-            <PriceCheck label="Sold" active={stock === 'sold'} onToggle={() => setStock(stock === 'sold' ? 'all' : 'sold')} />
+            <PriceCheck label="Sold out" active={stock === 'sold'} onToggle={() => setStock(stock === 'sold' ? 'all' : 'sold')} />
           </FilterGroup>
         </aside>
 
         {/* Grid */}
-        <div className={cn(PAD, 'flex-1')}>
-          <div className="hidden items-center gap-3 pt-6 pb-5 md:flex">
-            <IconSearch size={15} color="#BF5E18" />
-            <span className="font-ui text-[11px] tracking-[0.18em] text-dark uppercase">Result for “{keyword}”</span>
-            <span className="font-ui text-[11px] text-muted">· {filtered.length} pieces</span>
-            <div className="ml-auto">
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
-                className="bg-transparent font-ui text-[11px] tracking-[0.14em] text-dark uppercase outline-none"
-                aria-label="Sort products"
-              >
-                {SORTS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+        <div className={cn(PAD, 'flex-1 pb-16')}>
+          {/* Desktop Search & Sort Toolbar */}
+          <div className="hidden items-center justify-between gap-4 pt-6 pb-5 border-b border-[rgba(140,106,85,0.2)] md:flex">
+            {/* Desktop Search Input */}
+            <div className="relative flex items-center max-w-sm flex-1">
+              <span className="absolute left-3 text-copper pointer-events-none">
+                <IconSearch size={14} color="#BF5E18" />
+              </span>
+              <input
+                type="text"
+                value={term}
+                onChange={(e) => {
+                  setTerm(e.target.value)
+                  setPage(1)
+                }}
+                placeholder="Search by name, weave, or motif..."
+                className="w-full bg-cream/70 border border-[rgba(140,106,85,0.3)] pl-9 pr-8 py-2 font-ui text-xs text-dark placeholder:text-[rgba(28,10,6,0.45)] focus:outline-none focus:border-copper"
+              />
+              {term && (
+                <button
+                  onClick={() => setTerm('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 text-muted hover:text-dark text-sm px-1 leading-none"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Status Feedback & Sort */}
+            <div className="flex items-center gap-4">
+              <span className="font-ui text-[11px] text-muted whitespace-nowrap">
+                {filtered.length} {filtered.length === 1 ? 'piece' : 'pieces'}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-ui text-[10px] uppercase tracking-wider text-muted">Sort:</span>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
+                  className="bg-transparent font-ui text-[11px] tracking-[0.14em] text-dark uppercase outline-none cursor-pointer border-b border-copper/40 pb-0.5"
+                  aria-label="Sort products"
+                >
+                  {SORTS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
           {paged.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="font-display text-2xl text-dark">No pieces match your filters</p>
-              <p className="mt-2 font-ui text-xs font-light text-muted">Try clearing a filter or browse the full collection.</p>
+              <p className="font-display text-2xl text-dark">No pieces match your search</p>
+              <p className="mt-2 font-ui text-xs font-light text-muted">
+                {term ? `No products found for "${term}".` : 'Try clearing a filter or browse the full collection.'}
+              </p>
+              {(term || weaves.length > 0 || stock !== 'all' || price !== null) && (
+                <button
+                  onClick={() => {
+                    setTerm('')
+                    setWeaves([])
+                    setStock('all')
+                    setPrice(null)
+                  }}
+                  className="mt-4 inline-block px-4 py-2 bg-copper text-ivory font-ui text-[10px] uppercase tracking-[0.18em]"
+                >
+                  Clear All Filters
+                </button>
+              )}
             </div>
           ) : (
-            <>
-              <div className="hidden grid-cols-4 gap-x-4 gap-y-10 md:grid">
-                {paged.map((p) => (
-                  <PlpCard key={p.id} product={p} />
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-7 md:hidden">
-                {paged.map((p) => (
-                  <PlpCard key={p.id} product={p} />
-                ))}
-              </div>
-            </>
+            <div className="pt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+              {paged.map((p) => (
+                <PlpCard key={p.id} product={p} />
+              ))}
+            </div>
           )}
 
           {pageCount > 1 && (

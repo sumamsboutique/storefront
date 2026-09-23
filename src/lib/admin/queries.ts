@@ -38,6 +38,33 @@ export type AuditLogRow = {
   diff?: Record<string, unknown> | null
 }
 
+export type DashboardInventoryItem = {
+  id: string
+  name: string
+  sku: string | null
+  category_name: string | null
+  stock_status: string
+  quantity: number
+  price: number
+}
+
+export type DashboardInventorySummary = {
+  inStockCount: number
+  lowStockCount: number
+  outOfStockCount: number
+  soldCount: number
+  totalUnits: number
+  items: DashboardInventoryItem[]
+}
+
+function withTimeout<T>(promise: PromiseLike<T>, ms = 1500): Promise<T> {
+  let timer: NodeJS.Timeout
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Admin query timeout after ${ms}ms`)), ms)
+  })
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer))
+}
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 export async function getDashboardKPIs(): Promise<DashboardKPIs> {
   try {
@@ -47,11 +74,14 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
       { data: orders },
       { data: products },
       { data: variants },
-    ] = await Promise.all([
-      supabase.from('orders').select('id, status, total'),
-      supabase.from('products').select('id, is_active, stock_status'),
-      supabase.from('product_variants').select('id, stock_quantity'),
-    ])
+    ] = await withTimeout(
+      Promise.all([
+        supabase.from('orders').select('id, status, total'),
+        supabase.from('products').select('id, is_active, stock_status'),
+        supabase.from('product_variants').select('id, stock_quantity'),
+      ]),
+      1500
+    )
 
     const orderRows = orders ?? []
     const productRows = products ?? []
@@ -99,11 +129,14 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
 export async function getRecentOrders(limit = 5): Promise<RecentOrderRow[]> {
   try {
     const supabase = await createAdminServerClient()
-    const { data, error } = await supabase
-      .from('orders')
-      .select('id, created_at, status, total, shipping_address, profiles(full_name, email)')
-      .order('created_at', { ascending: false })
-      .limit(limit)
+    const { data, error } = await withTimeout(
+      supabase
+        .from('orders')
+        .select('id, created_at, status, total, shipping_address, profiles(full_name, email)')
+        .order('created_at', { ascending: false })
+        .limit(limit),
+      1500
+    )
 
     if (error || !data) return []
 
@@ -128,11 +161,14 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrderRow[]> {
 export async function getLowStockProducts(limit = 6): Promise<LowStockItem[]> {
   try {
     const supabase = await createAdminServerClient()
-    const { data } = await supabase
-      .from('products')
-      .select('id, name, sku, stock_status, product_variants(stock_quantity)')
-      .in('stock_status', ['low_stock', 'out_of_stock'])
-      .limit(limit)
+    const { data } = await withTimeout(
+      supabase
+        .from('products')
+        .select('id, name, sku, stock_status, product_variants(stock_quantity)')
+        .in('stock_status', ['low_stock', 'out_of_stock'])
+        .limit(limit),
+      1500
+    )
 
     if (!data || data.length === 0) return []
 
@@ -158,11 +194,14 @@ export async function getLowStockProducts(limit = 6): Promise<LowStockItem[]> {
 export async function getRecentAuditLogs(limit = 8): Promise<AuditLogRow[]> {
   try {
     const supabase = await createAdminServerClient()
-    const { data } = await supabase
-      .from('audit_log')
-      .select('id, table_name, record_id, action, created_at, diff, profiles(full_name, email)')
-      .order('created_at', { ascending: false })
-      .limit(limit)
+    const { data } = await withTimeout(
+      supabase
+        .from('audit_log')
+        .select('id, table_name, record_id, action, created_at, diff, profiles(full_name, email)')
+        .order('created_at', { ascending: false })
+        .limit(limit),
+      1500
+    )
 
     if (!data) return []
 
@@ -181,6 +220,99 @@ export async function getRecentAuditLogs(limit = 8): Promise<AuditLogRow[]> {
   } catch (err) {
     console.error('[admin/queries] getRecentAuditLogs error:', err)
     return []
+  }
+}
+
+export async function getDashboardInventorySummary(limit = 8): Promise<DashboardInventorySummary> {
+  try {
+    const supabase = await createAdminServerClient()
+    const { data: prods, error } = await withTimeout(
+      supabase
+        .from('products')
+        .select('id, name, sku, price, stock_status, categories(name), product_variants(stock_quantity)')
+        .order('updated_at', { ascending: false }),
+      1500
+    )
+
+    if (error || !prods || prods.length === 0) {
+      const items: DashboardInventoryItem[] = CATALOG.map((c, i) => ({
+        id: c.id,
+        name: c.name,
+        sku: `SKU-${c.slug.toUpperCase().slice(0, 8)}`,
+        category_name: c.weave,
+        stock_status: c.sold ? 'sold' : (i === 1 ? 'low_stock' : 'in_stock'),
+        quantity: c.sold ? 0 : (i === 1 ? 2 : 6),
+        price: c.priceNum,
+      }))
+
+      return {
+        inStockCount: items.filter((i) => i.stock_status === 'in_stock').length,
+        lowStockCount: items.filter((i) => i.stock_status === 'low_stock').length,
+        outOfStockCount: items.filter((i) => i.stock_status === 'out_of_stock').length,
+        soldCount: items.filter((i) => i.stock_status === 'sold').length,
+        totalUnits: items.reduce((acc, i) => acc + i.quantity, 0),
+        items: items.slice(0, limit),
+      }
+    }
+
+    let inStockCount = 0
+    let lowStockCount = 0
+    let outOfStockCount = 0
+    let soldCount = 0
+    let totalUnits = 0
+
+    const items: DashboardInventoryItem[] = prods.map((p) => {
+      const cat = p.categories as unknown as { name?: string } | null
+      const variants = (p.product_variants || []) as { stock_quantity?: number }[]
+      const qty = variants.reduce((sum, v) => sum + (Number(v.stock_quantity) || 0), 0)
+      const status = p.stock_status || (qty === 0 ? 'out_of_stock' : qty <= 3 ? 'low_stock' : 'in_stock')
+
+      if (status === 'in_stock') inStockCount++
+      else if (status === 'low_stock') lowStockCount++
+      else if (status === 'out_of_stock') outOfStockCount++
+      else if (status === 'sold') soldCount++
+
+      totalUnits += qty
+
+      return {
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        category_name: cat?.name || null,
+        stock_status: status,
+        quantity: qty,
+        price: Number(p.price || 0),
+      }
+    })
+
+    return {
+      inStockCount,
+      lowStockCount,
+      outOfStockCount,
+      soldCount,
+      totalUnits,
+      items: items.slice(0, limit),
+    }
+  } catch (err) {
+    console.error('[admin/queries] getDashboardInventorySummary error:', err)
+    const items: DashboardInventoryItem[] = CATALOG.map((c, i) => ({
+      id: c.id,
+      name: c.name,
+      sku: `SKU-${c.slug.toUpperCase().slice(0, 8)}`,
+      category_name: c.weave,
+      stock_status: c.sold ? 'sold' : (i === 1 ? 'low_stock' : 'in_stock'),
+      quantity: c.sold ? 0 : (i === 1 ? 2 : 6),
+      price: c.priceNum,
+    }))
+
+    return {
+      inStockCount: items.filter((i) => i.stock_status === 'in_stock').length,
+      lowStockCount: items.filter((i) => i.stock_status === 'low_stock').length,
+      outOfStockCount: 0,
+      soldCount: items.filter((i) => i.stock_status === 'sold').length,
+      totalUnits: items.reduce((acc, i) => acc + i.quantity, 0),
+      items: items.slice(0, limit),
+    }
   }
 }
 
@@ -355,6 +487,139 @@ export type AdminCategoryItem = {
   children?: AdminCategoryItem[]
 }
 
+export const FALLBACK_ADMIN_CATEGORIES: AdminCategoryItem[] = [
+  {
+    id: 'cat-sarees',
+    name: 'Sarees',
+    name_bn: 'শাড়ি',
+    slug: 'sarees',
+    parent_id: null,
+    parent_name: null,
+    is_hero_tile: true,
+    tile_gradient_fallback: 'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)',
+    display_order: 1,
+    is_active: true,
+    product_count: 9,
+  },
+  {
+    id: 'cat-benarasi',
+    name: 'Benarasi Silk',
+    name_bn: 'বেনারসি সিল্ক',
+    slug: 'benarasi',
+    parent_id: 'cat-sarees',
+    parent_name: 'Sarees',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(155deg, #2A0D06, #6B2410 35%, #A04514 70%, #BF5E18)',
+    display_order: 2,
+    is_active: true,
+    product_count: 4,
+  },
+  {
+    id: 'cat-tant',
+    name: 'Tant Cotton',
+    name_bn: 'তাঁত',
+    slug: 'tant',
+    parent_id: 'cat-sarees',
+    parent_name: 'Sarees',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(170deg, #F5EFE6, #DCC9A8 45%, #B8956A 80%, #8C6A55)',
+    display_order: 3,
+    is_active: true,
+    product_count: 2,
+  },
+  {
+    id: 'cat-jamdani',
+    name: 'Jamdani',
+    name_bn: 'জামদানি',
+    slug: 'jamdani',
+    parent_id: 'cat-sarees',
+    parent_name: 'Sarees',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(170deg, #EDE3D6, #C4A878 55%, #6B5238)',
+    display_order: 4,
+    is_active: true,
+    product_count: 1,
+  },
+  {
+    id: 'cat-muslin',
+    name: 'Muslin',
+    name_bn: 'মসলিন',
+    slug: 'muslin',
+    parent_id: 'cat-sarees',
+    parent_name: 'Sarees',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(170deg, #EDE3D6, #C9B488 50%, #8E6F4A 90%)',
+    display_order: 5,
+    is_active: true,
+    product_count: 1,
+  },
+  {
+    id: 'cat-kantha',
+    name: 'Kantha Stitch',
+    name_bn: 'কাঁথা স্টিচ',
+    slug: 'kantha',
+    parent_id: 'cat-sarees',
+    parent_name: 'Sarees',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(155deg, #1C0A06, #4A2010 45%, #8C6A55 90%)',
+    display_order: 6,
+    is_active: true,
+    product_count: 1,
+  },
+  {
+    id: 'cat-garad',
+    name: 'Garad & Korial',
+    name_bn: 'গরদ ও কোড়িয়াল',
+    slug: 'garad',
+    parent_id: 'cat-sarees',
+    parent_name: 'Sarees',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(170deg, #F5EFE6, #E8D5B0 50%, #BF5E18 95%)',
+    display_order: 7,
+    is_active: true,
+    product_count: 1,
+  },
+  {
+    id: 'cat-jewellery',
+    name: 'Heritage Jewellery',
+    name_bn: 'ঐতিহ্যবাহী গয়না',
+    slug: 'jewellery',
+    parent_id: null,
+    parent_name: null,
+    is_hero_tile: true,
+    tile_gradient_fallback: 'linear-gradient(165deg, #4A2010, #8B3A14 40%, #C4611A 70%, #7A2C0C)',
+    display_order: 8,
+    is_active: true,
+    product_count: 2,
+  },
+  {
+    id: 'cat-temple',
+    name: 'Temple Collection',
+    name_bn: 'মন্দির কালেকশন',
+    slug: 'temple-jewellery',
+    parent_id: 'cat-jewellery',
+    parent_name: 'Heritage Jewellery',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(165deg, #4A2010, #8B3A14 40%, #C4611A 70%, #7A2C0C)',
+    display_order: 9,
+    is_active: true,
+    product_count: 1,
+  },
+  {
+    id: 'cat-contemporary',
+    name: 'Contemporary Jewels',
+    name_bn: 'আধুনিক গয়না',
+    slug: 'contemporary-jewellery',
+    parent_id: 'cat-jewellery',
+    parent_name: 'Heritage Jewellery',
+    is_hero_tile: false,
+    tile_gradient_fallback: 'linear-gradient(165deg, #5A2A14, #8B3A14 40%, #C4611A 70%, #4A2010)',
+    display_order: 10,
+    is_active: true,
+    product_count: 1,
+  },
+]
+
 export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
   try {
     const supabase = await createAdminServerClient()
@@ -363,7 +628,7 @@ export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
       supabase.from('products').select('category_id'),
     ])
 
-    if (!cats || cats.length === 0) return []
+    if (!cats || cats.length === 0) return FALLBACK_ADMIN_CATEGORIES
 
     const countMap = new Map<string, number>()
     for (const p of prods || []) {
@@ -389,7 +654,7 @@ export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
     }))
   } catch (err) {
     console.error('[admin/queries] getAdminCategories error:', err)
-    return []
+    return FALLBACK_ADMIN_CATEGORIES
   }
 }
 

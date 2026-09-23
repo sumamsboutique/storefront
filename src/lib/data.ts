@@ -69,34 +69,93 @@ function toProduct(row: Row, parentOf: Map<string, string>): CatalogProduct {
   }
 }
 
-async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, string> } | null> {
-  // ponytail: fall back to static CATALOG when Supabase env vars are absent (CI build).
-  if (!supabase) return null
-  // PostgREST doesn't expose the categories self-FK, so resolve subcategory →
-  // parent in JS from one small categories fetch instead of a nested join.
-  const [{ data: cats, error: catErr }, { data, error }] = await Promise.all([
-    supabase.from('categories').select('id, name, parent_id'),
-    supabase
-      .from('products')
-      .select('id, name, slug, category_id, short_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, product_images(storage_path), categories(name)')
-      .eq('is_published', true)
-      .eq('is_active', true),
-  ])
-  if (error || catErr) return null
-  const parentOf = new Map<string, string>()
-  const byId = new Map<string, Pick<CategoryRow, 'name' | 'parent_id'>>((cats ?? []).map((c) => [c.id, c]))
-  for (const c of cats ?? []) {
-    const p = c.parent_id ? byId.get(c.parent_id) : undefined
-    if (p) parentOf.set(c.id, p.name)
+// ── Circuit Breaker & Caching ────────────────────────────────────────────────
+let isSupabaseAvailableState = true
+let lastFailureTimestamp = 0
+const CIRCUIT_BREAKER_COOLDOWN_MS = 60 * 1000 // 60s cooldown if host fails
+
+function isSupabaseAvailable(): boolean {
+  if (!supabase) return false
+  if (!isSupabaseAvailableState) {
+    if (Date.now() - lastFailureTimestamp > CIRCUIT_BREAKER_COOLDOWN_MS) {
+      isSupabaseAvailableState = true // Allow retry after cooldown
+    } else {
+      return false
+    }
   }
-  return { rows: data as unknown as Row[], parentOf }
+  return true
+}
+
+function markSupabaseFailure(err?: unknown): void {
+  isSupabaseAvailableState = false
+  lastFailureTimestamp = Date.now()
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('[data.ts] Supabase query failed or timed out. Tripping circuit breaker for 60s:', err instanceof Error ? err.message : err)
+  }
+}
+
+// Timeout helper: rejects if promise takes longer than ms
+function withTimeout<T>(promise: PromiseLike<T>, ms = 1500): Promise<T> {
+  let timer: NodeJS.Timeout
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
+  })
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer))
+}
+
+let cachedProducts: { data: CatalogProduct[]; expiresAt: number } | null = null
+let cachedHomeContent: { data: HomeContent; expiresAt: number } | null = null
+const CACHE_TTL_MS = 60 * 1000 // 60s in-memory cache
+
+export function clearDataCache(): void {
+  cachedProducts = null
+  cachedHomeContent = null
+}
+
+async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, string> } | null> {
+  if (!isSupabaseAvailable()) return null
+  try {
+    const res = await withTimeout(
+      Promise.all([
+        supabase!.from('categories').select('id, name, parent_id'),
+        supabase!
+          .from('products')
+          .select('id, name, slug, category_id, short_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, product_images(storage_path), categories(name)')
+          .eq('is_published', true)
+          .eq('is_active', true),
+      ]),
+      1500
+    )
+    const [{ data: cats, error: catErr }, { data, error }] = res
+    if (error || catErr) {
+      markSupabaseFailure(error || catErr)
+      return null
+    }
+    const parentOf = new Map<string, string>()
+    const byId = new Map<string, Pick<CategoryRow, 'name' | 'parent_id'>>((cats ?? []).map((c) => [c.id, c]))
+    for (const c of cats ?? []) {
+      const p = c.parent_id ? byId.get(c.parent_id) : undefined
+      if (p) parentOf.set(c.id, p.name)
+    }
+    return { rows: (data ?? []) as unknown as Row[], parentOf }
+  } catch (err) {
+    markSupabaseFailure(err)
+    return null
+  }
 }
 
 /** All published products, mapped. Falls back to static catalog on DB error/empty. */
 export async function getAllProducts(): Promise<CatalogProduct[]> {
+  const now = Date.now()
+  if (cachedProducts && cachedProducts.expiresAt > now) {
+    return cachedProducts.data
+  }
   const res = await fetchProducts()
-  if (!res || res.rows.length === 0) return CATALOG
-  return res.rows.map((r) => toProduct(r, res.parentOf))
+  const data = (!res || res.rows.length === 0)
+    ? CATALOG
+    : res.rows.map((r) => toProduct(r, res.parentOf))
+  cachedProducts = { data, expiresAt: now + CACHE_TTL_MS }
+  return data
 }
 
 /** Products filtered by type (saree vs jewel). */
@@ -198,45 +257,58 @@ const emptyHomeContent: HomeContent = {
   footer: {} as FooterContent,
 }
 
-async function fetchContentBlock(key: string): Promise<unknown | null> {
-  if (!supabase) return null
-  const { data, error } = await supabase
-    .from('content_blocks')
-    .select('content')
-    .eq('section_key', key)
-    .eq('is_published', true)
-    .maybeSingle()
-  if (error || !data) return null
-  return data.content
+type ContentBlockRow = {
+  section_key: string
+  content: unknown
+}
+
+async function fetchAllContentBlocks(): Promise<Record<string, unknown> | null> {
+  if (!isSupabaseAvailable()) return null
+  try {
+    const { data, error } = await withTimeout(
+      supabase!
+        .from('content_blocks')
+        .select('section_key, content')
+        .eq('is_published', true),
+      1500
+    )
+    if (error || !data) {
+      markSupabaseFailure(error)
+      return null
+    }
+    const map: Record<string, unknown> = {}
+    for (const item of (data as ContentBlockRow[])) {
+      map[item.section_key] = item.content
+    }
+    return map
+  } catch (err) {
+    markSupabaseFailure(err)
+    return null
+  }
 }
 
 /** Homepage copy/images from content_blocks. Empty section = caller falls back. */
 export async function getHomeContent(): Promise<HomeContent> {
-  const keys = [
-    'hero',
-    'marquee',
-    'browse_by_category',
-    'featured_collection',
-    'our_heritage',
-    'jewellery_spotlight',
-    'testimonials',
-    'instagram_strip',
-    'footer',
-  ] as const
-  const results = await Promise.all(keys.map((k) => fetchContentBlock(k)))
+  const now = Date.now()
+  if (cachedHomeContent && cachedHomeContent.expiresAt > now) {
+    return cachedHomeContent.data
+  }
+
+  const blockMap = await fetchAllContentBlocks()
   const out: HomeContent = { ...emptyHomeContent }
-  results.forEach((v, i) => {
-    if (v == null) return
-    const key = keys[i]
-    if (key === 'hero') out.hero = v as HeroSlide[]
-    else if (key === 'marquee') out.marquee = v as MarqueeItem[]
-    else if (key === 'browse_by_category') out.browse_by_category = v as BbcContent
-    else if (key === 'featured_collection') out.featured_collection = v as FeaturedProduct[]
-    else if (key === 'our_heritage') out.our_heritage = v as OurHeritageContent
-    else if (key === 'jewellery_spotlight') out.jewellery_spotlight = v as JewelSpotContent
-    else if (key === 'testimonials') out.testimonials = v as Testimonial[]
-    else if (key === 'instagram_strip') out.instagram_strip = v as InstaContent
-    else if (key === 'footer') out.footer = v as FooterContent
-  })
+
+  if (blockMap) {
+    if (blockMap.hero) out.hero = blockMap.hero as HeroSlide[]
+    if (blockMap.marquee) out.marquee = blockMap.marquee as MarqueeItem[]
+    if (blockMap.browse_by_category) out.browse_by_category = blockMap.browse_by_category as BbcContent
+    if (blockMap.featured_collection) out.featured_collection = blockMap.featured_collection as FeaturedProduct[]
+    if (blockMap.our_heritage) out.our_heritage = blockMap.our_heritage as OurHeritageContent
+    if (blockMap.jewellery_spotlight) out.jewellery_spotlight = blockMap.jewellery_spotlight as JewelSpotContent
+    if (blockMap.testimonials) out.testimonials = blockMap.testimonials as Testimonial[]
+    if (blockMap.instagram_strip) out.instagram_strip = blockMap.instagram_strip as InstaContent
+    if (blockMap.footer) out.footer = blockMap.footer as FooterContent
+  }
+
+  cachedHomeContent = { data: out, expiresAt: now + CACHE_TTL_MS }
   return out
 }

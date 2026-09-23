@@ -1,0 +1,16 @@
+{
+  "node": {
+    "4082ab9ddcbc7abb02ca131837d0e899d5db56e6f7": {
+      "workers": {
+        "app/(client)/collections/page": {
+          "moduleId": 77305,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "subscribeNewsletter",
+      "filename": "src/lib/newsletter.ts"
+    }
+  },
+  "edge": {}
+}

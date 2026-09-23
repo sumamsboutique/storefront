@@ -8,23 +8,27 @@ const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-cormorant',
+  display: 'swap',
 })
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-dm-sans',
+  display: 'swap',
 })
 
 const hind = Hind({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-hind',
+  display: 'swap',
 })
 
 const hindSiliguri = Hind_Siliguri({
   subsets: ['latin', 'bengali'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-hind-siliguri',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {

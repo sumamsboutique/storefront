@@ -6,6 +6,7 @@ import {
   getRecentOrders,
   getLowStockProducts,
   getRecentAuditLogs,
+  getDashboardInventorySummary,
 } from '@/lib/admin/queries'
 import { AdminCard } from '@/components/admin/AdminCard'
 import { OrderStatusBadge, StockBadge } from '@/components/admin/AdminBadge'
@@ -14,11 +15,12 @@ import { Eyebrow } from '@/components/shared/primitives'
 export default async function AdminDashboardPage() {
   await requireAdminOrStaff()
 
-  const [kpis, recentOrders, lowStockItems, recentLogs] = await Promise.all([
+  const [kpis, recentOrders, lowStockItems, recentLogs, inventorySummary] = await Promise.all([
     getDashboardKPIs(),
     getRecentOrders(6),
     getLowStockProducts(6),
     getRecentAuditLogs(8),
+    getDashboardInventorySummary(8),
   ])
 
   return (
@@ -246,6 +248,114 @@ export default async function AdminDashboardPage() {
           </AdminCard>
         </div>
       </div>
+
+      {/* Inventory & Stock Overview Section */}
+      <AdminCard
+        title="Inventory & Stock Availability Matrix"
+        subtitle="Real-time stock quantities, reorder watchlists, and sold handloom pieces across the atelier catalog."
+        action={
+          <Link
+            href="/admin/products"
+            className="text-xs font-sans text-copper hover:underline"
+          >
+            Manage full inventory ({inventorySummary.totalUnits} total units) →
+          </Link>
+        }
+      >
+        <div className="space-y-6">
+          {/* Quick Stock Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 -mt-2">
+            <div className="p-3 bg-white border border-[#DCC9A8]/40 rounded">
+              <span className="text-[10px] font-sans uppercase tracking-wider text-muted block">
+                Available In Stock
+              </span>
+              <div className="text-xl font-display font-medium text-[#1E6B2C] mt-0.5">
+                {inventorySummary.inStockCount}
+              </div>
+              <span className="text-[10px] font-sans text-muted">Ready for immediate dispatch</span>
+            </div>
+
+            <div className="p-3 bg-white border border-[#DCC9A8]/40 rounded">
+              <span className="text-[10px] font-sans uppercase tracking-wider text-muted block">
+                Low Stock Watch
+              </span>
+              <div className="text-xl font-display font-medium text-[#9A6207] mt-0.5">
+                {inventorySummary.lowStockCount}
+              </div>
+              <span className="text-[10px] font-sans text-muted">≤ 3 units remaining</span>
+            </div>
+
+            <div className="p-3 bg-white border border-[#DCC9A8]/40 rounded">
+              <span className="text-[10px] font-sans uppercase tracking-wider text-muted block">
+                Out of Stock
+              </span>
+              <div className="text-xl font-display font-medium text-[#A62719] mt-0.5">
+                {inventorySummary.outOfStockCount}
+              </div>
+              <span className="text-[10px] font-sans text-muted">Requires loom replenishment</span>
+            </div>
+
+            <div className="p-3 bg-white border border-black/30 rounded bg-[#1C0A06]/5">
+              <span className="text-[10px] font-sans uppercase tracking-wider text-dark block font-semibold">
+                Sold Out Pieces
+              </span>
+              <div className="text-xl font-display font-semibold text-black mt-0.5">
+                {inventorySummary.soldCount}
+              </div>
+              <span className="text-[10px] font-sans text-muted font-medium">Highlighted in solid black</span>
+            </div>
+          </div>
+
+          {/* Stock Table */}
+          <div className="overflow-x-auto -mx-6 -mb-6">
+            <table className="w-full text-left font-sans text-xs">
+              <thead className="bg-cream/40 border-b border-[#DCC9A8]/40 text-muted uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="px-6 py-3">Product Name & Weave</th>
+                  <th className="px-6 py-3">SKU</th>
+                  <th className="px-6 py-3">Category</th>
+                  <th className="px-6 py-3">Stock Status</th>
+                  <th className="px-6 py-3 text-right">Units</th>
+                  <th className="px-6 py-3 text-right">Price</th>
+                  <th className="px-6 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#DCC9A8]/30">
+                {inventorySummary.items.map((item) => (
+                  <tr key={item.id} className="hover:bg-ivory/20 transition-colors">
+                    <td className="px-6 py-3 font-medium text-dark">
+                      {item.name}
+                    </td>
+                    <td className="px-6 py-3 font-mono text-[11px] text-muted">
+                      {item.sku || '—'}
+                    </td>
+                    <td className="px-6 py-3 text-muted">
+                      {item.category_name || 'Handloom'}
+                    </td>
+                    <td className="px-6 py-3">
+                      <StockBadge status={item.stock_status} />
+                    </td>
+                    <td className="px-6 py-3 text-right font-mono text-dark">
+                      {item.quantity}
+                    </td>
+                    <td className="px-6 py-3 text-right font-medium text-dark">
+                      ₹{item.price.toLocaleString('en-IN')}
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      <Link
+                        href={`/admin/products/${item.id}`}
+                        className="text-copper hover:underline font-medium text-xs"
+                      >
+                        Edit Stock
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </AdminCard>
 
       {/* Audit Activity Stream */}
       <AdminCard

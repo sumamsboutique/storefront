@@ -1,0 +1,16 @@
+{
+  "node": {
+    "405914cc78a3f1fb6e67051211611df2cd05c255fe": {
+      "workers": {
+        "app/(client)/jewellery/page": {
+          "moduleId": "[project]/.next-internal/server/app/(client)/jewellery/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/newsletter.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "subscribeNewsletter",
+      "filename": "src/lib/newsletter.ts"
+    }
+  },
+  "edge": {}
+}

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { HeartIcon } from '@/components/icons'
 import { cn } from '@/lib/cn'
 import { useCart, useWishlist } from '@/lib/store'
+import { useMounted } from '@/lib/useMounted'
 
 export interface ProductCardData {
   id?: number | string
@@ -21,6 +22,7 @@ export interface ProductCardData {
   slug?: string
   catalogId?: string
   images?: string[]
+  sold?: boolean
 }
 
 export function ProductCard({
@@ -34,8 +36,10 @@ export function ProductCard({
 }) {
   const add = useCart((s) => s.add)
   const wishlist = useWishlist((s) => s)
-  const wished = product.catalogId ? wishlist.has(product.catalogId) : false
+  const mounted = useMounted()
   const [qvOpen, setQvOpen] = useState(false)
+
+  const wished = mounted && product.catalogId ? wishlist.has(product.catalogId) : false
 
   const addItem = () => {
     if (product.catalogId) {
@@ -65,7 +69,7 @@ export function ProductCard({
             fill
             src={product.images[0]}
             alt={product.name}
-            sizes="(min-width: 768px) 33vw, 100vw"
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
             className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         ) : (
@@ -84,15 +88,27 @@ export function ProductCard({
             </div>
           </>
         )}
+        {/* Sold Overlay */}
+        {product.sold && (
+          <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+            <span className="bg-black text-white px-3.5 py-1.5 font-sans text-[10px] font-semibold tracking-[0.24em] uppercase shadow-lg border border-white/20">
+              SOLD OUT
+            </span>
+          </div>
+        )}
         {/* Badge */}
-        {product.badge && (
+        {product.sold ? (
+          <div className="absolute top-[14px] left-[14px] z-20 font-sans text-[9px] font-bold tracking-[0.2em] uppercase text-white bg-black px-2.5 py-1 shadow-sm">
+            SOLD
+          </div>
+        ) : product.badge ? (
           <div
             className="absolute top-[14px] left-[14px] font-sans text-[9px] font-medium tracking-[0.2em] uppercase text-ivory px-2.5 py-1"
             style={{ background: product.badgeColor ?? '#BF5E18' }}
           >
             {product.badge}
           </div>
-        )}
+        ) : null}
         {/* Wishlist */}
         <button
           suppressHydrationWarning
@@ -135,18 +151,24 @@ export function ProductCard({
         </div>
         <div className="flex items-center justify-between mt-3.5">
           <span className="font-sans text-[15px] font-medium text-copper">{product.price}</span>
-          <button
-            suppressHydrationWarning
-            disabled={!product.catalogId}
-            onClick={(e) => {
-              e.preventDefault()
-              addItem()
-            }}
-            className="bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors duration-200 hover:bg-copper hover:text-ivory disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label={`Add ${product.name} to bag`}
-          >
-            ADD TO BAG
-          </button>
+          {product.sold ? (
+            <span className="bg-black text-white font-sans text-[9px] font-semibold tracking-[0.16em] uppercase px-3 py-1.5">
+              SOLD OUT
+            </span>
+          ) : (
+            <button
+              suppressHydrationWarning
+              disabled={!product.catalogId}
+              onClick={(e) => {
+                e.preventDefault()
+                addItem()
+              }}
+              className="bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors duration-200 hover:bg-copper hover:text-ivory disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label={`Add ${product.name} to bag`}
+            >
+              ADD TO BAG
+            </button>
+          )}
         </div>
       </div>
     </>

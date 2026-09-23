@@ -60,6 +60,31 @@ export async function createAdminServerClient() {
 
 export async function getAdminSession(): Promise<AdminSession | null> {
   try {
+    // 1. Check for local/demo admin session cookie
+    const cookieStore = await cookies()
+    const demoCookie = cookieStore.get('sumams_admin_session')?.value
+    if (demoCookie) {
+      try {
+        const parsed = JSON.parse(demoCookie)
+        return {
+          user: {
+            id: 'admin-dev-01',
+            email: parsed.email || 'admin@sumamsboutique.com',
+          },
+          profile: {
+            id: 'admin-dev-01',
+            role: parsed.role || 'admin',
+            full_name: parsed.full_name || 'Sunit Saha (Atelier Admin)',
+            email: parsed.email || 'admin@sumamsboutique.com',
+            phone: '+91 98765 43210',
+          },
+        }
+      } catch {
+        // invalid cookie payload
+      }
+    }
+
+    // 2. Otherwise check Supabase authentication
     const supabase = await createAdminServerClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) return null

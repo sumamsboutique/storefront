@@ -7,6 +7,8 @@ import { adminLoginAction } from '@/lib/admin/actions'
 
 export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [isPending, startTransition] = useTransition()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -21,6 +23,12 @@ export default function AdminLoginPage() {
         setError(res.error)
       }
     })
+  }
+
+  const handleFillDemo = () => {
+    setEmail('admin@sumamsboutique.com')
+    setPassword('admin123')
+    setError(null)
   }
 
   return (
@@ -58,6 +66,8 @@ export default function AdminLoginPage() {
             <input
               type="email"
               name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="admin@sumamsboutique.com"
               className="w-full px-3.5 py-2.5 bg-white border border-[#DCC9A8]/80 rounded text-sm font-sans text-dark placeholder:text-muted/50 focus:border-copper focus:ring-2 focus:ring-copper/20 focus:outline-none"
@@ -71,6 +81,8 @@ export default function AdminLoginPage() {
             <input
               type="password"
               name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••••••"
               className="w-full px-3.5 py-2.5 bg-white border border-[#DCC9A8]/80 rounded text-sm font-sans text-dark placeholder:text-muted/50 focus:border-copper focus:ring-2 focus:ring-copper/20 focus:outline-none"
@@ -85,6 +97,26 @@ export default function AdminLoginPage() {
             {isPending ? 'Authenticating...' : 'Enter Admin Panel'}
           </button>
         </form>
+
+        {/* Quick Demo Credentials Helper */}
+        <div className="mt-6 p-3.5 bg-cream/60 border border-[#DCC9A8] rounded-md text-xs">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="font-ui text-[11px] font-semibold uppercase tracking-wider text-dark">
+              Demo Access Credentials
+            </span>
+            <button
+              type="button"
+              onClick={handleFillDemo}
+              className="text-[11px] font-medium text-copper hover:underline focus:outline-none"
+            >
+              Fill Demo Login
+            </button>
+          </div>
+          <div className="font-mono text-[11px] text-muted space-y-0.5">
+            <div>Email: <span className="text-dark font-medium select-all">admin@sumamsboutique.com</span></div>
+            <div>Password: <span className="text-dark font-medium select-all">admin123</span></div>
+          </div>
+        </div>
 
         {/* Storefront return link */}
         <div className="mt-8 text-center pt-6 border-t border-[#DCC9A8]/30">

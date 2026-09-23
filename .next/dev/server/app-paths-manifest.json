@@ -1,0 +1,9 @@
+{
+  "/(client)/collections/page": "app/(client)/collections/page.js",
+  "/(client)/jewellery/page": "app/(client)/jewellery/page.js",
+  "/(client)/page": "app/(client)/page.js",
+  "/(client)/sarees/page": "app/(client)/sarees/page.js",
+  "/(client)/story/page": "app/(client)/story/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/api/health/route": "app/api/health/route.js"
+}

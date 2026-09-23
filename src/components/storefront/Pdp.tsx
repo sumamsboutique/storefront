@@ -9,6 +9,7 @@ import { PdpCard } from './PdpCard'
 import { AlponaDivider, PAD, SareeBorderDivider } from '@/components/shared/primitives'
 import { cn } from '@/lib/cn'
 import { useCart, useWishlist } from '@/lib/store'
+import { useMounted } from '@/lib/useMounted'
 
 function fmt(n: number) {
   return '₹' + n.toLocaleString('en-IN')
@@ -145,11 +146,26 @@ function Gallery({ p }: { p: CatalogProduct }) {
           <Image
             key={active}
             fill
+            priority={active === 0}
             src={displayShots[active]}
             alt={p.name}
-            sizes="100vw"
+            sizes="(max-width: 1024px) 100vw, 60vw"
             className="object-cover opacity-0 animate-[fadeIn_0.4s_ease-out_forwards] group-hover:scale-[1.02] transition-transform duration-700 ease-out"
           />
+        </div>
+        {/* Mobile slide indicator dots */}
+        <div className="flex justify-center gap-1.5 py-2.5 lg:hidden">
+          {displayShots.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActive(i)}
+              className={cn(
+                'h-1.5 rounded-full transition-all duration-300',
+                active === i ? 'w-5 bg-copper' : 'w-1.5 bg-[rgba(140,106,85,0.3)]'
+              )}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -157,29 +173,52 @@ function Gallery({ p }: { p: CatalogProduct }) {
 }
 
 // ── Accordion ──
-function AccordionRow({ title, defaultOpen = false, children }: { title: string; defaultOpen?: boolean; children?: React.ReactNode }) {
+function AccordionRow({ title, icon, defaultOpen = false, children }: { title: string; icon?: string; defaultOpen?: boolean; children?: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div>
+    <div className="border-b border-[rgba(140,106,85,0.2)]">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex h-14 w-full items-center justify-between border-b border-[rgba(140,106,85,0.25)] text-left"
+        className="flex h-14 w-full items-center justify-between text-left py-3 group cursor-pointer"
       >
-        <span className="font-sans text-xs font-medium tracking-[0.18em] text-dark uppercase">{title}</span>
-        <span className="w-4 text-center font-sans text-base text-muted leading-none transition-transform duration-200" style={{ transform: open ? 'rotate(45deg)' : 'none' }}>+</span>
+        <div className="flex items-center gap-2.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-copper/60 group-hover:bg-copper transition-colors" />
+          <span className="font-ui text-xs font-semibold tracking-[0.18em] text-dark uppercase">{title}</span>
+        </div>
+        <span
+          className="flex h-6 w-6 items-center justify-center font-ui text-sm text-copper/80 border border-copper/30 transition-transform duration-300 group-hover:border-copper"
+          style={{ transform: open ? 'rotate(45deg)' : 'none' }}
+        >
+          +
+        </span>
       </button>
-      {open && <div className="border-b border-[rgba(140,106,85,0.25)] py-6">{children}</div>}
+      {open && <div className="pb-6 pt-2 animate-fadeIn">{children}</div>}
+    </div>
+  )
+}
+
+function FeaturePills({ items }: { items: string[] }) {
+  return (
+    <div className="flex flex-wrap gap-2 pt-1">
+      {items.map((item) => (
+        <span
+          key={item}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/80 border border-[rgba(140,106,85,0.25)] font-ui text-xs text-dark/90 tracking-wide"
+        >
+          <span className="h-1 w-1 rounded-full bg-copper" />
+          {item}
+        </span>
+      ))}
     </div>
   )
 }
 
 function BulletList({ items }: { items: string[] }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid gap-2.5">
       {items.map((item) => (
-        <div key={item} className="flex items-baseline gap-2">
-          <span className="text-[10px] text-copper">•</span>
-          <span className="font-sans text-[13px] font-light leading-[1.7] text-[rgba(28,10,6,0.8)]">{item}</span>
+        <div key={item} className="flex items-start gap-2.5 p-2 bg-cream/40 border-l-2 border-copper">
+          <span className="font-ui text-xs font-light leading-[1.7] text-dark/85">{item}</span>
         </div>
       ))}
     </div>
@@ -188,9 +227,11 @@ function BulletList({ items }: { items: string[] }) {
 
 // ── 3. Info panel ──
 function ProductInfo({ p }: { p: CatalogProduct }) {
+  const mounted = useMounted()
   const { add } = useCart()
   const { has, toggle } = useWishlist()
-  const wished = has(p.id)
+
+  const wished = mounted ? has(p.id) : false
   const sub = p.type === 'jewel' ? p.tag : p.sub
   const copy = accordionCopy(p)
   const addItem = () => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] })
@@ -212,28 +253,50 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
       <div>
         <div className="mb-2 flex items-baseline justify-between">
           <span className="font-display text-2xl font-medium tracking-[-0.005em] text-copper md:text-3xl">{p.price}</span>
-          <div className="flex items-center gap-2">
-            <svg width="8" height="8" viewBox="0 0 8 8">
-              <rect x="1" y="1" width="6" height="6" fill="#BF5E18" transform="rotate(45,4,4)" />
-            </svg>
-            <span className="font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-gold">
-              {p.sold ? 'Sold Out' : 'Only 1 Piece — One of One'}
+          {p.sold ? (
+            <span className="bg-black text-white px-3 py-1 font-ui text-[10px] font-bold tracking-[0.2em] uppercase shadow-sm">
+              SOLD OUT
             </span>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <svg width="8" height="8" viewBox="0 0 8 8">
+                <rect x="1" y="1" width="6" height="6" fill="#BF5E18" transform="rotate(45,4,4)" />
+              </svg>
+              <span className="font-ui text-[11px] font-medium uppercase tracking-[0.16em] text-gold">
+                Only 1 Piece — One of One
+              </span>
+            </div>
+          )}
         </div>
-        <div className="font-sans text-[11px] font-light text-muted">Inclusive of all taxes · MRP</div>
+        <div className="font-ui text-[11px] font-light text-muted">Inclusive of all taxes · Hand-verified heirloom piece</div>
       </div>
 
-      {/* C — CTA cluster */}
+      {/* C — Quick Highlights Spec Strip */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 p-3.5 bg-cream/70 border border-[rgba(140,106,85,0.25)]">
+        <div>
+          <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Weave / Craft</div>
+          <div className="font-ui text-xs font-semibold text-dark mt-0.5">{p.weave}</div>
+        </div>
+        <div>
+          <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Category</div>
+          <div className="font-ui text-xs font-semibold text-dark mt-0.5">{p.type === 'saree' ? 'Handloom Saree' : 'Fine Jewellery'}</div>
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Craft Guarantee</div>
+          <div className="font-ui text-xs font-semibold text-copper mt-0.5">Sumam Hand-Verified</div>
+        </div>
+      </div>
+
+      {/* D — CTA cluster (WhatsApp removed per client MOM) */}
       <div>
-        <div className="mb-3 flex gap-3">
+        <div className="flex gap-3">
           <button
             onClick={addItem}
             disabled={p.sold}
             className={cn(
-              'h-[52px] flex-1 font-sans text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-400 ease-out',
+              'h-[52px] flex-1 font-ui text-[11px] font-semibold uppercase tracking-[0.18em] transition-all duration-300 ease-out',
               p.sold
-                ? 'cursor-not-allowed bg-[rgba(140,106,85,0.3)] text-[rgba(28,10,6,0.4)]'
+                ? 'cursor-not-allowed bg-black text-white'
                 : 'bg-dark text-ivory hover:bg-copper hover:tracking-[0.22em]'
             )}
           >
@@ -252,49 +315,36 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
             </svg>
           </button>
         </div>
-
-        <a
-          href={`https://wa.me/?text=${encodeURIComponent(`Hi Sumam, I'm interested in the ${p.name} (${p.price}). Could you share more details?`)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="mb-4 flex h-[52px] w-full items-center justify-center gap-3 bg-whatsapp font-sans text-xs font-medium uppercase tracking-[0.18em] text-white"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-            <path d="M11.998 2.003C6.476 2.003 2 6.479 2 12.001c0 1.762.457 3.45 1.33 4.931L2 22l5.218-1.299A9.955 9.955 0 0012 21.999c5.522 0 9.998-4.476 9.998-9.998 0-5.523-4.476-9.998-9.998-9.998zm0 18.286a8.27 8.27 0 01-4.208-1.154l-.303-.18-3.098.772.794-3.001-.198-.311A8.265 8.265 0 013.73 12c0-4.568 3.714-8.282 8.268-8.282 4.555 0 8.267 3.714 8.267 8.282 0 4.567-3.712 8.289-8.267 8.289z" />
-          </svg>
-          Chat on WhatsApp
-        </a>
       </div>
 
-      {/* D — Description */}
+      {/* E — Description */}
       <div>
-        <div className="mb-4 font-display text-lg text-dark">
+        <div className="mb-3 font-display text-lg text-dark">
           About This {p.type === 'jewel' ? 'Piece' : 'Saree'}
         </div>
-        <div className="mb-4 h-px w-6 bg-copper" />
-        <p className="font-sans text-[13px] font-light leading-[1.8] text-[rgba(28,10,6,0.8)]">
+        <div className="mb-3 h-px w-6 bg-copper" />
+        <p className="font-ui text-[13px] font-light leading-[1.8] text-[rgba(28,10,6,0.85)]">
           {p.type === 'jewel'
             ? `${p.name} is crafted from hand-finished materials, each piece personally checked by Sumam before it reaches you. A one-of-one piece drawn from Bengal's temple and heirloom traditions.`
             : `A ${p.weave} handwoven in the traditional technique, where each motif is woven separately into the fabric — never stitched on. The ${p.occasion.toLowerCase()} palette is hand-dyed, with intricate zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Bengal.`}
         </p>
       </div>
 
-      {/* E — Accordions */}
-      <div>
+      {/* F — Enhanced Accordions */}
+      <div className="space-y-1">
         <AccordionRow title="Fabric & Weave" defaultOpen>
           <BulletList items={copy.fabric} />
         </AccordionRow>
-        <AccordionRow title="Occasion">
-          <BulletList items={copy.occasion} />
+        <AccordionRow title="Occasion & Pairing">
+          <FeaturePills items={copy.occasion} />
         </AccordionRow>
-        <AccordionRow title="Dimensions">
+        <AccordionRow title="Dimensions & Specifications">
           <BulletList items={copy.dimensions} />
         </AccordionRow>
-        <AccordionRow title="Care">
+        <AccordionRow title="Wash & Care Preservation">
           <BulletList items={copy.care} />
         </AccordionRow>
-        <AccordionRow title="Shipping & Returns">
+        <AccordionRow title="Complimentary Shipping & Returns">
           <BulletList items={copy.shipping} />
         </AccordionRow>
       </div>
@@ -354,7 +404,7 @@ const TRUST_ITEMS = [
   { n: 0, title: 'Authenticity Certified', sub: 'Each piece, hand-verified by Sumam' },
   { n: 1, title: 'Free Shipping', sub: 'On orders above ₹10,000' },
   { n: 2, title: '7-Day Returns', sub: 'Easy returns, subject to inspection' },
-  { n: 3, title: 'WhatsApp Support', sub: 'Personal assistance from our boutique' },
+  { n: 3, title: 'Atelier Concierge', sub: 'Personal guidance from our boutique' },
 ] as const
 
 function TrustStrip() {
@@ -399,7 +449,7 @@ function StyleThisWith({ p }: { p: CatalogProduct }) {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
         {styled.map((j) => (
           <Link key={j.id} href={`/products/${j.slug}`}>
-            <PdpCard tag={j.tag} gradient={j.gradient} label={j.label} name={j.name} price={j.price} images={j.images} />
+            <PdpCard tag={j.tag} gradient={j.gradient} label={j.label} name={j.name} price={j.price} images={j.images} sold={j.sold} />
           </Link>
         ))}
       </div>
@@ -435,7 +485,7 @@ function MoreFrom({ p }: { p: CatalogProduct }) {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
         {items.map((r) => (
           <Link key={r.id} href={`/products/${r.slug}`}>
-            <PdpCard badge={r.badge} badgeColor={r.badge === 'New Arrival' || r.badge === 'Featured' ? '#BF5E18' : '#D4880A'} gradient={r.gradient} label={r.label} name={r.name} sub={r.sub} price={r.price} images={r.images} />
+            <PdpCard badge={r.badge} badgeColor={r.badge === 'New Arrival' || r.badge === 'Featured' ? '#BF5E18' : '#D4880A'} gradient={r.gradient} label={r.label} name={r.name} sub={r.sub} price={r.price} images={r.images} sold={r.sold} />
           </Link>
         ))}
       </div>
@@ -455,7 +505,10 @@ function StickyBar({ p }: { p: CatalogProduct }) {
       <button
         onClick={() => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] })}
         disabled={p.sold}
-        className="h-12 shrink-0 bg-copper px-6 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-ivory"
+        className={cn(
+          'h-12 shrink-0 px-6 font-ui text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors',
+          p.sold ? 'bg-black text-white cursor-not-allowed border border-white/20' : 'bg-copper text-ivory hover:bg-[#A04A18]'
+        )}
       >
         {p.sold ? 'Sold Out' : 'Add to Bag'}
       </button>

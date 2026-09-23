@@ -1,0 +1,3 @@
+module.exports=[67970,a=>{"use strict";var b=a.i(40576);a.s([],68712),a.i(68712),a.s(["003b9c049975657b27626fa91b0487469f70604f42",()=>b.adminLogoutAction,"4037cb7155ef062ac527e9de40fb0f89c762845cfa",()=>b.saveCoupon,"40839137b1d549d8ab30667135b06def10a3509111",()=>b.deleteCoupon,"60a8fa91ff33def366e4a0aad7bb31cdc0e13b9426",()=>b.toggleCoupon],67970)}];
+
+//# sourceMappingURL=_next-internal_server_app_admin_coupons_page_actions_0ffq6lr.js.map

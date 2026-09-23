@@ -220,7 +220,8 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
           width={480}
           height={480}
           priority={false}
-          style={{ width: '100%', height: 'auto', filter: 'sepia(1) saturate(3) hue-rotate(-10deg) brightness(0.7)' }}
+          className="w-full h-auto"
+          style={{ filter: 'sepia(1) saturate(3) hue-rotate(-10deg) brightness(0.7)' }}
         />
       </div>
 

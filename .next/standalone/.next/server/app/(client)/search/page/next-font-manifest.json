@@ -1,0 +1,26 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/src/app/(client)/search/page": [
+      "static/media/01e4147cff8141ee-s.p.3huc2loe0ie8a.woff2",
+      "static/media/5c285b27cdda1fe8-s.p.2_mbdogr7ni8i.woff2",
+      "static/media/211e29c1c16163dc-s.p.2p9qfnu2qh4q6.woff2",
+      "static/media/615b8c4b816233f9-s.p.3hfkl415jjze8.woff2",
+      "static/media/0e63149d5897f52c-s.p.19jsrx7exjbdt.woff2",
+      "static/media/91ac69127e8041e8-s.p.083560ve--_qs.woff2",
+      "static/media/5246515474daf346-s.p.14m725e1f886h.woff2",
+      "static/media/5838bc3f070fd510-s.p.3vga9zqu1bmt7.woff2",
+      "static/media/5e7949b23cf57750-s.p.0rqesly5ro1k0.woff2",
+      "static/media/1f95d4beca86b0f6-s.p.0nu0d1-zq0f7n.woff2",
+      "static/media/0b1792555a6d440e-s.p.0mbba7e7fye4a.woff2",
+      "static/media/34478e929f11203a-s.p.43mqagctl8tum.woff2",
+      "static/media/fddc8784efb0488f-s.p.2115tu4m4whjv.woff2",
+      "static/media/d62a86ea65eb628c-s.p.3eswb6t44uyhi.woff2",
+      "static/media/9edc04d9bd7b92a1-s.p.2grpegx_myr9g.woff2",
+      "static/media/7ca7a04daf1e7f98-s.p.2ih2w5qn4g81_.woff2",
+      "static/media/463098014298bfba-s.p.3qwca9tgzuj27.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

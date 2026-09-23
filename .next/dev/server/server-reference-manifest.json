@@ -1,0 +1,59 @@
+{
+  "node": {
+    "405914cc78a3f1fb6e67051211611df2cd05c255fe": {
+      "workers": {
+        "app/(client)/collections/page": {
+          "moduleId": "[project]/.next-internal/server/app/(client)/collections/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/newsletter.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/(client)/jewellery/page": {
+          "moduleId": "[project]/.next-internal/server/app/(client)/jewellery/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/newsletter.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/(client)/page": {
+          "moduleId": "[project]/.next-internal/server/app/(client)/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/newsletter.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/(client)/sarees/page": {
+          "moduleId": "[project]/.next-internal/server/app/(client)/sarees/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/newsletter.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/(client)/story/page": {
+          "moduleId": "[project]/.next-internal/server/app/(client)/story/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/newsletter.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "src/lib/newsletter.ts",
+      "exportedName": "subscribeNewsletter"
+    },
+    "00294ee073f4678e026473b0701ab561233d68034b": {
+      "workers": {
+        "app/admin/login/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/login/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/admin/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "src/lib/admin/actions.ts",
+      "exportedName": "adminLogoutAction"
+    },
+    "6070526ff2f91bc3fe6db7b2756de1534052dc1b26": {
+      "workers": {
+        "app/admin/login/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/login/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/admin/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "src/lib/admin/actions.ts",
+      "exportedName": "adminLoginAction"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "oOWj3hUrumiZb2SKHIgooldVIwhREG7JMaJi6RatR7w="
+}

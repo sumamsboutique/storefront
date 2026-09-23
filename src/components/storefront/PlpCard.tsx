@@ -5,12 +5,15 @@ import Link from 'next/link'
 import type { CatalogProduct } from '@/lib/catalog'
 import { HeartIcon } from '@/components/icons'
 import { useCart, useWishlist } from '@/lib/store'
+import { useMounted } from '@/lib/useMounted'
 
 export function PlpCard({ product }: { product: CatalogProduct }) {
   const { type, name, sub, price, priceNum, badge, gradient, label, sold, slug, tag, images } = product
+  const mounted = useMounted()
   const add = useCart((s) => s.add)
   const wishlist = useWishlist((s) => s)
-  const wished = wishlist.has(product.id)
+
+  const wished = mounted ? wishlist.has(product.id) : false
   const img = images?.[0]
 
   return (
@@ -28,11 +31,16 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
             <div className="absolute inset-0" style={{ background: gradient }} />
           )}
           {sold && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <div className="flex h-10 w-10 rotate-45 items-center justify-center border border-[rgba(245,239,230,0.5)]">
-                <span className="-rotate-45 font-ui text-[9px] font-medium tracking-[0.18em] text-[rgba(245,239,230,0.85)]">SOLD</span>
+            <>
+              <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
+                <span className="bg-black text-white px-3.5 py-1.5 font-ui text-[10px] font-semibold tracking-[0.24em] uppercase shadow-lg border border-white/20">
+                  SOLD OUT
+                </span>
               </div>
-            </div>
+              <span className="absolute left-3 top-3 z-20 bg-black text-white px-2 py-0.5 font-ui text-[8px] font-bold tracking-[0.2em] uppercase">
+                SOLD
+              </span>
+            </>
           )}
           {badge && !sold && (
             <span className="absolute left-4 top-4 z-10 bg-copper px-2.5 py-1 font-ui text-[9px] font-medium tracking-[0.18em] text-ivory uppercase">
@@ -62,7 +70,9 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
         <div className="flex items-center justify-between">
           <span className="font-ui text-sm font-medium text-copper">{price}</span>
           {sold ? (
-            <span className="font-ui text-[9px] tracking-[0.16em] text-muted uppercase">Sold out</span>
+            <span className="inline-flex items-center justify-center h-8 bg-black text-white px-3 font-ui text-[9px] font-semibold tracking-[0.16em] uppercase">
+              SOLD OUT
+            </span>
           ) : (
             <button
               onClick={(e) => {
