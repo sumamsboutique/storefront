@@ -111,6 +111,30 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   }
 }
 
+export async function getCustomerSession(): Promise<AdminSession | null> {
+  try {
+    const supabase = await createAdminServerClient()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) return null
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role, full_name, email, phone, created_at, updated_at')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profileError || !profile || profile.role !== 'customer') return null
+
+    return {
+      user: { id: user.id, email: user.email ?? profile.email ?? undefined },
+      profile: profile as AdminProfile,
+    }
+  } catch (err) {
+    console.error('[admin/auth] error getting customer session:', err)
+    return null
+  }
+}
+
 export async function requireAdminOrStaff(): Promise<AdminSession> {
   const session = await getAdminSession()
   if (!session) {

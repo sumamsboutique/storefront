@@ -100,7 +100,11 @@ export async function adminLoginAction(
     if (authError || !authData?.user) {
       recordFailedLogin(ip)
       recordFailedLogin(emailKey)
-      return { error: authError?.message || 'Invalid credentials.' }
+      const raw = authError?.message || ''
+      const msg = /invalid login credentials|invalid credentials/i.test(raw)
+        ? 'The email or password you entered is incorrect.'
+        : raw || 'The email or password you entered is incorrect.'
+      return { error: msg }
     }
 
     // Verify role is admin or staff
@@ -130,6 +134,66 @@ export async function adminLoginAction(
   }
 }
 
+export async function adminSignupAction(
+  prevState: { error?: string; success?: boolean; message?: string } | null,
+  formData: FormData
+) {
+  const fullName = (formData.get('fullName') as string)?.trim()
+  const email = (formData.get('email') as string)?.trim().toLowerCase()
+  const phone = (formData.get('phone') as string)?.trim() || null
+  const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
+
+  if (!fullName) return { error: 'Please enter your full name.' }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: 'Please enter a valid email address.' }
+  }
+  if (!password || password.length < 8) {
+    return { error: 'Password must contain at least 8 characters.' }
+  }
+  if (password !== confirmPassword) {
+    return { error: 'Passwords do not match.' }
+  }
+
+  try {
+    const supabase = await createAdminServerClient()
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName, phone } },
+    })
+
+    if (error || !data?.user) {
+      return { error: error?.message || 'Sign up failed.' }
+    }
+
+    // best-effort profile row so the account can sign in; a missing profile
+    // (RLS/trigger) must not fail the signup itself.
+    try {
+      await supabase.from('profiles').upsert(
+        {
+          id: data.user.id,
+          role: 'customer',
+          full_name: fullName,
+          email,
+          phone,
+        },
+        { onConflict: 'id' }
+      )
+    } catch {
+      // ignore
+    }
+
+    return {
+      success: true,
+      message: 'Account created. Check your inbox to confirm your email, then sign in.',
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return { error: msg || 'Sign up failed.' }
+  }
+}
+
 export async function adminLogoutAction() {
   const cookieStore = await cookies()
   cookieStore.delete('sumams_admin_session')
@@ -140,6 +204,78 @@ export async function adminLogoutAction() {
     // Ignore network error on signout
   }
   redirect('/admin/login')
+}
+
+// ── Customer Auth Actions ────────────────────────────────────────────────────
+export async function customerLoginAction(
+  prevState: { error?: string } | null,
+  formData: FormData
+) {
+  const email = (formData.get('email') as string)?.trim()
+  const password = formData.get('password') as string
+
+  if (!email || !password) {
+    return { error: 'Please enter both email and password.' }
+  }
+
+  const hdrs = await headers()
+  const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const emailKey = email.toLowerCase()
+  if (loginThrottled(ip) || loginThrottled(emailKey)) {
+    return { error: 'Too many attempts. Please try again in 15 minutes.' }
+  }
+
+  try {
+    const supabase = await createAdminServerClient()
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (authError || !authData?.user) {
+      const raw = authError?.message || ''
+      const msg = /invalid login credentials|invalid credentials/i.test(raw)
+        ? 'The email or password you entered is incorrect.'
+        : raw || 'The email or password you entered is incorrect.'
+      if (/email not confirmed/i.test(raw)) {
+        return {
+          error: 'Your email is not confirmed yet. Check your inbox for the confirmation link, then try again.',
+        }
+      }
+      recordFailedLogin(ip)
+      recordFailedLogin(emailKey)
+      return { error: msg }
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user.id)
+      .maybeSingle()
+
+    if (profileError || !profile || profile.role !== 'customer') {
+      await supabase.auth.signOut()
+      return { error: 'Your account is registered for staff access. Please use the staff CRM login.' }
+    }
+
+    redirect('/account')
+  } catch (err) {
+    if (err && typeof err === 'object' && 'digest' in err) {
+      throw err // Next.js redirect
+    }
+    const msg = err instanceof Error ? err.message : String(err)
+    return { error: msg || 'Login failed.' }
+  }
+}
+
+export async function customerLogoutAction() {
+  try {
+    const supabase = await createAdminServerClient()
+    await supabase.auth.signOut()
+  } catch {
+    // Ignore network error on signout
+  }
+  redirect('/account')
 }
 
 // ── Product Actions ──────────────────────────────────────────────────────────

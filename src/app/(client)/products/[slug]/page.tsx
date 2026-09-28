@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import Footer from '@/components/storefront/Footer'
 import Pdp from '@/components/storefront/Pdp'
@@ -8,8 +9,8 @@ import { siteUrl } from '@/lib/site'
 function Navbar() {
   return (
     <nav aria-label="Main navigation" className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5">
-      <a href="/" className="font-serif text-xl">Sumam&apos;s Boutique</a>
-      <a href="/products" className="text-sm">Shop</a>
+      <Link href="/" className="font-serif text-xl">Sumam&apos;s Boutique</Link>
+      <Link href="/products" className="text-sm">Shop</Link>
     </nav>
   )
 }
