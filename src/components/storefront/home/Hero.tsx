@@ -239,21 +239,6 @@ export default function Hero({ slides: slidesProp }: { slides?: HeroSlide[] }) {
         </span>
       </div>
 
-      {/* Mobile progress bars */}
-      <div className="absolute bottom-[220px] left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
-        {slides.map((_, i) => (
-          <div key={i} className="w-9 h-[2px] bg-[rgba(245,239,230,0.25)] relative overflow-hidden">
-            {i === active && (
-              <div className="absolute inset-0 bg-[rgba(245,239,230,0.25)]" />
-            )}
-            {i === active && (
-              <div className="absolute top-0 left-0 h-full bg-copper" style={{ width: `${prog * 100}%` }} />
-            )}
-            {i < active && <div className="absolute inset-0 bg-copper opacity-45" />}
-          </div>
-        ))}
-      </div>
-
       {/* Prev / Next — desktop */}
       {(
         [

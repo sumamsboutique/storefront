@@ -57,7 +57,7 @@ export type DashboardInventorySummary = {
   items: DashboardInventoryItem[]
 }
 
-function withTimeout<T>(promise: PromiseLike<T>, ms = 1500): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, ms = 8000): Promise<T> {
   let timer: NodeJS.Timeout
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => reject(new Error(`Admin query timeout after ${ms}ms`)), ms)
@@ -80,7 +80,7 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
         supabase.from('products').select('id, is_active, stock_status'),
         supabase.from('product_variants').select('id, stock_quantity'),
       ]),
-      1500
+      8000
     )
 
     const orderRows = orders ?? []
@@ -135,7 +135,7 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrderRow[]> {
         .select('id, created_at, status, total, shipping_address, profiles(full_name, email)')
         .order('created_at', { ascending: false })
         .limit(limit),
-      1500
+      8000
     )
 
     if (error || !data) return []
@@ -167,7 +167,7 @@ export async function getLowStockProducts(limit = 6): Promise<LowStockItem[]> {
         .select('id, name, sku, stock_status, product_variants(stock_quantity)')
         .in('stock_status', ['low_stock', 'out_of_stock'])
         .limit(limit),
-      1500
+      8000
     )
 
     if (!data || data.length === 0) return []
@@ -200,7 +200,7 @@ export async function getRecentAuditLogs(limit = 8): Promise<AuditLogRow[]> {
         .select('id, table_name, record_id, action, created_at, diff, profiles(full_name, email)')
         .order('created_at', { ascending: false })
         .limit(limit),
-      1500
+      8000
     )
 
     if (!data) return []
@@ -231,7 +231,7 @@ export async function getDashboardInventorySummary(limit = 8): Promise<Dashboard
         .from('products')
         .select('id, name, sku, price, stock_status, categories(name), product_variants(stock_quantity)')
         .order('updated_at', { ascending: false }),
-      1500
+      8000
     )
 
     if (error || !prods || prods.length === 0) {
@@ -949,7 +949,7 @@ export async function getAdminMedia(): Promise<MediaFile[]> {
       '/Products/temple-choker-set.png',
       '/Products/kantha-stitch-tussar.png',
       '/Products/jhumka-antique-finish.png',
-      '/logo_transparent.png',
+      '/logo.png',
       '/saree_figure.png',
     ]
 

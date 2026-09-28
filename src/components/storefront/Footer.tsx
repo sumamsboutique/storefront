@@ -215,10 +215,10 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
       {/* Watermark logo */}
       <div className="absolute right-[-4%] top-1/2 -translate-y-1/2 w-[480px] opacity-[0.07] pointer-events-none z-0 hidden md:block">
         <Image
-          src="/logo_transparent.png"
+          src="/logo.png"
           alt=""
-          width={480}
-          height={480}
+          width={761}
+          height={306}
           priority={false}
           className="w-full h-auto"
           style={{ filter: 'sepia(1) saturate(3) hue-rotate(-10deg) brightness(0.7)' }}

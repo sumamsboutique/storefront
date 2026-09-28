@@ -101,10 +101,11 @@ export default function Navbar() {
         <div className="flex flex-col items-center shrink-0">
           <Link href="/" aria-label="Sumam's Boutique home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* logo.png is trimmed to the mark's bounds — h-7 ≈ the old visible size, no dead padding */}
             <img
-              src="/logo_transparent.png"
+              src="/logo.png"
               alt="Sumam's Boutique"
-              className="h-14 w-auto object-contain"
+              className="h-7 w-auto object-contain"
             />
           </Link>
         </div>
