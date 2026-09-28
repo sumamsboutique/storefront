@@ -1,1 +1,23 @@
-node_modules/ 
+# dependencies
+node_modules/
+
+# next.js build output
+.next/
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# env files (real secrets live in the deploy platform, not the repo)
+.env
+.env.local
+.env.production
+
+# local logs
+dev.log
+*.log
+
+# local browser-automation debug output
+.playwright-mcp/
+
+# OS junk
+.DS_Store
+Thumbs.db

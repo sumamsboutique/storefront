@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 64, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Ashmeet/Music/Digital%20Buddies/Sumams/src/app/api/health/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server'\n\nexport const dynamic = 'force-dynamic'\n\nexport async function GET() {\n  const healthData = {\n    status: 'ok',\n    timestamp: new Date().toISOString(),\n    uptime: Math.floor(process.uptime()),\n    environment: process.env.NODE_ENV || 'production',\n    service: \"Sumam's Boutique\",\n  }\n\n  return NextResponse.json(healthData, {\n    status: 200,\n    headers: {\n      'Cache-Control': 'no-store, no-cache, must-revalidate',\n    },\n  })\n}\n"],"names":["dynamic","GET","healthData","status","timestamp","Date","toISOString","uptime","Math","floor","process","environment","service","json","headers"],"mappings":";;;;;;AAAA;;AAEO,MAAMA,UAAU;AAEhB,eAAeC;IACpB,MAAMC,aAAa;QACjBC,QAAQ;QACRC,WAAW,IAAIC,OAAOC,WAAW;QACjCC,QAAQC,KAAKC,KAAK,CAACC,QAAQH,MAAM;QACjCI,aAAa,mDAAwB;QACrCC,SAAS;IACX;IAEA,OAAO,+PAAY,CAACC,IAAI,CAACX,YAAY;QACnCC,QAAQ;QACRW,SAAS;YACP,iBAAiB;QACnB;IACF;AACF"}}]
-}
