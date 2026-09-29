@@ -17,6 +17,14 @@ const inputBase =
   'w-full rounded-full border border-[rgba(140,106,85,0.32)] bg-white/80 px-5 py-3.5 text-[15px] text-dark shadow-[inset_0_1px_2px_rgba(28,10,6,0.04)] outline-none transition-all duration-200 placeholder:text-muted/50 focus:border-copper focus:ring-4 focus:ring-copper/15'
 const inputDanger = ' border-red-400/70 focus:border-red-600 focus:ring-red-200/60'
 
+// ponytail: shared low-privilege demo account — deliberately public, so this is
+// safe to show. It only self-reads via RLS (own orders/addresses). Per-tenant
+// demo accounts if you ever need isolation.
+const DEMO_CUSTOMER_EMAIL =
+  process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL ?? 'demo@sumamsboutique.com'
+const DEMO_CUSTOMER_PASSWORD =
+  process.env.NEXT_PUBLIC_DEMO_CUSTOMER_PASSWORD ?? 'customer123'
+
 function FieldShell({
   id,
   label,
@@ -184,8 +192,8 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
   const isProd = process.env.NODE_ENV === 'production'
 
   const fillDemo = () => {
-    setLoginEmail('admin@sumamsboutique.com')
-    setLoginPassword('admin123')
+    setLoginEmail(isAdmin ? 'admin@sumamsboutique.com' : DEMO_CUSTOMER_EMAIL)
+    setLoginPassword(isAdmin ? 'admin123' : DEMO_CUSTOMER_PASSWORD)
     setError(null)
   }
 
@@ -417,12 +425,17 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                   </p>
                 )}
 
-                {isAdmin && !isProd && (
+                {(isAdmin ? !isProd : true) && (
                   <div className="mt-6 rounded-xl border border-[#DCC9A8]/70 bg-cream/50 px-4 py-3 text-center">
                     <p className="font-sans text-[11px] text-muted">
-                      Demo access —{' '}
-                      <span className="select-all font-medium text-dark">admin@sumamsboutique.com</span>{' '}
-                      / <span className="select-all font-medium text-dark">admin123</span>
+                      {isAdmin ? 'Demo access' : 'Demo customer account'} —{' '}
+                      <span className="select-all font-medium text-dark">
+                        {isAdmin ? 'admin@sumamsboutique.com' : DEMO_CUSTOMER_EMAIL}
+                      </span>{' '}
+                      /{' '}
+                      <span className="select-all font-medium text-dark">
+                        {isAdmin ? 'admin123' : DEMO_CUSTOMER_PASSWORD}
+                      </span>
                     </p>
                     <button
                       type="button"
