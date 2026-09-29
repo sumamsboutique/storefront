@@ -136,7 +136,7 @@ export default function Hero({ slides: slidesProp }: { slides?: HeroSlide[] }) {
               sizes="(max-width: 767px) 100vw, 0px"
               priority={i === 0}
               loading={i === 0 ? 'eager' : 'lazy'}
-              className="object-cover md:hidden"
+              className="hero-parallax object-cover md:hidden"
             />
           )}
           {s.image && (
@@ -147,7 +147,7 @@ export default function Hero({ slides: slidesProp }: { slides?: HeroSlide[] }) {
               sizes="(max-width: 767px) 0px, 100vw"
               priority={i === 0}
               loading={i === 0 ? 'eager' : 'lazy'}
-              className="object-cover hidden md:block"
+              className="hero-parallax object-cover hidden md:block"
             />
           )}
           <div
@@ -185,33 +185,47 @@ export default function Hero({ slides: slidesProp }: { slides?: HeroSlide[] }) {
         <AlponaMotif size={40} opacity={0.22} />
       </div>
 
-      {/* Content block */}
+      {/* Content block. key={active} remounts the subtree per slide, which is
+          what replays the .hero-line stagger in globals.css. */}
       <div className="absolute top-0 bottom-0 left-0 w-full z-10 flex items-end md:items-center px-5 md:px-0 pb-24 md:pb-0">
-        <div className="w-full max-w-[540px] md:pl-[clamp(40px,7vw,100px)]">
+        <div key={active} className="w-full max-w-[540px] md:pl-[clamp(40px,7vw,100px)]">
           {/* Eyebrow */}
-          <div className="flex items-center gap-3 mb-4">
+          <div
+            className="hero-line flex items-center gap-3 mb-4"
+            style={{ animationDelay: '0ms' }}
+          >
             <div className="w-8 h-px bg-gold shrink-0" />
             <span className="font-sans text-[10px] tracking-[0.24em] uppercase text-gold">
               {slide.eyebrow}
             </span>
           </div>
           {/* Bengali */}
-          <div className="font-bengali text-base md:text-[22px] font-light tracking-[0.04em] text-[rgba(212,136,10,0.85)] mb-2 leading-[1.3]">
+          <div
+            className="hero-line font-bengali text-base md:text-[22px] font-light tracking-[0.04em] text-[rgba(212,136,10,0.85)] mb-2 leading-[1.3]"
+            style={{ animationDelay: '80ms' }}
+          >
             {slide.bengali}
           </div>
           {/* English headline */}
-          <h1 className="font-display font-light text-[34px] md:text-[clamp(40px,4.2vw,60px)] leading-[1.08] text-ivory">
+          <h1
+            className="hero-line font-display font-light text-[34px] md:text-[clamp(40px,4.2vw,60px)] leading-[1.08] text-ivory"
+            style={{ animationDelay: '160ms' }}
+          >
             {renderParts(slide.parts)}
           </h1>
           {/* Subtitle */}
-          <p className="font-sans text-[13px] md:text-[15px] font-light tracking-[0.03em] text-[rgba(245,239,230,0.72)] mt-3 md:mt-[18px] leading-[1.5]">
+          <p
+            className="hero-line font-sans text-[13px] md:text-[15px] font-light tracking-[0.03em] text-[rgba(245,239,230,0.72)] mt-3 md:mt-[18px] leading-[1.5]"
+            style={{ animationDelay: '240ms' }}
+          >
             {slide.subtitle}
           </p>
           {/* CTA */}
           <Link
             key={slide.href}
             href={slide.href}
-            className="mt-8 inline-flex items-center justify-center gap-2.5 bg-copper text-ivory border-0 rounded-none px-6 md:px-8 w-full md:w-auto h-12 md:h-auto md:py-[14px] font-sans text-[11px] font-medium tracking-[0.18em] uppercase cursor-pointer transition-all hover:bg-[#A0501A]"
+            className="hero-line mt-8 inline-flex items-center justify-center gap-2.5 bg-copper text-ivory border-0 rounded-none px-6 md:px-8 w-full md:w-auto h-12 md:h-auto md:py-[14px] font-sans text-[11px] font-medium tracking-[0.18em] uppercase cursor-pointer transition-all hover:bg-[#A0501A]"
+            style={{ animationDelay: '340ms' }}
           >
             {slide.cta}
             <span className="text-sm leading-none">→</span>

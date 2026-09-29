@@ -65,6 +65,68 @@ body {
   to { opacity: 1; }
 }
 
+/* ===== Hero motion ===== */
+
+/* Copy lines rise in sequence. `both` fill hides each line until its delay
+   elapses, so the stagger never flashes. Replays because Hero re-keys the
+   copy block per slide (see Hero.tsx) — no JS, no animation library. */
+.hero-line {
+  animation: heroLine 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes heroLine {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll parallax on the hero imagery, driven by the native scroll timeline —
+   no scroll listener. `scale(1.15)` is headroom so the drift never exposes an
+   edge inside the clipped hero frame.
+   ponytail: Chrome/Edge only (Firefox/Safari lack animation-timeline); those
+   browsers just show a static hero, which is a fine degradation. Swap for a
+   rAF scroll listener if the parallax has to be universal. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-parallax {
+      animation: heroDrift linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 100vh;
+    }
+  }
+}
+@keyframes heroDrift {
+  from {
+    transform: scale(1.15) translate3d(0, 2%, 0);
+  }
+  to {
+    transform: scale(1.15) translate3d(0, 6%, 0);
+  }
+}
+
+/* Honour the OS setting. `!important` is required to also neutralise the
+   inline `transition` that <Reveal> sets on its wrapper (src/lib/reveal.tsx);
+   without it those reveals would still animate. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Kill outright: a 0.001ms marquee would park the track at its -33.33%
+     end frame instead of its neutral start. */
+  .marquee-track {
+    animation: none !important;
+  }
+}
+
 /* ===== Admin panel design system ===== */
 /* Scoped to authenticated admin pages (AdminShell wrapper) so the
    customer storefront above is completely untouched. */
