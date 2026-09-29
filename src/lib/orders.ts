@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { supabase } from './supabase'
 import { couponErrorText } from './coupon-codes'
 
-const AddressSchema = z.object({
+export const AddressSchema = z.object({
   name: z.string().trim().min(2, 'Name is required').max(120),
   phone: z.string().trim().regex(/^[0-9+\-\s()]{7,20}$/, 'Enter a valid phone number'),
   email: z.string().trim().email('Enter a valid email').max(160),
@@ -25,6 +25,23 @@ const PayloadSchema = z.object({
 })
 
 export type PlaceOrderResult = { orderId: string } | { error: string }
+
+export async function getStoreCommerce(): Promise<{
+  freeShippingThreshold: number
+  flatShippingRate: number
+}> {
+  if (!supabase) return { freeShippingThreshold: 10000, flatShippingRate: 199 }
+  const { data } = await supabase
+    .from('store_settings')
+    .select('value')
+    .eq('key', 'commerce')
+    .maybeSingle()
+  const commerce = data?.value as { free_shipping_threshold?: number; flat_shipping_rate?: number } | undefined
+  return {
+    freeShippingThreshold: Number(commerce?.free_shipping_threshold) || 10000,
+    flatShippingRate: Number(commerce?.flat_shipping_rate) || 199,
+  }
+}
 
 export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
   const parsed = PayloadSchema.safeParse(input)

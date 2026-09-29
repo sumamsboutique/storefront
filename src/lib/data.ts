@@ -107,11 +107,6 @@ let cachedProducts: { data: CatalogProduct[]; expiresAt: number } | null = null
 let cachedHomeContent: { data: HomeContent; expiresAt: number } | null = null
 const CACHE_TTL_MS = 60 * 1000 // 60s in-memory cache
 
-export function clearDataCache(): void {
-  cachedProducts = null
-  cachedHomeContent = null
-}
-
 async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, string> } | null> {
   if (!isSupabaseAvailable()) return null
   try {

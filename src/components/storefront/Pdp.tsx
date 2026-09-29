@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { CatalogProduct } from '@/lib/catalog'
 import { CATALOG, JEWELLERY } from '@/lib/catalog'
 import { PdpCard } from './PdpCard'
+import Reviews from './Reviews'
 import { AlponaDivider, PAD, SareeBorderDivider } from '@/components/shared/primitives'
 import { cn } from '@/lib/cn'
 import { useCart, useWishlist } from '@/lib/store'
@@ -526,6 +527,7 @@ export default function Pdp({ product }: { product: CatalogProduct }) {
       <StyleThisWith p={product} />
       <SareeBorderDivider />
       <MoreFrom p={product} />
+      <Reviews productId={product.id} />
       <StickyBar p={product} />
     </div>
   )

@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions, createBrowserClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
@@ -20,13 +20,6 @@ export type AdminSession = {
     email?: string
   }
   profile: AdminProfile
-}
-
-export function createAdminBrowserClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 }
 
 export async function createAdminServerClient() {
@@ -58,29 +51,35 @@ export async function createAdminServerClient() {
   )
 }
 
+// Demo admin session. Unsigned and user-plantable, so production trusts only
+// the Supabase path below. Dev-only for the same reason as DEMO_ENABLED.
+const DEMO_ENABLED = process.env.NODE_ENV !== 'production'
+
 export async function getAdminSession(): Promise<AdminSession | null> {
   try {
     // 1. Check for local/demo admin session cookie
-    const cookieStore = await cookies()
-    const demoCookie = cookieStore.get('sumams_admin_session')?.value
-    if (demoCookie) {
-      try {
-        const parsed = JSON.parse(demoCookie)
-        return {
-          user: {
-            id: 'admin-dev-01',
-            email: parsed.email || 'admin@sumamsboutique.com',
-          },
-          profile: {
-            id: 'admin-dev-01',
-            role: parsed.role || 'admin',
-            full_name: parsed.full_name || 'Sunit Saha (Atelier Admin)',
-            email: parsed.email || 'admin@sumamsboutique.com',
-            phone: '+91 98765 43210',
-          },
+    if (DEMO_ENABLED) {
+      const cookieStore = await cookies()
+      const demoCookie = cookieStore.get('sumams_admin_session')?.value
+      if (demoCookie) {
+        try {
+          const parsed = JSON.parse(demoCookie)
+          return {
+            user: {
+              id: 'admin-dev-01',
+              email: parsed.email || 'admin@sumamsboutique.com',
+            },
+            profile: {
+              id: 'admin-dev-01',
+              role: parsed.role || 'admin',
+              full_name: parsed.full_name || 'Sunit Saha (Atelier Admin)',
+              email: parsed.email || 'admin@sumamsboutique.com',
+              phone: '+91 98765 43210',
+            },
+          }
+        } catch {
+          // invalid cookie payload
         }
-      } catch {
-        // invalid cookie payload
       }
     }
 

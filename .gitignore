@@ -18,6 +18,13 @@ dev.log
 # local browser-automation debug output
 .playwright-mcp/
 
+# supabase CLI local state (project refs, pooler urls, version pins)
+supabase/.temp/
+
+# superseded design prototypes + build log, kept out of the app tree
+repo-docs/
+progress.md
+
 # OS junk
 .DS_Store
 Thumbs.db

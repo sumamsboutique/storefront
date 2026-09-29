@@ -60,7 +60,7 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
 
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] gap-6 md:gap-[60px] items-center">
           {/* LEFT — founder image */}
-          <Reveal as="div">
+          <Reveal>
           <div>
             <div className="relative w-full aspect-[5/6] overflow-hidden">
               <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, #2A1008, #BF5E18)' }} />
@@ -89,7 +89,7 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
           </Reveal>
 
           {/* RIGHT — text */}
-          <Reveal as="div" delay={100}>
+          <Reveal delay={100}>
           <div className="md:max-w-[480px]">
             <h2 className="font-display font-light text-[28px] md:text-[clamp(28px,2.8vw,38px)] leading-[1.2] text-ivory mb-7">
               {renderParts(d.headlineParts)}

@@ -28,8 +28,8 @@ function PriceCheck({ label, active, onToggle }: { label: string; active: boolea
   )
 }
 
-function FilterGroup({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen)
+function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true)
   return (
     <div className="border-b border-[rgba(140,106,85,0.25)] py-5">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
@@ -238,7 +238,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               <PriceCheck key={l as string} label={l as string} active={price === v} onToggle={() => setPrice(price === v ? null : (v as number))} />
             ))}
           </FilterGroup>
-          <FilterGroup title="Availability" defaultOpen={true}>
+          <FilterGroup title="Availability">
             <PriceCheck label="All pieces" active={stock === 'all'} onToggle={() => setStock('all')} />
             <PriceCheck label="In stock only" active={stock === 'in'} onToggle={() => setStock(stock === 'in' ? 'all' : 'in')} />
             <PriceCheck label="Sold out" active={stock === 'sold'} onToggle={() => setStock(stock === 'sold' ? 'all' : 'sold')} />

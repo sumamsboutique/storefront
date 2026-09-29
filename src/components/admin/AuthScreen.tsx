@@ -72,39 +72,6 @@ function EyeIcon({ off }: { off?: boolean }) {
   )
 }
 
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
-      <path
-        fill="#FFC107"
-        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
-      />
-      <path
-        fill="#FF3D00"
-        d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
-      />
-      <path
-        fill="#4CAF50"
-        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
-      />
-      <path
-        fill="#1976D2"
-        d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
-      />
-    </svg>
-  )
-}
-
-function AppleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
-      />
-    </svg>
-  )
-}
 
 function Spinner() {
   return (
@@ -138,7 +105,6 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [forgot, setForgot] = useState(false)
-  const [socialMsg, setSocialMsg] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const loginFormRef = useRef<HTMLFormElement>(null)
@@ -149,7 +115,6 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
     setError(null)
     setNotice(null)
     setForgot(false)
-    setSocialMsg(null)
     setFieldErrors({})
     setShowPwd(false)
     setShowConfirm(false)
@@ -215,6 +180,8 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
       }
     })
   }
+
+  const isProd = process.env.NODE_ENV === 'production'
 
   const fillDemo = () => {
     setLoginEmail('admin@sumamsboutique.com')
@@ -437,37 +404,6 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                   </button>
                 </form>
 
-                <div className="my-6 flex items-center gap-4">
-                  <div className="h-px flex-1 bg-[rgba(140,106,85,0.25)]" />
-                  <span className="font-sans text-[11px] uppercase tracking-widest text-muted">OR</span>
-                  <div className="h-px flex-1 bg-[rgba(140,106,85,0.25)]" />
-                </div>
-
-                <div className="space-y-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setSocialMsg('Social sign-in is coming soon.')}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-full border border-[rgba(140,106,85,0.32)] bg-white/70 px-4 py-3 text-sm font-medium text-dark/85 transition-all duration-200 hover:border-copper/50 hover:bg-white hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper"
-                  >
-                    <GoogleIcon /> Continue with Google
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSocialMsg('Social sign-in is coming soon.')}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-full border border-[rgba(140,106,85,0.32)] bg-white/70 px-4 py-3 text-sm font-medium text-dark/85 transition-all duration-200 hover:border-copper/50 hover:bg-white hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper"
-                  >
-                    <AppleIcon /> Continue with Apple
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSocialMsg('Social sign-in is coming soon.')}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-full border border-[rgba(140,106,85,0.32)] bg-white/70 px-4 py-3 text-sm font-medium text-dark/85 transition-all duration-200 hover:border-copper/50 hover:bg-white hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper"
-                  >
-                    Continue with another provider
-                  </button>
-                </div>
-                {socialMsg && <p className="mt-2 text-center font-sans text-xs text-muted">{socialMsg}</p>}
-
                 {!isAdmin && (
                   <p className="mt-8 text-center font-sans text-sm text-muted">
                     Don&apos;t have an account?{' '}
@@ -481,7 +417,7 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                   </p>
                 )}
 
-                {isAdmin && (
+                {isAdmin && !isProd && (
                   <div className="mt-6 rounded-xl border border-[#DCC9A8]/70 bg-cream/50 px-4 py-3 text-center">
                     <p className="font-sans text-[11px] text-muted">
                       Demo access —{' '}

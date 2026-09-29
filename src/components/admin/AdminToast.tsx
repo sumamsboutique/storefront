@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react'
 
-export type ToastType = 'success' | 'error' | 'info' | 'warning'
+export type ToastType = 'success' | 'error'
 
 export type Toast = {
   id: string
@@ -11,11 +11,8 @@ export type Toast = {
 }
 
 type ToastContextType = {
-  toast: (message: string, type?: ToastType) => void
   success: (message: string) => void
   error: (message: string) => void
-  warning: (message: string) => void
-  info: (message: string) => void
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
@@ -23,7 +20,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined)
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const addToast = useCallback((message: string, type: ToastType = 'info') => {
+  const addToast = useCallback((message: string, type: ToastType) => {
     const id = Math.random().toString(36).substring(2, 9)
     setToasts((prev) => [...prev, { id, type, message }])
     setTimeout(() => {
@@ -32,11 +29,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const contextValue = {
-    toast: addToast,
     success: (msg: string) => addToast(msg, 'success'),
     error: (msg: string) => addToast(msg, 'error'),
-    warning: (msg: string) => addToast(msg, 'warning'),
-    info: (msg: string) => addToast(msg, 'info'),
   }
 
   return (
@@ -49,11 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             className={`pointer-events-auto flex items-start justify-between gap-3 p-4 shadow-xl border rounded-lg text-sm font-sans transition-all duration-300 ${
               t.type === 'success'
                 ? 'bg-cream text-dark border-gold/50'
-                : t.type === 'error'
-                ? 'bg-[#FDF2F0] text-[#7A1C12] border-[#E8A59E]'
-                : t.type === 'warning'
-                ? 'bg-[#FEF9E7] text-[#78540B] border-[#F2DE9C]'
-                : 'bg-ivory text-dark border-[#DCC9A8]'
+                : 'bg-[#FDF2F0] text-[#7A1C12] border-[#E8A59E]'
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -62,9 +52,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               )}
               {t.type === 'error' && (
                 <span className="text-[#C43828] shrink-0 font-bold">!</span>
-              )}
-              {t.type === 'warning' && (
-                <span className="text-gold shrink-0">▲</span>
               )}
               <span className="leading-snug">{t.message}</span>
             </div>

@@ -73,26 +73,12 @@ export function PdpCard({
             {badge}
           </span>
         ) : null}
-        <span className="pointer-events-none absolute bottom-3.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap bg-[rgba(245,239,230,0.92)] px-5 py-2 font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-dark opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          Quick View
-        </span>
       </div>
       <div className={cn('flex flex-col bg-cream p-5 pb-[22px]', sub ? '' : '!pt-[18px]')}>
         {tag && <div className="mb-2.5 font-sans text-[10px] uppercase tracking-[0.2em] text-copper">{tag}</div>}
         <div className="mb-1.5 font-display text-[17px] leading-[1.3] text-dark">{name}</div>
         {sub && <div className="mb-3.5 font-sans text-[10px] uppercase tracking-[0.1em] text-muted">{sub}</div>}
-        <div className="mt-auto flex items-center justify-between">
-          <span className="font-sans text-[15px] font-medium text-copper">{price}</span>
-          {sold ? (
-            <span className="h-8 inline-flex items-center justify-center bg-black text-white px-3.5 font-sans text-[9px] font-semibold uppercase tracking-[0.16em]">
-              SOLD OUT
-            </span>
-          ) : (
-            <button className="h-8 border border-[rgba(191,94,24,0.38)] px-4 font-sans text-[10px] uppercase tracking-[0.18em] text-copper transition-colors hover:bg-copper hover:text-ivory">
-              Add to Bag
-            </button>
-          )}
-        </div>
+        <div className="mt-auto font-sans text-[15px] font-medium text-copper">{price}</div>
       </div>
     </div>
   )

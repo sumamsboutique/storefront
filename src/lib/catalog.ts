@@ -65,18 +65,6 @@ export const CATALOG: CatalogProduct[] = [
   { id: 'j3', slug: 'drop-temple-earrings', type: 'jewel', name: 'Drop Temple Earrings', sub: '', tag: 'Temple Collection', price: '₹2,400', priceNum: n('2400'), badge: null, gradient: G.templeJ, label: 'temple earrings · drop style', sold: false, weave: 'Temple', occasion: 'Bridal', images: ['/Products/jewellery/drop-temple-earrings.png'] },
 ]
 
-export const bySlug = (slug: string) => CATALOG.find((p) => p.slug === slug)
-
-export const SAREES = CATALOG.filter((p) => p.type === 'saree')
 export const JEWELLERY = CATALOG.filter((p) => p.type === 'jewel')
 
-export const OPTIONS = {
-  sarees: SAREES,
-  jewellery: JEWELLERY,
-  all: CATALOG,
-} as const
-
 export const WEAVES = ['Benarasi', 'Tant', 'Muslin', 'Jamdani', 'Kantha', 'Garad', 'Silk', 'Temple', 'Contemporary', 'Gold-Plated']
-export const OCCASIONS = ['Bridal', 'Festive', 'Everyday', 'Puja', 'Wedding Guest']
-
-export { n as numToPrice }

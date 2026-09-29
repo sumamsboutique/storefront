@@ -7,7 +7,6 @@ export function AdminCard({
   action,
   children,
   className,
-  headerClassName,
   bodyClassName,
 }: {
   title?: React.ReactNode
@@ -15,7 +14,6 @@ export function AdminCard({
   action?: React.ReactNode
   children: React.ReactNode
   className?: string
-  headerClassName?: string
   bodyClassName?: string
 }) {
   return (
@@ -26,12 +24,7 @@ export function AdminCard({
       )}
     >
       {(title || subtitle || action) && (
-        <div
-          className={cn(
-            'flex flex-wrap items-center justify-between gap-3 border-b border-[#DCC9A8]/40 px-6 py-4.5',
-            headerClassName
-          )}
-        >
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#DCC9A8]/40 px-6 py-4.5">
           <div>
             {title && (
               <h2 className="font-display text-xl font-medium tracking-tight text-dark">

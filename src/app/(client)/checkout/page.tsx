@@ -1,10 +1,11 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart, cartImage } from '@/lib/store'
-import { placeOrder } from '@/lib/orders'
+import { placeOrder, getStoreCommerce } from '@/lib/orders'
+import { getSavedAddresses, type SavedAddress } from '@/lib/account'
 import { validateCoupon, type CouponLookup } from '@/lib/coupons'
 import { createRazorpayOrder, verifyRazorpayPayment } from '@/lib/payments'
 import { openRazorpayCheckout } from '@/lib/razorpay-client'
@@ -21,7 +22,11 @@ export default function Checkout() {
 
   const items = mounted ? rawItems : []
   const count = items.reduce((a, i) => a + i.qty, 0)
-  const shipping = subtotal() > 10000 || subtotal() === 0 ? 0 : 199
+  // Fallbacks mirror the SQL defaults; the live value replaces them on mount.
+  const [commerce, setCommerce] = useState({ freeShippingThreshold: 10000, flatShippingRate: 199 })
+  const [saved, setSaved] = useState<SavedAddress[] | null>(null)
+  const shipping =
+    subtotal() === 0 || subtotal() > commerce.freeShippingThreshold ? 0 : commerce.flatShippingRate
   const [coupon, setCoupon] = useState<CouponLookup & { ok: true } | null>(null)
   const [couponInput, setCouponInput] = useState('')
   const [couponMsg, setCouponMsg] = useState('')
@@ -35,6 +40,20 @@ export default function Checkout() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', pin: '' })
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  useEffect(() => {
+    getStoreCommerce()
+      .then(setCommerce)
+      .catch(() => {})
+    getSavedAddresses()
+      .then((res) => {
+        if (!res.ok || res.data.length === 0) return
+        setSaved(res.data)
+        const first = res.data[0]
+        setForm({ name: first.name, phone: first.phone, email: first.email, address: first.address, city: first.city, pin: first.pin })
+      })
+      .catch(() => {})
+  }, [])
 
   const applyCoupon = async () => {
     if (!couponInput.trim() || couponPending) return
@@ -97,13 +116,13 @@ export default function Checkout() {
           onFail: (msg) => setError(msg),
           onDismiss: () => {},
         })
-      } else if (rzp.error === 'razorpay_not_configured') {
-        // Dev fallback — no Razorpay keys, keep the old mocked flow working.
+      } else if (rzp.error === 'razorpay_not_configured' && process.env.NODE_ENV !== 'production') {
+        // Dev fallback — no Razorpay keys, keep the old mocked flow working locally.
         clear()
         setOrderId(dbOrderId)
         setPlaced(true)
       } else {
-        setError(rzp.error)
+        setError(rzp.error === 'razorpay_not_configured' ? 'Online payments are temporarily unavailable. Please try again later.' : rzp.error)
       }
     })
   }
@@ -209,7 +228,9 @@ export default function Checkout() {
             <p className="mt-3 text-center font-ui text-[10px] font-light text-muted">
               {process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
                 ? 'Payments are secure and powered by Razorpay.'
-                : 'Payments disabled in this environment — orders are recorded without payment.'}
+                : process.env.NODE_ENV === 'production'
+                  ? 'Online payments are temporarily unavailable. Please try again later.'
+                  : 'Payments disabled in this environment — orders are recorded without payment.'}
             </p>
           </div>
         </aside>
@@ -217,6 +238,28 @@ export default function Checkout() {
         {/* Address form */}
         <div className="flex-1">
           <div className="font-ui text-[11px] tracking-[0.18em] text-dark uppercase">Delivery Address</div>
+          {saved && saved.length > 0 && (
+            <div className="mt-4">
+              <label className="block">
+                <span className="font-ui text-[10px] tracking-[0.12em] text-muted uppercase">Use a saved address</span>
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const a = saved.find((s) => s.id === e.target.value)
+                    if (a) setForm({ name: a.name, phone: a.phone, email: a.email, address: a.address, city: a.city, pin: a.pin })
+                  }}
+                  className="mt-1 w-full border-b border-[rgba(140,106,85,0.3)] bg-transparent py-2 font-ui text-sm text-dark outline-none"
+                >
+                  <option value="" disabled>Choose an address</option>
+                  {saved.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.label} — {a.address}, {a.city} {a.pin}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
           <div className="mt-4 grid grid-cols-2 gap-4">
             <label className="block">
               <span className="font-ui text-[10px] tracking-[0.12em] text-muted uppercase">Full Name</span>

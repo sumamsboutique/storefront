@@ -51,6 +51,13 @@ export type ActionResult<T = unknown> = {
 }
 
 // ── Auth Actions ─────────────────────────────────────────────────────────────
+// Demo admin login. Hardcoded credentials are a full-auth bypass, so this is
+// dev-only: in production the Supabase password path below is the sole gate.
+// A user can plant this cookie by hand, so it must never be trusted in prod.
+const DEMO_EMAIL = 'admin@sumamsboutique.com'
+const DEMO_PASSWORDS = ['admin', 'admin123', 'sumams2026', 'sumams']
+const DEMO_ENABLED = process.env.NODE_ENV !== 'production'
+
 export async function adminLoginAction(
   prevState: { error?: string } | null,
   formData: FormData
@@ -63,14 +70,17 @@ export async function adminLoginAction(
   }
 
   const emailClean = email.trim().toLowerCase()
-  const isDemoAdmin =
-    emailClean === 'admin@sumamsboutique.com' &&
-    (password === 'admin' || password === 'admin123' || password === 'sumams2026' || password === 'sumams')
+  const hdrs = await headers()
+  const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const emailKey = emailClean
+  if (loginThrottled(ip) || loginThrottled(emailKey)) {
+    return { error: 'Too many attempts. Please try again in 15 minutes.' }
+  }
 
-  if (isDemoAdmin) {
+  if (DEMO_ENABLED && emailClean === DEMO_EMAIL && DEMO_PASSWORDS.includes(password)) {
     const cookieStore = await cookies()
     cookieStore.set('sumams_admin_session', JSON.stringify({
-      email: 'admin@sumamsboutique.com',
+      email: DEMO_EMAIL,
       role: 'admin',
       full_name: 'Sunit Saha (Atelier Admin)',
     }), {
@@ -81,13 +91,6 @@ export async function adminLoginAction(
       maxAge: 60 * 60 * 24 * 7,
     })
     redirect('/admin')
-  }
-
-  const hdrs = await headers()
-  const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const emailKey = emailClean
-  if (loginThrottled(ip) || loginThrottled(emailKey)) {
-    return { error: 'Too many attempts. Please try again in 15 minutes.' }
   }
 
   try {
@@ -126,11 +129,11 @@ export async function adminLoginAction(
     }
     const msg = err instanceof Error ? err.message : String(err)
     if (msg.includes('fetch failed') || msg.includes('ENOTFOUND')) {
-      return {
-        error: 'Database not connected. You can log in using demo credentials: admin@sumamsboutique.com / admin123',
-      }
+      console.error('[admin/login] auth service unreachable:', err)
+      return { error: 'Could not reach the authentication service. Please try again.' }
     }
-    return { error: msg || 'Login failed.' }
+    console.error('[admin/login] failed:', err)
+    return { error: 'Login failed.' }
   }
 }
 

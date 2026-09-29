@@ -204,7 +204,7 @@ export default function BrowseByCategory({ data }: { data?: BbcContent }) {
       </Reveal>
 
       {/* Desktop asymmetric grid */}
-      <Reveal as="div" delay={80}>
+      <Reveal delay={80}>
       <div className="hidden md:grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
         <HeroTile cat={sarees.hero} />
         <SmallTile cat={sarees.small[0]} />
@@ -221,7 +221,7 @@ export default function BrowseByCategory({ data }: { data?: BbcContent }) {
       </Reveal>
 
       {/* Mobile: hero + 2-col grid */}
-      <Reveal as="div">
+      <Reveal>
       <div className="md:hidden">
         <MobileHeroTile hero={sarees.hero} />
         <div className="grid grid-cols-2 gap-3 my-8">

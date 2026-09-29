@@ -2,7 +2,6 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { CartItem } from './types'
 import { CATALOG } from './catalog'
 
 export interface CartLine {

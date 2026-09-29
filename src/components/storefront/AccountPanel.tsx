@@ -27,8 +27,20 @@ export default function AccountPanel({ name, email }: { name: string | null; ema
 
       <div className="mt-8 space-y-3">
         <Link
-          href="/sarees"
+          href="/account/orders"
           className="block w-full rounded-full bg-copper py-3 font-ui text-[11px] font-medium uppercase tracking-wider text-ivory transition-colors hover:bg-dark"
+        >
+          View Order History
+        </Link>
+        <Link
+          href="/account/addresses"
+          className="block w-full rounded-full border border-[rgba(140,106,85,0.3)] py-3 font-ui text-[11px] font-medium uppercase tracking-wider text-dark/80 transition-colors hover:border-copper hover:text-copper"
+        >
+          Manage Saved Addresses
+        </Link>
+        <Link
+          href="/sarees"
+          className="block w-full rounded-full border border-[rgba(140,106,85,0.3)] py-3 font-ui text-[11px] font-medium uppercase tracking-wider text-dark/80 transition-colors hover:border-copper hover:text-copper"
         >
           Browse Saree Collection
         </Link>

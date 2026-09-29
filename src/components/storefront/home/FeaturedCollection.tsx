@@ -106,17 +106,17 @@ export default function FeaturedCollection({ products = FEATURED }: { products?:
         style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: `${GH * 0.58}px ${GH * 0.58}px` }}
       >
         <div style={{ gridRow: '1 / 3' }}>
-          <Reveal className="h-full" as="div">
+          <Reveal className="h-full">
             <ProductCard product={FEAT[0]} imgHeight={GH * 1.02} />
           </Reveal>
         </div>
         <div style={{ gridRow: '1 / 2' }}>
-          <Reveal as="div" className="h-full" delay={120}>
+          <Reveal className="h-full" delay={120}>
             <ProductCard product={FEAT[1]} imgHeight={GH * 0.58 * 0.72} />
           </Reveal>
         </div>
         <div style={{ gridRow: '2 / 3' }}>
-          <Reveal as="div" className="h-full" delay={200}>
+          <Reveal className="h-full" delay={200}>
             <ProductCard product={FEAT[2]} imgHeight={GH * 0.58 * 0.72} />
           </Reveal>
         </div>

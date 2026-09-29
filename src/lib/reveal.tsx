@@ -9,12 +9,10 @@ export function Reveal({
   children,
   delay = 0,
   className,
-  as: Tag = 'div',
 }: {
   children: React.ReactNode
   delay?: number
   className?: string
-  as?: 'div' | 'section' | 'li' | 'a'
 }) {
   const ref = useRef<HTMLDivElement | null>(null)
   const [visible, setVisible] = useState(false)
@@ -42,8 +40,8 @@ export function Reveal({
   }, [])
 
   return (
-    <Tag
-      ref={ref as any}
+    <div
+      ref={ref}
       className={cn(className)}
       style={{
         opacity: visible ? 1 : 0,
@@ -53,6 +51,6 @@ export function Reveal({
       }}
     >
       {children}
-    </Tag>
+    </div>
   )
 }

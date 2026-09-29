@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Cormorant_Garamond, DM_Sans, Hind, Hind_Siliguri } from 'next/font/google'
+import { Cormorant_Garamond, DM_Sans, Hind_Siliguri } from 'next/font/google'
 import { CartDrawer } from '@/components/storefront/CartDrawer'
 import { GoogleAnalytics } from '@/components/storefront/GoogleAnalytics'
 import './globals.css'
@@ -17,17 +17,11 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
-const hind = Hind({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-hind',
-  display: 'swap',
-})
-
-const hindSiliguri = Hind_Siliguri({
+// Siliguri covers Bengali + Devanagari + Latin, so it also replaces Hind.
+const bengali = Hind_Siliguri({
   subsets: ['latin', 'bengali'],
   weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-hind-siliguri',
+  variable: '--font-bengali',
   display: 'swap',
 })
 
@@ -53,7 +47,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${cormorant.variable} ${dmSans.variable} ${hind.variable} ${hindSiliguri.variable}`}
+      className={`${cormorant.variable} ${dmSans.variable} ${bengali.variable}`}
     >
       <body className="antialiased">
         {children}
