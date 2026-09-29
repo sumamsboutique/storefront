@@ -12,6 +12,15 @@ const nextConfig = {
       },
     ],
   },
+  // The three account sections now live as tabs on /account. Config redirects
+  // give old links a real 308; a redirect() in a page would only meta-refresh.
+  async redirects() {
+    return [
+      { source: '/account/profile', destination: '/account', permanent: true },
+      { source: '/account/orders', destination: '/account?tab=orders', permanent: true },
+      { source: '/account/addresses', destination: '/account?tab=addresses', permanent: true },
+    ]
+  },
   async headers() {
     return [
       {

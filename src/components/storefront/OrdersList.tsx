@@ -1,9 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { getMyOrders, type CustomerOrder } from '@/lib/account'
-import { Eyebrow } from '@/components/shared/primitives'
+import { type CustomerOrder } from '@/lib/account'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
@@ -19,96 +17,86 @@ function statusLabel(status: string): string {
   }
 }
 
-export default function OrdersList({ email }: { email: string }) {
-  const [orders, setOrders] = useState<CustomerOrder[] | null>(null)
-  const [error, setError] = useState('')
+export default function OrdersList({
+  orders,
+  error,
+  email,
+}: {
+  orders: CustomerOrder[] | null
+  error: string
+  email: string
+}) {
+  if (error) return <p className="font-sans text-sm text-[#B00020]">{error}</p>
 
-  useEffect(() => {
-    getMyOrders().then((res) => {
-      if (res.ok) setOrders(res.data)
-      else setError(res.error)
-    })
-  }, [])
+  if (orders === null) {
+    return <p className="font-sans text-sm font-light text-muted">Loading your orders…</p>
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="border border-[#DCC9A8] bg-[#FDFBF7] p-10 text-center">
+        <p className="font-sans text-sm leading-relaxed font-light text-muted">
+          No orders yet. When you make a purchase with {email}, it will appear here.
+        </p>
+        <Link
+          href="/sarees"
+          className="mt-6 inline-block border border-dark bg-dark px-7 py-3 font-sans text-[10px] uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-copper hover:border-copper"
+        >
+          Start shopping
+        </Link>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <Eyebrow label="Your account" />
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="font-display text-[clamp(28px,4vw,40px)] font-light text-dark">Order History</h1>
-        <p className="font-ui text-xs text-muted">{email}</p>
-      </div>
-
-      <div className="mt-8">
-        {error && <p className="font-ui text-sm text-[#B00020]">{error}</p>}
-
-        {orders === null && !error && (
-          <p className="font-ui text-sm font-light text-muted">Loading your orders…</p>
-        )}
-
-        {orders !== null && orders.length === 0 && (
-          <div className="rounded-2xl border border-[#DCC9A8] bg-[#FDFBF7] p-10 text-center">
-            <p className="font-ui text-sm font-light text-muted">
-              No orders yet. When you make a purchase with {email}, it will appear here.
+    <ol className="space-y-10">
+      {orders.map((o) => (
+        <li key={o.id} className="border-b border-[#DCC9A8] pb-8 last:border-0 last:pb-0">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h3 className="font-display text-xl font-light text-dark">{statusLabel(o.status)}</h3>
+            <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-muted">
+              {new Date(o.created_at).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'long', year: 'numeric',
+              })}
             </p>
-            <Link
-              href="/sarees"
-              className="mt-6 inline-block bg-dark px-7 py-3 font-ui text-[11px] font-medium uppercase tracking-[0.18em] text-ivory"
-            >
-              Start shopping
-            </Link>
           </div>
-        )}
 
-        {orders !== null && orders.length > 0 && (
-          <div className="space-y-4">
-            {orders.map((o) => (
-              <div key={o.id} className="rounded-2xl border border-[#DCC9A8] bg-[#FDFBF7] p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="font-display text-lg font-light text-dark">
-                    {statusLabel(o.status)}
-                  </div>
-                  <div className="font-ui text-xs text-muted">
-                    {new Date(o.created_at).toLocaleDateString('en-IN', {
-                      day: 'numeric', month: 'long', year: 'numeric',
-                    })}
-                  </div>
-                </div>
-
-                <ul className="mt-4 divide-y divide-[#DCC9A8]/40">
-                  {o.items.map((line, i) => (
-                    <li key={i} className="flex items-center justify-between py-2.5">
-                      <span className="font-ui text-sm text-dark">
-                        {line.name} <span className="text-muted">× {line.quantity}</span>
-                      </span>
-                      <span className="font-ui text-sm text-dark">{fmt(line.unit_price * line.quantity)}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-4 pt-3 font-ui text-xs text-muted">
-                  <span className="inline-block w-32">Shipping</span>
-                  <span className="text-dark">{o.shipping_fee === 0 ? 'Free' : fmt(o.shipping_fee)}</span>
-                  {o.discount > 0 && (
-                    <div className="mt-1">
-                      <span className="inline-block w-32">Coupon</span>
-                      <span className="text-copper">−{fmt(o.discount)}{o.coupon_code ? ` (${o.coupon_code})` : ''}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-3 flex items-center justify-between border-t border-[#DCC9A8]/50 pt-3">
-                  <span className="font-ui text-xs uppercase tracking-wider text-muted">Total</span>
-                  <span className="font-display text-xl font-light text-dark">{fmt(o.total)}</span>
-                </div>
-
-                <p className="mt-3 font-ui text-xs font-light text-muted">
-                  {o.shipping_address.address}, {o.shipping_address.city} {o.shipping_address.pin}
-                </p>
-              </div>
+          <ul className="mt-4 divide-y divide-[#DCC9A8]/40">
+            {o.items.map((line, i) => (
+              <li key={i} className="flex items-center justify-between py-2.5">
+                <span className="font-sans text-sm text-dark">
+                  {line.name} <span className="text-muted">× {line.quantity}</span>
+                </span>
+                <span className="font-sans text-sm text-dark">{fmt(line.unit_price * line.quantity)}</span>
+              </li>
             ))}
+          </ul>
+
+          <div className="mt-4 font-sans text-xs text-muted">
+            <div className="flex gap-6">
+              <span className="w-24 shrink-0 uppercase tracking-[0.12em]">Shipping</span>
+              <span className="text-dark">{o.shipping_fee === 0 ? 'Free' : fmt(o.shipping_fee)}</span>
+            </div>
+            {o.discount > 0 && (
+              <div className="mt-1 flex gap-6">
+                <span className="w-24 shrink-0 uppercase tracking-[0.12em]">Coupon</span>
+                <span className="text-copper">
+                  −{fmt(o.discount)}{o.coupon_code ? ` (${o.coupon_code})` : ''}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+
+          <div className="mt-4 flex items-baseline justify-between border-t border-[#DCC9A8]/60 pt-3">
+            <span className="font-sans text-[10px] uppercase tracking-[0.16em] text-muted">Total</span>
+            <span className="font-display text-2xl font-light text-dark">{fmt(o.total)}</span>
+          </div>
+
+          <p className="mt-3 max-w-prose font-sans text-xs leading-relaxed font-light text-muted">
+            {o.shipping_address.address}, {o.shipping_address.city} {o.shipping_address.pin}
+          </p>
+        </li>
+      ))}
+    </ol>
   )
 }

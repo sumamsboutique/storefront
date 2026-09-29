@@ -10,6 +10,7 @@ export type AdminProfile = {
   full_name: string | null
   email: string | null
   phone: string | null
+  avatar_url?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -18,6 +19,8 @@ export type AdminSession = {
   user: {
     id: string
     email?: string
+    // Set by Supabase while an email change waits on its confirmation link.
+    newEmail?: string | null
   }
   profile: AdminProfile
 }
@@ -90,7 +93,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, role, full_name, email, phone, created_at, updated_at')
+      .select('id, role, full_name, email, phone, avatar_url, created_at, updated_at')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -118,14 +121,18 @@ export async function getCustomerSession(): Promise<AdminSession | null> {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, role, full_name, email, phone, created_at, updated_at')
+      .select('id, role, full_name, email, phone, avatar_url, created_at, updated_at')
       .eq('id', user.id)
       .maybeSingle()
 
     if (profileError || !profile || profile.role !== 'customer') return null
 
     return {
-      user: { id: user.id, email: user.email ?? profile.email ?? undefined },
+      user: {
+        id: user.id,
+        email: user.email ?? profile.email ?? undefined,
+        newEmail: user.new_email ?? null,
+      },
       profile: profile as AdminProfile,
     }
   } catch (err) {

@@ -3,15 +3,7 @@
 import { z } from 'zod'
 import { supabase } from './supabase'
 import { couponErrorText } from './coupon-codes'
-
-export const AddressSchema = z.object({
-  name: z.string().trim().min(2, 'Name is required').max(120),
-  phone: z.string().trim().regex(/^[0-9+\-\s()]{7,20}$/, 'Enter a valid phone number'),
-  email: z.string().trim().email('Enter a valid email').max(160),
-  address: z.string().trim().min(5, 'Address is required').max(300),
-  city: z.string().trim().min(2, 'City is required').max(80),
-  pin: z.string().trim().regex(/^[0-9]{6}$/, 'Enter a valid 6-digit PIN'),
-})
+import { AddressSchema } from './schemas'
 
 const ItemSchema = z.object({
   product_id: z.string().uuid(),
