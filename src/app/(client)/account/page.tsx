@@ -5,6 +5,8 @@ import AuthScreen from '@/components/admin/AuthScreen'
 import AccountPanel from '@/components/storefront/AccountPanel'
 import { getCustomerSession } from '@/lib/admin/auth'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AccountPage() {
   const session = await getCustomerSession()
 
