@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { HeartIcon } from '@/components/icons'
+import { HeartIcon, IconCart } from '@/components/icons'
 import { cn } from '@/lib/cn'
 import { useCart, useWishlist } from '@/lib/store'
 import { useMounted } from '@/lib/useMounted'
@@ -142,7 +142,9 @@ export function ProductCard({
       {/* Info */}
       <div className="px-5 py-[18px] pb-[22px] bg-cream flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-display text-[17px] font-normal text-dark mb-1 leading-[1.3]">
+          {/* Two lines always reserved: 17px * 1.3 * 2. Without it a 1-line name
+              makes that card shorter than its row neighbours. */}
+          <h3 className="font-display text-[17px] font-normal text-dark mb-1 leading-[1.3] line-clamp-2 min-h-[44px]">
             {product.name}
           </h3>
           <p className="font-sans text-[10px] font-normal tracking-[0.1em] uppercase text-muted leading-[1.5]">
@@ -152,22 +154,39 @@ export function ProductCard({
         <div className="flex items-center justify-between mt-3.5">
           <span className="font-sans text-[15px] font-medium text-copper">{product.price}</span>
           {product.sold ? (
-            <span className="bg-black text-white font-sans text-[9px] font-semibold tracking-[0.16em] uppercase px-3 py-1.5">
+            /* Same slot as the add-to-bag button so the row stays aligned. */
+            <span className="shrink-0 bg-black text-white font-sans text-[10px] font-semibold tracking-[0.12em] uppercase px-2.5 py-1.5">
               SOLD OUT
             </span>
           ) : (
-            <button
-              suppressHydrationWarning
-              disabled={!product.catalogId}
-              onClick={(e) => {
-                e.preventDefault()
-                addItem()
-              }}
-              className="bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors duration-200 hover:bg-copper hover:text-ivory disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label={`Add ${product.name} to bag`}
-            >
-              ADD TO BAG
-            </button>
+            <>
+              {/* Desktop — labelled button */}
+              <button
+                suppressHydrationWarning
+                disabled={!product.catalogId}
+                onClick={(e) => {
+                  e.preventDefault()
+                  addItem()
+                }}
+                className="hidden md:inline-flex bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors duration-200 hover:bg-copper hover:text-ivory disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label={`Add ${product.name} to bag`}
+              >
+                ADD TO BAG
+              </button>
+              {/* Mobile — icon only, same hit area as the wishlist button above */}
+              <button
+                suppressHydrationWarning
+                disabled={!product.catalogId}
+                onClick={(e) => {
+                  e.preventDefault()
+                  addItem()
+                }}
+                className="md:hidden flex items-center justify-center w-8 h-8 shrink-0 border border-[rgba(191,94,24,0.38)] text-copper transition-colors duration-200 active:bg-copper active:text-ivory disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label={`Add ${product.name} to bag`}
+              >
+                <IconCart size={15} />
+              </button>
+            </>
           )}
         </div>
       </div>

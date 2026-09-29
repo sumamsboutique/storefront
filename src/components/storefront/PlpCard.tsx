@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type { CatalogProduct } from '@/lib/catalog'
-import { HeartIcon } from '@/components/icons'
+import { HeartIcon, IconCart } from '@/components/icons'
 import { useCart, useWishlist } from '@/lib/store'
 import { useMounted } from '@/lib/useMounted'
 
@@ -19,7 +19,7 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
   return (
     <Link
       href={`/products/${slug}`}
-      className="group block w-full"
+      className="group block w-full h-full flex flex-col"
     >
       <div className="relative overflow-hidden">
         <div
@@ -59,30 +59,54 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
           </button>
         </div>
       </div>
-      <div className="bg-cream p-4 pb-[18px]">
+      <div className="bg-cream p-4 pb-[18px] flex-1 flex flex-col justify-end">
+        {/* Both sub-lines are always rendered: a jewel card's copper category and
+            a saree card's grey fabric line take the same 15px, so cards in a row
+            stay the same height regardless of type. */}
         {type === 'jewel' ? (
-          <div className="mb-2 font-ui text-[10px] tracking-[0.1em] text-copper uppercase">{sub || tag}</div>
-        ) : null}
-        <div className="font-display text-[17px] leading-[1.3] text-dark">{name}</div>
+          <div className="mb-2 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-copper uppercase">{sub || tag}</div>
+        ) : (
+          <div className="mb-2 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-muted uppercase" aria-hidden="true" />
+        )}
+        {/* Two lines always reserved: 17px * 1.3 * 2. Without it a 1-line name
+            makes that card shorter than its row neighbours. */}
+        <div className="font-display text-[17px] leading-[1.3] text-dark line-clamp-2 min-h-[44px]">{name}</div>
         {type === 'saree' ? (
-          <div className="mb-2.5 font-ui text-[10px] tracking-[0.1em] text-muted uppercase">{sub}</div>
-        ) : null}
+          <div className="mb-2.5 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-muted uppercase">{sub}</div>
+        ) : (
+          <div className="mb-2.5 h-[15px]" aria-hidden="true" />
+        )}
         <div className="flex items-center justify-between">
           <span className="font-ui text-sm font-medium text-copper">{price}</span>
           {sold ? (
-            <span className="inline-flex items-center justify-center h-8 bg-black text-white px-3 font-ui text-[9px] font-semibold tracking-[0.16em] uppercase">
+            /* Same slot as the add-to-bag button so the row stays aligned. */
+            <span className="inline-flex items-center justify-center h-8 shrink-0 bg-black text-white px-2.5 font-ui text-[10px] font-semibold tracking-[0.12em] uppercase">
               SOLD OUT
             </span>
           ) : (
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
-              }}
-              className="h-8 border border-[rgba(191,94,24,0.45)] px-3 font-ui text-[9px] tracking-[0.16em] text-copper uppercase"
-            >
-              Add to Bag
-            </button>
+            <>
+              {/* Desktop — labelled button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
+                }}
+                className="hidden md:inline-flex h-8 items-center border border-[rgba(191,94,24,0.45)] px-3 font-ui text-[9px] tracking-[0.16em] text-copper uppercase"
+              >
+                Add to Bag
+              </button>
+              {/* Mobile — icon only, matching the h-8 sold-out badge in this row */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
+                }}
+                className="md:hidden h-8 w-8 flex items-center justify-center border border-[rgba(191,94,24,0.45)] text-copper"
+                aria-label={`Add ${name} to bag`}
+              >
+                <IconCart size={15} />
+              </button>
+            </>
           )}
         </div>
       </div>

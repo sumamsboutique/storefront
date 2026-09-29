@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AlponaDivider } from '@/components/shared/primitives'
-import { HeartIcon } from '@/components/icons'
+import { HeartIcon, IconCart } from '@/components/icons'
 import { Reveal } from '@/lib/reveal'
 import { useCart, useWishlist } from '@/lib/store'
 import type { JewelSpotContent, HeroPart } from '@/lib/data'
@@ -126,32 +126,58 @@ function JewelleryCard({ product }: { product: Jewellery }) {
           <div className="font-sans text-[10px] font-normal tracking-[0.2em] uppercase text-copper mb-2.5">
             {product.tag}
           </div>
-          <h3 className="font-display text-[16px] md:text-[17px] font-normal text-dark mb-3.5 leading-[1.3]">
+          {/* Two lines always reserved: 17px * 1.3 * 2. Without it a 1-line name
+              makes that card shorter than its row neighbours. */}
+          <h3 className="font-display text-[16px] md:text-[17px] font-normal text-dark mb-3.5 leading-[1.3] line-clamp-2 min-h-[44px]">
             {product.name}
           </h3>
         </div>
         <div className="flex items-center justify-between">
           <span className="font-sans text-[15px] font-medium text-copper">{product.price}</span>
-          <button
-            suppressHydrationWarning
-            onClick={() =>
-              add({
-                id: product.catalogId,
-                productId: product.catalogId,
-                slug: product.slug,
-                name: product.name,
-                price: product.price,
-                priceNum: product.priceNum,
-                gradient: product.gradient,
-                label: product.label,
-                image: product.images?.[0],
-              })
-            }
-            className="bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors hover:bg-copper hover:text-ivory"
-            aria-label={`Add ${product.name} to bag`}
-          >
-            ADD TO BAG
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Desktop — labelled button */}
+            <button
+              suppressHydrationWarning
+              onClick={() =>
+                add({
+                  id: product.catalogId,
+                  productId: product.catalogId,
+                  slug: product.slug,
+                  name: product.name,
+                  price: product.price,
+                  priceNum: product.priceNum,
+                  gradient: product.gradient,
+                  label: product.label,
+                  image: product.images?.[0],
+                })
+              }
+              className="hidden md:inline-flex bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors hover:bg-copper hover:text-ivory"
+              aria-label={`Add ${product.name} to bag`}
+            >
+              ADD TO BAG
+            </button>
+            {/* Mobile — icon only, same 32px footprint as the other cards */}
+            <button
+              suppressHydrationWarning
+              onClick={() =>
+                add({
+                  id: product.catalogId,
+                  productId: product.catalogId,
+                  slug: product.slug,
+                  name: product.name,
+                  price: product.price,
+                  priceNum: product.priceNum,
+                  gradient: product.gradient,
+                  label: product.label,
+                  image: product.images?.[0],
+                })
+              }
+              className="md:hidden flex items-center justify-center w-8 h-8 border border-[rgba(191,94,24,0.38)] text-copper transition-colors active:bg-copper active:text-ivory"
+              aria-label={`Add ${product.name} to bag`}
+            >
+              <IconCart size={15} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

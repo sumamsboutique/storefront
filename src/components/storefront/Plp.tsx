@@ -317,11 +317,15 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               )}
             </div>
           ) : (
-            <div className="pt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-              {paged.map((p) => (
-                <PlpCard key={p.id} product={p} />
-              ))}
-            </div>
+            <>
+              {/* items-stretch plus h-full on the card makes every card in a row
+                  share the tallest height, so panels line up across the row. */}
+              <div className="pt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 items-stretch">
+                {paged.map((p) => (
+                  <PlpCard key={p.id} product={p} />
+                ))}
+              </div>
+            </>
           )}
 
           {pageCount > 1 && (
