@@ -17,11 +17,15 @@ const inputBase =
   'w-full rounded-full border border-[rgba(140,106,85,0.32)] bg-white/80 px-5 py-3.5 text-[15px] text-dark shadow-[inset_0_1px_2px_rgba(28,10,6,0.04)] outline-none transition-all duration-200 placeholder:text-muted/50 focus:border-copper focus:ring-4 focus:ring-copper/15'
 const inputDanger = ' border-red-400/70 focus:border-red-600 focus:ring-red-200/60'
 
-// ponytail: shared low-privilege demo account — deliberately public, so this is
-// safe to show. It only self-reads via RLS (own orders/addresses). Per-tenant
-// demo accounts if you ever need isolation.
+// ponytail: shared demo accounts — deliberately public, so safe to show. They
+// only self-read / self-write via RLS (admin role gates the CRM). The fill box
+// is an autofill convenience; in prod auth still goes through real Supabase.
+const DEMO_ADMIN_EMAIL =
+  process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL ?? 'admin@sumamsboutique.com'
+const DEMO_ADMIN_PASSWORD =
+  process.env.NEXT_PUBLIC_DEMO_ADMIN_PASSWORD ?? 'admin123'
 const DEMO_CUSTOMER_EMAIL =
-  process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL ?? 'demo@sumamsboutique.com'
+  process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL ?? 'warot83435@ncleap.com'
 const DEMO_CUSTOMER_PASSWORD =
   process.env.NEXT_PUBLIC_DEMO_CUSTOMER_PASSWORD ?? 'customer123'
 
@@ -192,8 +196,8 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
   const isProd = process.env.NODE_ENV === 'production'
 
   const fillDemo = () => {
-    setLoginEmail(isAdmin ? 'admin@sumamsboutique.com' : DEMO_CUSTOMER_EMAIL)
-    setLoginPassword(isAdmin ? 'admin123' : DEMO_CUSTOMER_PASSWORD)
+    setLoginEmail(isAdmin ? DEMO_ADMIN_EMAIL : DEMO_CUSTOMER_EMAIL)
+    setLoginPassword(isAdmin ? DEMO_ADMIN_PASSWORD : DEMO_CUSTOMER_PASSWORD)
     setError(null)
   }
 
@@ -425,16 +429,15 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                   </p>
                 )}
 
-                {(isAdmin ? !isProd : true) && (
-                  <div className="mt-6 rounded-xl border border-[#DCC9A8]/70 bg-cream/50 px-4 py-3 text-center">
+<div className="mt-6 rounded-xl border border-[#DCC9A8]/70 bg-cream/50 px-4 py-3 text-center">
                     <p className="font-sans text-[11px] text-muted">
-                      {isAdmin ? 'Demo access' : 'Demo customer account'} —{' '}
+                      {isAdmin ? 'Demo admin access' : 'Demo customer account'} —{' '}
                       <span className="select-all font-medium text-dark">
-                        {isAdmin ? 'admin@sumamsboutique.com' : DEMO_CUSTOMER_EMAIL}
+                        {isAdmin ? DEMO_ADMIN_EMAIL : DEMO_CUSTOMER_EMAIL}
                       </span>{' '}
                       /{' '}
                       <span className="select-all font-medium text-dark">
-                        {isAdmin ? 'admin123' : DEMO_CUSTOMER_PASSWORD}
+                        {isAdmin ? DEMO_ADMIN_PASSWORD : DEMO_CUSTOMER_PASSWORD}
                       </span>
                     </p>
                     <button
@@ -445,7 +448,6 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                       Fill demo credentials
                     </button>
                   </div>
-                )}
               </div>
             ) : (
               /* ── SIGNUP ── */
