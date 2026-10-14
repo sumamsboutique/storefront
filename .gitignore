@@ -21,6 +21,9 @@ dev.log
 # supabase CLI local state (project refs, pooler urls, version pins)
 supabase/.temp/
 
+# vercel CLI local link state
+.vercel/
+
 # superseded design prototypes + build log, kept out of the app tree
 repo-docs/
 progress.md
@@ -28,3 +31,5 @@ progress.md
 # OS junk
 .DS_Store
 Thumbs.db
+.vercel
+.env*
