@@ -232,7 +232,7 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
   const { add } = useCart()
   const { has, toggle } = useWishlist()
 
-  const wished = mounted ? has(p.id) : false
+  const wished = mounted ? has(p.slug) : false
   const sub = p.type === 'jewel' ? p.tag : p.sub
   const copy = accordionCopy(p)
   const addItem = () => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] })
@@ -304,7 +304,7 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
             {p.sold ? 'Sold Out' : 'Add to Bag'}
           </button>
           <button
-            onClick={() => toggle(p.id)}
+            onClick={() => toggle(p.slug)}
             aria-label="Add to wishlist"
             className={cn(
               'h-[52px] w-[52px] shrink-0 flex items-center justify-center border bg-transparent transition-colors duration-200',

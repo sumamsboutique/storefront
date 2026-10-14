@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Cormorant_Garamond, DM_Sans, Hind_Siliguri } from 'next/font/google'
 import { CartDrawer } from '@/components/storefront/CartDrawer'
 import { GoogleAnalytics } from '@/components/storefront/GoogleAnalytics'
+import WhatsAppFab from '@/components/storefront/WhatsAppFab'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -53,6 +54,7 @@ export default function RootLayout({
         {children}
         <CartDrawer />
         <GoogleAnalytics />
+        <WhatsAppFab />
       </body>
     </html>
   )

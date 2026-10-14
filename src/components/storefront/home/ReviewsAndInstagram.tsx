@@ -143,6 +143,7 @@ export default function ReviewsAndInstagram({
 
   return (
     <section className="py-14 md:py-24 px-5 md:px-[clamp(32px,6vw,85px)] bg-[#FDFBF7] border-t border-[#DCC9A8]/40 relative">
+      <div className="mx-auto w-full max-w-[1440px]">
       {/* Header */}
       <Reveal>
         <div className="flex flex-col items-center text-center mb-10 md:mb-14">
@@ -198,7 +199,7 @@ export default function ReviewsAndInstagram({
 
       {/* Stories Grid */}
       <Reveal delay={80}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 justify-items-center">
           {displayedStories.map((story) => (
             <div
               key={story.id}
@@ -275,6 +276,7 @@ export default function ReviewsAndInstagram({
           ))}
         </div>
       </Reveal>
+      </div>
 
       {/* Interactive Modal Popup */}
       {activeStory && (

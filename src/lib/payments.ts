@@ -54,7 +54,8 @@ export async function createRazorpayOrder(orderId: string): Promise<CreateRazorp
   if (order.status !== 'pending') return { error: 'This order is not payable.' }
 
   const amountPaise = Math.round(Number(order.total) * 100)
-  if (!amountPaise || amountPaise <= 0) return { error: 'Invalid order total.' }
+  // Razorpay rejects anything under 100 paise.
+  if (amountPaise < 100) return { error: 'Invalid order total.' }
 
   let rzp: { id: string }
   try {

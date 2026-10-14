@@ -46,7 +46,7 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
         }}
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 mx-auto w-full max-w-[1440px]">
         {/* Eyebrow */}
         <Reveal>
         <div className="hidden md:flex items-center gap-3 mb-14">
@@ -61,8 +61,8 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] gap-6 md:gap-[60px] items-center">
           {/* LEFT — founder image */}
           <Reveal>
-          <div>
-            <div className="relative w-full aspect-[5/6] overflow-hidden">
+          <div className="mx-auto w-full max-w-[560px] md:max-w-[520px] lg:max-w-[560px] flex justify-center">
+            <div className="relative w-full aspect-[5/6] overflow-hidden max-h-[min(85vh,680px)]">
               <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, #2A1008, #BF5E18)' }} />
               <div className="absolute inset-3 border border-[rgba(212,136,10,0.4)] z-20 pointer-events-none" />
               <div className="absolute inset-0 flex items-center justify-center z-10">

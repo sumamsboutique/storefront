@@ -16,7 +16,7 @@ const FEATURED: ProductCardData[] = [
     price: '₹24,500',
     priceNum: 24500,
     label: 'Benarasi silk — rich crimson with gold zari',
-    aspect: 2 / 3,
+    aspect: 3 / 4,
     images: ['/Products/Banarasi/royal-crimson-benarasi.png'],
   },
   {

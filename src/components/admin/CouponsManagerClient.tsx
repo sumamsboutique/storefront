@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AdminCouponRow } from '@/lib/admin/queries'
 import { AdminBadge } from '@/components/admin/AdminBadge'
+import { Dropdown } from '@/components/shared/Dropdown'
 import { ConfirmModal } from '@/components/admin/AdminModal'
 import { useToast } from '@/components/admin/AdminToast'
 import { saveCoupon, toggleCoupon, deleteCoupon } from '@/lib/admin/actions'
@@ -107,10 +108,16 @@ export function CouponsManagerClient({ coupons }: { coupons: AdminCouponRow[] })
         </label>
         <label className="block">
           <span className="text-[10px] font-sans uppercase tracking-wider text-muted">Discount Type</span>
-          <select value={form.discount_type} onChange={set('discount_type')} className="mt-1 w-full px-3 py-1.5 text-xs bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper">
-            <option value="percent">Percent (%)</option>
-            <option value="amount">Fixed (₹)</option>
-          </select>
+          <Dropdown
+            value={form.discount_type}
+            onChange={(v) => setForm((f) => ({ ...f, discount_type: v as FormState['discount_type'] }))}
+            ariaLabel="Discount Type"
+            options={[
+              { value: 'percent', label: 'Percent (%)' },
+              { value: 'amount', label: 'Fixed (₹)' },
+            ]}
+            className="mt-1 w-full px-3 py-1.5 text-xs bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
+          />
         </label>
         <label className="block">
           <span className="text-[10px] font-sans uppercase tracking-wider text-muted">Value</span>

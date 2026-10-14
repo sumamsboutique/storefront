@@ -7,6 +7,7 @@ import {
   deleteAddress,
   type SavedAddress,
 } from '@/lib/account'
+import { Dropdown } from '@/components/shared/Dropdown'
 
 const empty = { label: 'Home', name: '', phone: '', email: '', address: '', city: '', pin: '' }
 
@@ -81,11 +82,17 @@ export default function AddressBook({ email }: { email: string }) {
           <div className="grid grid-cols-2 gap-4">
             <label className="block">
               <span className={LABEL}>Label</span>
-              <select value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} className={FIELD}>
-                <option value="Home">Home</option>
-                <option value="Work">Work</option>
-                <option value="Other">Other</option>
-              </select>
+              <Dropdown
+                value={form.label}
+                onChange={(v) => setForm({ ...form, label: v })}
+                ariaLabel="Label"
+                options={[
+                  { value: 'Home', label: 'Home' },
+                  { value: 'Work', label: 'Work' },
+                  { value: 'Other', label: 'Other' },
+                ]}
+                className={FIELD}
+              />
             </label>
             <label className="block">
               <span className={LABEL}>Full name</span>
@@ -115,6 +122,7 @@ export default function AddressBook({ email }: { email: string }) {
           <button
             type="submit"
             disabled={saving}
+            aria-busy={saving}
             className="mt-6 border border-dark bg-dark px-7 py-3 font-sans text-[10px] uppercase tracking-[0.2em] text-ivory transition-colors hover:border-copper hover:bg-copper disabled:opacity-40"
           >
             {saving ? 'Saving…' : 'Save address'}

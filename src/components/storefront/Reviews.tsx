@@ -151,6 +151,7 @@ export default function Reviews({ productId }: { productId: string }) {
                 type="button"
                 onClick={submit}
                 disabled={pending}
+                aria-busy={pending}
                 className="mt-4 w-full bg-copper py-3 font-ui text-[11px] font-medium uppercase tracking-[0.16em] text-ivory hover:bg-dark disabled:opacity-50"
               >
                 {pending ? 'Posting…' : 'Post Review'}

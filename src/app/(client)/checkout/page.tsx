@@ -3,6 +3,7 @@
 import { useTransition, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useCart, cartImage } from '@/lib/store'
 import { placeOrder, getStoreCommerce } from '@/lib/orders'
 import { getSavedAddresses, type SavedAddress } from '@/lib/account'
@@ -11,6 +12,7 @@ import { createRazorpayOrder, verifyRazorpayPayment } from '@/lib/payments'
 import { openRazorpayCheckout } from '@/lib/razorpay-client'
 import { trackEvent } from '@/components/storefront/GoogleAnalytics'
 import { PAD, Eyebrow } from '@/components/shared/primitives'
+import { Dropdown } from '@/components/shared/Dropdown'
 import { cn } from '@/lib/cn'
 import { useMounted } from '@/lib/useMounted'
 
@@ -18,6 +20,15 @@ const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
 export default function Checkout() {
   const mounted = useMounted()
+  const router = useRouter()
+  // Back to where the user came from if that was us, else home.
+  const goBack = () => {
+    const ref = document.referrer
+    let sameOrigin = false
+    try { sameOrigin = ref !== '' && new URL(ref).origin === window.location.origin } catch {}
+    if (sameOrigin) router.back()
+    else router.push('/')
+  }
   const { items: rawItems, subtotal, clear } = useCart()
 
   const items = mounted ? rawItems : []
@@ -38,6 +49,7 @@ export default function Checkout() {
   const [error, setError] = useState('')
   const [pending, startTransition] = useTransition()
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', pin: '' })
+  const [savedAddressId, setSavedAddressId] = useState('')
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
@@ -114,7 +126,8 @@ export default function Checkout() {
             }
           },
           onFail: (msg) => setError(msg),
-          onDismiss: () => {},
+          onDismiss: () =>
+            setError('Payment cancelled. Your order has been saved — press Pay again to complete it.'),
         })
       } else if (rzp.error === 'razorpay_not_configured' && process.env.NODE_ENV !== 'production') {
         // Dev fallback — no Razorpay keys, keep the old mocked flow working locally.
@@ -151,6 +164,13 @@ export default function Checkout() {
   return (
     <div className="bg-ivory">
       <div className={cn(PAD, 'pt-[26px]')}>
+        <button
+          type="button"
+          onClick={goBack}
+          className="mb-3 font-ui text-[10px] tracking-[0.18em] text-muted uppercase hover:text-copper transition-colors"
+        >
+          ← Back
+        </button>
         <Eyebrow label="Secure checkout" hairline={false} />
         <h1 className="mt-2 font-display text-[clamp(30px,4vw,42px)] font-light text-dark">Checkout</h1>
       </div>
@@ -208,9 +228,10 @@ export default function Checkout() {
                 <button
                   onClick={applyCoupon}
                   disabled={couponPending || !!coupon}
+                  aria-busy={couponPending}
                   className="px-3 py-1.5 border border-[#DCC9A8]/80 font-ui text-[11px] tracking-[0.14em] uppercase text-dark hover:border-copper hover:text-copper disabled:opacity-50"
                 >
-                  {couponPending ? '…' : coupon ? 'Applied' : 'Apply'}
+                  {couponPending ? 'Applying…' : coupon ? 'Applied' : 'Apply'}
                 </button>
               </div>
               {couponMsg && (
@@ -220,6 +241,7 @@ export default function Checkout() {
             <button
               onClick={submit}
               disabled={items.length === 0 || pending}
+              aria-busy={pending}
               className={cn('mt-6 w-full py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] uppercase', items.length === 0 || pending ? 'bg-[rgba(140,106,85,0.3)] text-[rgba(28,10,6,0.4)]' : 'bg-copper text-ivory')}
             >
               {pending ? 'Placing Order…' : `Place Order · ${fmt(total)}`}
@@ -242,21 +264,18 @@ export default function Checkout() {
             <div className="mt-4">
               <label className="block">
                 <span className="font-ui text-[10px] tracking-[0.12em] text-muted uppercase">Use a saved address</span>
-                <select
-                  defaultValue=""
-                  onChange={(e) => {
-                    const a = saved.find((s) => s.id === e.target.value)
+                <Dropdown
+                  value={savedAddressId}
+                  onChange={(id) => {
+                    setSavedAddressId(id)
+                    const a = saved.find((s) => s.id === id)
                     if (a) setForm({ name: a.name, phone: a.phone, email: a.email, address: a.address, city: a.city, pin: a.pin })
                   }}
+                  placeholder="Choose an address"
+                  ariaLabel="Use a saved address"
+                  options={saved.map((a) => ({ value: a.id, label: `${a.label} — ${a.address}, ${a.city} ${a.pin}` }))}
                   className="mt-1 w-full border-b border-[rgba(140,106,85,0.3)] bg-transparent py-2 font-ui text-sm text-dark outline-none"
-                >
-                  <option value="" disabled>Choose an address</option>
-                  {saved.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.label} — {a.address}, {a.city} {a.pin}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
             </div>
           )}

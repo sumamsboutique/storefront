@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AdminCategoryItem } from '@/lib/admin/queries'
 import { AdminCard } from '@/components/admin/AdminCard'
+import { Dropdown } from '@/components/shared/Dropdown'
 import { AdminModal, ConfirmModal } from '@/components/admin/AdminModal'
 import { ActiveBadge } from '@/components/admin/AdminBadge'
 import { useToast } from '@/components/admin/AdminToast'
@@ -326,18 +327,16 @@ export function CategoryManagerClient({
               <label className="block text-[11px] font-sans font-medium uppercase tracking-wider text-muted mb-1.5">
                 Parent Category
               </label>
-              <select
+              <Dropdown
                 value={parentId}
-                onChange={(e) => setParentId(e.target.value)}
+                onChange={setParentId}
+                ariaLabel="Parent Category"
+                options={[
+                  { value: '', label: 'None (Top-Level Category)' },
+                  ...availableParents.map((p) => ({ value: p.id, label: p.name })),
+                ]}
                 className="w-full px-3 py-2 text-xs border border-[#DCC9A8]/80 text-dark font-sans focus:outline-none focus:border-copper"
-              >
-                <option value="">None (Top-Level Category)</option>
-                {availableParents.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 

@@ -11,6 +11,7 @@ import {
   ActiveBadge,
 } from '@/components/admin/AdminBadge'
 import { ConfirmModal } from '@/components/admin/AdminModal'
+import { Dropdown } from '@/components/shared/Dropdown'
 import { useToast } from '@/components/admin/AdminToast'
 import { deleteProduct, bulkUpdateProducts } from '@/lib/admin/actions'
 
@@ -129,42 +130,44 @@ export function ProductListClient({
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2 text-xs font-sans">
           {/* Category */}
-          <select
+          <Dropdown
             value={searchParams.get('categoryId') || ''}
-            onChange={(e) => handleFilterChange('categoryId', e.target.value)}
+            onChange={(v) => handleFilterChange('categoryId', v)}
+            ariaLabel="Filter by category"
+            options={[
+              { value: '', label: 'All Categories' },
+              ...categories.map((c) => ({ value: c.id, label: c.name })),
+            ]}
             className="px-2.5 py-1.5 bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
-          >
-            <option value="">All Categories</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          />
 
           {/* Stock Status */}
-          <select
+          <Dropdown
             value={searchParams.get('stockStatus') || ''}
-            onChange={(e) => handleFilterChange('stockStatus', e.target.value)}
+            onChange={(v) => handleFilterChange('stockStatus', v)}
+            ariaLabel="Filter by stock status"
+            options={[
+              { value: '', label: 'All Stock' },
+              { value: 'in_stock', label: 'In Stock' },
+              { value: 'low_stock', label: 'Low Stock' },
+              { value: 'out_of_stock', label: 'Out of Stock' },
+              { value: 'sold', label: 'Sold' },
+            ]}
             className="px-2.5 py-1.5 bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
-          >
-            <option value="">All Stock</option>
-            <option value="in_stock">In Stock</option>
-            <option value="low_stock">Low Stock</option>
-            <option value="out_of_stock">Out of Stock</option>
-            <option value="sold">Sold</option>
-          </select>
+          />
 
           {/* Published */}
-          <select
+          <Dropdown
             value={searchParams.get('published') || ''}
-            onChange={(e) => handleFilterChange('published', e.target.value)}
+            onChange={(v) => handleFilterChange('published', v)}
+            ariaLabel="Filter by published status"
+            options={[
+              { value: '', label: 'All Statuses' },
+              { value: 'true', label: 'Published' },
+              { value: 'false', label: 'Draft' },
+            ]}
             className="px-2.5 py-1.5 bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
-          >
-            <option value="">All Statuses</option>
-            <option value="true">Published</option>
-            <option value="false">Draft</option>
-          </select>
+          />
         </div>
       </div>
 

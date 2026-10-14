@@ -205,7 +205,7 @@ export default function Story() {
           {WEAVING_CLUSTERS.map((cluster) => (
             <div
               key={cluster.name}
-              className="bg-white border border-[rgba(140,106,85,0.25)] p-6 md:p-7 flex flex-col justify-between hover:border-copper transition-all duration-300 shadow-sm group"
+              className="bg-white border border-[rgba(140,106,85,0.25)] p-6 md:p-7 flex flex-col justify-between cursor-default select-none pointer-events-none"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -214,7 +214,7 @@ export default function Story() {
                   </span>
                   <span className="font-bengali text-xs text-muted/70">{cluster.bn}</span>
                 </div>
-                <h3 className="font-display text-xl text-dark group-hover:text-copper transition-colors">
+                <h3 className="font-display text-xl text-dark">
                   {cluster.name}
                 </h3>
                 <div className="font-ui text-[11px] font-medium tracking-wide text-copper uppercase mt-0.5 mb-3">
@@ -227,7 +227,6 @@ export default function Story() {
 
               <div className="mt-6 pt-4 border-t border-[rgba(140,106,85,0.15)] flex items-center justify-between">
                 <span className="font-ui text-[10px] text-muted uppercase tracking-wider">Atelier Verified</span>
-                <span className="text-copper text-xs font-medium group-hover:translate-x-1 transition-transform">→</span>
               </div>
             </div>
           ))}
@@ -287,7 +286,7 @@ export default function Story() {
               href="/sarees"
               className="px-6 py-3.5 bg-copper hover:bg-[#A04A18] text-ivory font-ui text-[11px] font-medium tracking-[0.2em] uppercase transition-colors"
             >
-              Explore Saree Collection
+              Explore Sarees Collection
             </Link>
             <Link
               href="/jewellery"

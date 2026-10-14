@@ -230,12 +230,6 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
         .auth-logo-delay {
           animation: auth-logo 0.9s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
-        .auth-float {
-          animation: auth-float 9s ease-in-out infinite;
-        }
-        .auth-float-2 {
-          animation: auth-float 12s ease-in-out infinite;
-        }
         .auth-panel {
           animation-delay: 0.55s;
         }
@@ -269,22 +263,11 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
             transform: none;
           }
         }
-        @keyframes auth-float {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-16px);
-          }
-        }
         @media (prefers-reduced-motion: reduce) {
           .auth-up,
           .auth-swap,
           .auth-logo,
-          .auth-logo-delay,
-          .auth-float,
-          .auth-float-2 {
+          .auth-logo-delay {
             animation: none;
           }
         }
@@ -429,7 +412,8 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                   </p>
                 )}
 
-<div className="mt-6 rounded-xl border border-[#DCC9A8]/70 bg-cream/50 px-4 py-3 text-center">
+                {!isProd && (
+                  <div className="mt-6 rounded-xl border border-[#DCC9A8]/70 bg-cream/50 px-4 py-3 text-center">
                     <p className="font-sans text-[11px] text-muted">
                       {isAdmin ? 'Demo admin access' : 'Demo customer account'} —{' '}
                       <span className="select-all font-medium text-dark">
@@ -448,6 +432,7 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                       Fill demo credentials
                     </button>
                   </div>
+                )}
               </div>
             ) : (
               /* ── SIGNUP ── */
@@ -614,8 +599,6 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
 
         {/* ── RIGHT: brand identity ────────────────────────────────────────── */}
         <aside className={cn('relative hidden select-none overflow-hidden md:block', isAdmin && 'md:order-1')} aria-hidden>
-          <div className="auth-float absolute left-[11%] top-[16%] h-24 w-24 rotate-45 rounded-[1.5rem] border border-copper/25" />
-          <div className="auth-float-2 absolute bottom-[15%] right-[12%] h-16 w-16 rounded-full border border-gold/30" />
           <div className="absolute bottom-[-9%] right-[-5%] text-copper/10">
             <AlponaMotif size={340} />
           </div>
@@ -637,8 +620,8 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
               <div className="mx-auto mb-5 h-px w-12 bg-copper/50" />
               <p className="font-sans text-[15px] font-medium tracking-wide text-dark/85">
                 {isAdmin
-                  ? 'Bengal-heritage sarees &amp; fine jewellery'
-                  : 'Your patron orders &amp; saved wishlist'}
+                  ? 'Bengal-heritage sarees & fine jewellery'
+                  : 'Your patron orders & saved wishlist'}
               </p>
               <p className="mt-2 font-sans text-sm leading-relaxed text-muted">
                 {isAdmin

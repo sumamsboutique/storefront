@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { IconSearch, IconAccount, IconCart, IconMenu } from '@/components/icons'
-import { cn } from '@/lib/cn'
 import { useCart } from '@/lib/store'
+import { useDialog } from '@/lib/dialog'
 import { useMounted } from '@/lib/useMounted'
 
 const NAV: { label: string; href: string }[] = [
@@ -15,39 +16,38 @@ const NAV: { label: string; href: string }[] = [
 ]
 
 export function NavLink({ label, href }: { label: string; href: string }) {
-  const [hov, setHov] = useState(false)
   return (
     <Link
       href={href}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      className={cn(
-        'relative font-sans text-[11px] font-normal tracking-[0.18em] uppercase pb-[3px] transition-colors duration-200',
-        hov ? 'text-gold' : 'text-[rgba(245,239,230,0.70)]'
-      )}
+      className="group relative font-sans text-[11px] font-normal tracking-[0.18em] uppercase pb-[3px] text-[rgba(245,239,230,0.70)] transition-colors duration-200 hover:text-gold focus-visible:text-gold"
     >
       {label}
-      <span
-        className="absolute bottom-0 left-0 right-0 h-px bg-gold origin-left transition-transform duration-200"
-        style={{ transform: hov ? 'scaleX(1)' : 'scaleX(0)' }}
-      />
+      <span className="absolute bottom-0 left-0 right-0 h-px bg-gold origin-left scale-x-0 transition-transform duration-200 group-hover:scale-x-100 group-focus-visible:scale-x-100" />
     </Link>
   )
 }
 
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const panelRef = useDialog<HTMLDivElement>(open, onClose)
   return (
     <>
       <div
         onClick={onClose}
         aria-hidden
-        className={`fixed inset-0 z-[90] bg-[rgba(28,10,6,0.5)] md:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[90] bg-[rgba(28,10,6,0.5)] transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       />
+      {/* `invisible` (transitioned, so it lands after the slide) takes the closed
+          panel out of the tab order — a hidden menu must not hold focusables. */}
       <div
-        className={`fixed left-0 top-0 z-[100] flex h-full w-72 flex-col bg-dark px-8 py-6 transition-transform duration-300 md:hidden ${
-          open ? 'translate-x-0' : '-translate-x-full'
+        ref={panelRef}
+        id="mobile-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu"
+        className={`fixed left-0 top-0 z-[100] flex h-full w-72 flex-col bg-dark px-8 py-6 transition-[transform,visibility] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden ${
+          open ? 'translate-x-0' : 'invisible -translate-x-full'
         }`}
       >
         <button suppressHydrationWarning onClick={onClose} aria-label="Close menu" className="mb-8 self-end font-ui text-2xl leading-none text-gold">
@@ -80,10 +80,19 @@ export default function Navbar() {
   const mounted = useMounted()
   const count = useCart((s) => s.items.reduce((a, i) => a + i.qty, 0))
   const openCart = useCart((s) => s.open)
+  const pathname = usePathname()
+
+  // Route change ⇒ close the menu, so a new page never loads behind an open drawer.
+  // Adjusted during render (not in an effect) per React's derived-state pattern.
+  const [lastPath, setLastPath] = useState(pathname)
+  if (pathname !== lastPath) {
+    setLastPath(pathname)
+    if (menuOpen) setMenuOpen(false)
+  }
 
   return (
     <>
-      <nav className="sticky top-0 z-[100] w-full h-16 bg-dark border-b border-[rgba(212,136,10,0.18)] flex items-center px-8">
+      <nav aria-label="Main" className="sticky top-0 z-[100] w-full h-16 bg-dark border-b border-[rgba(212,136,10,0.18)] flex items-center px-8">
         {/* LEFT — desktop links */}
         <div className="hidden md:flex items-center gap-7 flex-1">
           {NAV.map((l) => (
@@ -92,7 +101,14 @@ export default function Navbar() {
         </div>
         {/* LEFT — mobile hamburger */}
         <div className="flex md:hidden flex-1">
-          <button suppressHydrationWarning onClick={() => setMenuOpen(true)} aria-label="Open menu" className="text-[rgba(245,239,230,0.8)]">
+          <button
+            suppressHydrationWarning
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            className="text-[rgba(245,239,230,0.8)]"
+          >
             <IconMenu />
           </button>
         </div>
@@ -100,19 +116,19 @@ export default function Navbar() {
         {/* CENTER — logo */}
         <div className="flex flex-col items-center shrink-0">
           <Link href="/" aria-label="Sumam's Boutique home">
+            {/* logo.png is trimmed to the mark's bounds */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {/* logo.png is trimmed to the mark's bounds — h-7 ≈ the old visible size, no dead padding */}
             <img
               src="/logo.png"
               alt="Sumam's Boutique"
-              className="h-7 w-auto object-contain"
+              className="h-12 md:h-14 w-auto object-contain"
             />
           </Link>
         </div>
 
         {/* RIGHT — icons */}
         <div className="flex items-center gap-4 flex-1 justify-end md:gap-[18px]">
-          <Link href="/search" className="hidden md:flex bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)]" aria-label="Search">
+          <Link href="/search" className="flex bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)]" aria-label="Search">
             <IconSearch />
           </Link>
           <Link href="/account" className="hidden md:flex bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)]" aria-label="Account">

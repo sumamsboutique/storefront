@@ -35,11 +35,14 @@ export function ProductCard({
   className?: string
 }) {
   const add = useCart((s) => s.add)
+  const cart = useCart((s) => s)
   const wishlist = useWishlist((s) => s)
   const mounted = useMounted()
   const [qvOpen, setQvOpen] = useState(false)
+  const [pop, setPop] = useState(false)
 
-  const wished = mounted && product.catalogId ? wishlist.has(product.catalogId) : false
+  const wished = mounted && product.slug ? wishlist.has(product.slug) : false
+  const inCart = mounted && product.catalogId ? cart.has(String(product.catalogId)) : false
 
   const addItem = () => {
     if (product.catalogId) {
@@ -62,7 +65,7 @@ export function ProductCard({
       {/* Image */}
       <div
         className="relative shrink-0 overflow-hidden w-full bg-cream"
-        style={{ height: imgHeight ? imgHeight : undefined, aspectRatio: imgHeight ? undefined : product.aspect ?? '3/4' }}
+        style={{ height: imgHeight ? imgHeight : undefined, aspectRatio: imgHeight ? undefined : product.aspect ?? '3/4', maxHeight: imgHeight ? undefined : 520 }}
       >
         {product.images?.[0] ? (
           <Image
@@ -114,9 +117,14 @@ export function ProductCard({
           suppressHydrationWarning
           onClick={(e) => {
             e.preventDefault()
-            if (product.catalogId) wishlist.toggle(product.catalogId)
+            if (product.slug) wishlist.toggle(product.slug)
+            setPop(true)
           }}
-          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center cursor-pointer transition-opacity duration-200 border border-[rgba(245,239,230,0.18)] bg-[rgba(245,239,230,0.88)] md:bg-[rgba(28,10,6,0.32)]"
+          onAnimationEnd={() => setPop(false)}
+          className={cn(
+            'absolute top-3 right-3 w-8 h-8 flex items-center justify-center cursor-pointer transition-opacity duration-200 border border-[rgba(245,239,230,0.18)] bg-[rgba(245,239,230,0.88)] md:bg-[rgba(28,10,6,0.32)]',
+            pop && 'heart-pop'
+          )}
           aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <HeartIcon filled={wished} color="#BF5E18" outline="#1C0A06" />
@@ -144,14 +152,14 @@ export function ProductCard({
         <div>
           {/* Two lines always reserved: 17px * 1.3 * 2. Without it a 1-line name
               makes that card shorter than its row neighbours. */}
-          <h3 className="font-display text-[17px] font-normal text-dark mb-1 leading-[1.3] line-clamp-2 min-h-[44px]">
+          <h3 className="font-display text-[17px] font-normal text-dark mb-0.5 leading-[1.25] line-clamp-2 min-h-[44px]">
             {product.name}
           </h3>
-          <p className="font-sans text-[10px] font-normal tracking-[0.1em] uppercase text-muted leading-[1.5]">
+          <p className="font-sans text-[10px] font-normal tracking-[0.1em] uppercase text-muted leading-[1.4]">
             {product.sub}
           </p>
         </div>
-        <div className="flex items-center justify-between mt-3.5">
+        <div className="flex items-center justify-between mt-2.5">
           <span className="font-sans text-[15px] font-medium text-copper">{product.price}</span>
           {product.sold ? (
             /* Same slot as the add-to-bag button so the row stays aligned. */
@@ -166,12 +174,16 @@ export function ProductCard({
                 disabled={!product.catalogId}
                 onClick={(e) => {
                   e.preventDefault()
-                  addItem()
+                  if (!inCart) {
+                    addItem()
+                  } else {
+                    cart.open()
+                  }
                 }}
                 className="hidden md:inline-flex bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors duration-200 hover:bg-copper hover:text-ivory disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label={`Add ${product.name} to bag`}
+                aria-label={inCart ? `Go to cart` : `Add ${product.name} to bag`}
               >
-                ADD TO BAG
+                {inCart ? 'GO TO CART' : 'ADD TO BAG'}
               </button>
               {/* Mobile — icon only, same hit area as the wishlist button above */}
               <button
@@ -179,10 +191,14 @@ export function ProductCard({
                 disabled={!product.catalogId}
                 onClick={(e) => {
                   e.preventDefault()
-                  addItem()
+                  if (!inCart) {
+                    addItem()
+                  } else {
+                    cart.open()
+                  }
                 }}
                 className="md:hidden flex items-center justify-center w-8 h-8 shrink-0 border border-[rgba(191,94,24,0.38)] text-copper transition-colors duration-200 active:bg-copper active:text-ivory disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label={`Add ${product.name} to bag`}
+                aria-label={inCart ? `Go to cart` : `Add ${product.name} to bag`}
               >
                 <IconCart size={15} />
               </button>
@@ -211,6 +227,9 @@ export function ProductCard({
 
 function QuickViewModal({ product, onClose }: { product: ProductCardData; onClose: () => void }) {
   const add = useCart((s) => s.add)
+  const has = useCart((s) => s.has)
+  const open = useCart((s) => s.open)
+  const inCart = product.catalogId ? has(String(product.catalogId)) : false
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -272,11 +291,18 @@ function QuickViewModal({ product, onClose }: { product: ProductCardData; onClos
           <div className="mt-auto flex flex-col gap-3 pt-8">
             <button
               suppressHydrationWarning
-              onClick={addItem}
+              onClick={(e) => {
+                e.preventDefault()
+                if (!inCart) addItem()
+                else {
+                  open()
+                  onClose()
+                }
+              }}
               disabled={!product.catalogId}
               className="w-full bg-dark py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-copper disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Add to Bag
+              {inCart ? 'Go to Cart' : 'Add to Bag'}
             </button>
             {product.slug && (
               <Link

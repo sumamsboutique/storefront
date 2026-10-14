@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { InstagramGlyph, FacebookGlyph, WhatsAppGlyph, YouTubeGlyph } from '@/components/icons'
 import { subscribeNewsletter } from '@/lib/newsletter'
+import { getStoreSocials, type StoreSocials } from '@/lib/settings'
 import { cn } from '@/lib/cn'
 import type { FooterContent } from '@/lib/data'
 
@@ -30,7 +31,7 @@ const FOOTER_HELP = [
   { label: 'Contact Us', href: '/contact' },
   { label: 'FAQs', href: '/faqs' },
 ]
-const PAYMENT_METHODS = ['RAZORPAY', 'STRIPE', 'VISA', 'MASTERCARD', 'UPI']
+const PAYMENT_METHODS = ['RAZORPAY', 'VISA', 'MASTERCARD', 'UPI']
 
 const DEFAULT_FOOTER: FooterContent = {
   brand: {
@@ -50,21 +51,37 @@ const DEFAULT_FOOTER: FooterContent = {
 }
 
 const SOCIALS = [
-  { label: 'Instagram', Icon: InstagramGlyph },
-  { label: 'Facebook', Icon: FacebookGlyph },
-  { label: 'WhatsApp', Icon: WhatsAppGlyph },
-  { label: 'YouTube', Icon: YouTubeGlyph },
+  { label: 'Instagram', Icon: InstagramGlyph, key: 'instagram' as const },
+  { label: 'Facebook', Icon: FacebookGlyph, key: 'facebook' as const },
+  { label: 'WhatsApp', Icon: WhatsAppGlyph, key: 'whatsapp' as const },
+  { label: 'YouTube', Icon: YouTubeGlyph, key: 'youtube' as const },
 ]
 
-function SocialLink({ Icon, label }: { Icon: (p: { className?: string }) => React.ReactNode; label: string }) {
+function socialHref(socials: StoreSocials, key: (typeof SOCIALS)[number]['key']): string | undefined {
+  const raw = socials[key]
+  if (!raw) return undefined
+  if (key === 'whatsapp') {
+    if (raw.startsWith('http')) return raw
+    const digits = raw.replace(/\D/g, '')
+    return digits ? `https://wa.me/${digits}` : undefined
+  }
+  return raw
+}
+
+function SocialLink({ Icon, label, href }: { Icon: (p: { className?: string }) => React.ReactNode; label: string; href?: string }) {
+  const cls = 'flex h-8 w-8 items-center justify-center'
+  const style = { border: '1px solid rgba(212,136,10,0.3)', color: '#8C6A55' }
+  if (!href) {
+    return (
+      <span aria-label={label} className={cls} style={style}>
+        <Icon className="w-3.5 h-3.5" />
+      </span>
+    )
+  }
   return (
-    <span
-      aria-label={label}
-      className="flex h-8 w-8 items-center justify-center"
-      style={{ border: '1px solid rgba(212,136,10,0.3)', color: '#8C6A55' }}
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className={cls} style={style}>
       <Icon className="w-3.5 h-3.5" />
-    </span>
+    </a>
   )
 }
 
@@ -184,7 +201,7 @@ function MobileAccordion() {
   )
 }
 
-function BrandBlock({ footer }: { footer: FooterContent }) {
+function BrandBlock({ footer, socials }: { footer: FooterContent; socials: StoreSocials }) {
   return (
     <div>
       <div className="font-display text-[22px] font-semibold tracking-[0.08em] uppercase text-copper mb-1.5">
@@ -198,7 +215,7 @@ function BrandBlock({ footer }: { footer: FooterContent }) {
       </p>
       <div className="flex gap-3">
         {SOCIALS.map((s) => (
-          <SocialLink key={s.label} Icon={s.Icon as any} label={s.label} />
+          <SocialLink key={s.label} Icon={s.Icon as any} label={s.label} href={socialHref(socials, s.key)} />
         ))}
       </div>
     </div>
@@ -207,6 +224,10 @@ function BrandBlock({ footer }: { footer: FooterContent }) {
 
 export default function Footer({ footer: footerProp }: { footer?: FooterContent }) {
   const footer = footerProp && footerProp.brand?.title ? footerProp : DEFAULT_FOOTER
+  const [socials, setSocials] = useState<StoreSocials>({})
+  useEffect(() => {
+    getStoreSocials().then(setSocials).catch(() => {})
+  }, [])
   return (
     <footer
       className="bg-dark relative overflow-hidden px-5 md:px-[clamp(32px,6vw,85px)] pt-16 md:pt-20 pb-6"
@@ -225,8 +246,8 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
         />
       </div>
 
-      <div className="relative z-10 md:hidden">
-        <BrandBlock footer={footer} />
+      <div className="relative z-10 md:hidden mx-auto w-full max-w-[1100px]">
+        <BrandBlock footer={footer} socials={socials} />
         <div className="my-6" style={{ borderTop: '1px solid rgba(212,136,10,0.15)' }} />
         <Newsletter footer={footer} />
         <div className="mt-8">
@@ -234,8 +255,8 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
         </div>
       </div>
 
-      <div className="relative z-10 hidden md:grid" style={{ gridTemplateColumns: '1.6fr 1fr 1fr 1fr 1.4fr', gap: 40 }}>
-        <BrandBlock footer={footer} />
+      <div className="relative z-10 hidden md:grid mx-auto w-full max-w-[1100px]" style={{ gridTemplateColumns: '1.6fr 1fr 1fr 1fr 1.4fr', gap: 40 }}>
+        <BrandBlock footer={footer} socials={socials} />
         <div>
           <FooterColTitle>Sarees</FooterColTitle>
           {FOOTER_SAREES.map((l) => <FooterLink key={l.label} item={l} />)}
@@ -252,7 +273,7 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
       </div>
 
       {/* Bottom bar */}
-      <div className="relative z-10 mt-10 pt-6 md:pb-8" style={{ borderTop: '1px solid rgba(212,136,10,0.15)' }}>
+      <div className="relative z-10 mt-10 pt-6 md:pb-8 mx-auto w-full max-w-[1100px]" style={{ borderTop: '1px solid rgba(212,136,10,0.15)' }}>
         <div className="flex flex-col md:flex-row items-center md:items-center justify-between flex-wrap gap-3">
           <span className="font-sans text-[11px] text-[rgba(245,239,230,0.30)]">
             {footer.copyright}

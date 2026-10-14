@@ -14,6 +14,55 @@
 
 html {
   scroll-behavior: smooth;
+  /* Anchor jumps and #hash links clear the sticky 64px navbar. */
+  scroll-padding-top: 4.5rem;
+}
+
+/* ===== Interaction floor (storefront + admin share it) ===== */
+
+/* Keyboard focus is always visible: copper ring, offset so it reads on both
+   the dark nav and the ivory pages. Mouse focus stays unstyled. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
+
+/* Press feedback. `scale` (the standalone property, not `transform`) so
+   utilities like -translate-x-1/2 and group-hover moves keep working.
+   The high-specificity selector deliberately wins over per-button
+   transition-colors so every button shares one timing. */
+body button:not(:disabled) {
+  transition-property: scale, transform, color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+body button:not(:disabled):active {
+  scale: 0.96;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+/* Loading state: components set aria-busy and swap their label. */
+button[aria-busy='true'] {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+/* Wishlist feedback — one authored pop when a piece is saved. */
+@keyframes heartPop {
+  0% { scale: 1; }
+  35% { scale: 1.35; }
+  70% { scale: 0.9; }
+  100% { scale: 1; }
+}
+.heart-pop {
+  animation: heartPop 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body {

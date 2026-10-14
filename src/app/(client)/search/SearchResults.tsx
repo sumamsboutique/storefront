@@ -3,13 +3,14 @@
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { CATALOG } from '@/lib/catalog'
+import { useRouter, useSearchParams } from 'next/navigation'
+import type { CatalogProduct } from '@/lib/catalog'
 import { PAD, Eyebrow } from '@/components/shared/primitives'
 import { IconSearch } from '@/components/icons'
 import { cn } from '@/lib/cn'
 
-export default function SearchResults() {
+export default function SearchResults({ products }: { products: CatalogProduct[] }) {
+  const router = useRouter()
   const params = useSearchParams()
   const initial = params.get('q') ?? ''
   const [term, setTerm] = useState(initial)
@@ -17,10 +18,18 @@ export default function SearchResults() {
   const results = useMemo(() => {
     const t = term.trim().toLowerCase()
     if (!t) return []
-    return CATALOG.filter((p) =>
+    return products.filter((p) =>
       (p.name + ' ' + p.weave + ' ' + p.sub + ' ' + (p.tag || '')).toLowerCase().includes(t),
     )
-  }, [term])
+  }, [term, products])
+
+  // ponytail: filtering is live as you type; submit only persists ?q= so the
+  // query survives refresh and Enter/click both feel wired.
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = term.trim()
+    router.replace(q ? `/search?q=${encodeURIComponent(q)}` : '/search')
+  }
 
   return (
     <div className="bg-ivory">
@@ -31,8 +40,10 @@ export default function SearchResults() {
             Find your <em className="italic text-copper">piece</em>
           </h1>
         </div>
-        <div className="mt-5 flex items-center gap-4 border-b border-[rgba(140,106,85,0.35)] pb-3">
-          <IconSearch size={20} color="#BF5E18" />
+        <form onSubmit={onSubmit} role="search" className="mt-5 flex items-center gap-4 border-b border-[rgba(140,106,85,0.35)] pb-3">
+          <button type="submit" aria-label="Search" className="flex shrink-0 cursor-pointer items-center justify-center bg-transparent border-0 p-0 text-[#BF5E18]">
+            <IconSearch size={20} color="#BF5E18" />
+          </button>
           <input
             autoFocus
             value={term}
@@ -41,7 +52,7 @@ export default function SearchResults() {
             className="flex-1 bg-transparent font-ui text-base text-dark outline-none placeholder:text-[rgba(140,106,85,0.5)]"
             aria-label="Search products"
           />
-        </div>
+        </form>
         <div className="mt-6">
           {term.trim() === '' ? (
             <p className="font-ui text-sm font-light text-muted">

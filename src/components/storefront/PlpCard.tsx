@@ -2,31 +2,36 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 import type { CatalogProduct } from '@/lib/catalog'
 import { HeartIcon, IconCart } from '@/components/icons'
 import { useCart, useWishlist } from '@/lib/store'
 import { useMounted } from '@/lib/useMounted'
+import { cn } from '@/lib/cn'
 
-export function PlpCard({ product }: { product: CatalogProduct }) {
+export function PlpCard({ product, priority = false }: { product: CatalogProduct; priority?: boolean }) {
   const { type, name, sub, price, priceNum, badge, gradient, label, sold, slug, tag, images } = product
   const mounted = useMounted()
+  const [pop, setPop] = useState(false)
   const add = useCart((s) => s.add)
+  const cart = useCart((s) => s)
   const wishlist = useWishlist((s) => s)
 
-  const wished = mounted ? wishlist.has(product.id) : false
+  const wished = mounted ? wishlist.has(product.slug) : false
+  const inCart = mounted && product.id ? cart.has(String(product.id)) : false
   const img = images?.[0]
 
   return (
     <Link
       href={`/products/${slug}`}
-      className="group block w-full h-full flex flex-col"
+      className="group block w-full h-full flex flex-col transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_22px_32px_-26px_rgba(28,10,6,0.65)]"
     >
       <div className="relative overflow-hidden">
         <div
           className="relative aspect-[3/4] w-full overflow-hidden bg-cream"
         >
           {img ? (
-            <Image fill src={img} alt={name} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
+            <Image priority={priority} fill src={img} alt={name} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
           ) : (
             <div className="absolute inset-0" style={{ background: gradient }} />
           )}
@@ -50,10 +55,15 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
           <button
             onClick={(e) => {
               e.preventDefault()
-              wishlist.toggle(product.id)
+              wishlist.toggle(product.slug)
+              setPop(true)
             }}
+            onAnimationEnd={() => setPop(false)}
             aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
-            className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center bg-[rgba(245,239,230,0.88)] transition-opacity md:opacity-0 md:group-hover:opacity-100"
+            className={cn(
+              'absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center bg-[rgba(245,239,230,0.88)] transition-opacity md:opacity-0 md:group-hover:opacity-100',
+              pop && 'heart-pop'
+            )}
           >
             <HeartIcon filled={wished} color="#BF5E18" outline="#1C0A06" />
           </button>
@@ -64,17 +74,17 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
             a saree card's grey fabric line take the same 15px, so cards in a row
             stay the same height regardless of type. */}
         {type === 'jewel' ? (
-          <div className="mb-2 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-copper uppercase">{sub || tag}</div>
+          <div className="mb-1.5 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-copper uppercase">{sub || tag}</div>
         ) : (
-          <div className="mb-2 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-muted uppercase" aria-hidden="true" />
+          <div className="mb-1.5 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-muted uppercase" aria-hidden="true" />
         )}
         {/* Two lines always reserved: 17px * 1.3 * 2. Without it a 1-line name
             makes that card shorter than its row neighbours. */}
         <div className="font-display text-[17px] leading-[1.3] text-dark line-clamp-2 min-h-[44px]">{name}</div>
         {type === 'saree' ? (
-          <div className="mb-2.5 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-muted uppercase">{sub}</div>
+          <div className="mb-1.5 h-[15px] font-ui text-[10px] leading-[15px] tracking-[0.1em] text-muted uppercase">{sub}</div>
         ) : (
-          <div className="mb-2.5 h-[15px]" aria-hidden="true" />
+          <div className="mb-1.5 h-[15px]" aria-hidden="true" />
         )}
         <div className="flex items-center justify-between">
           <span className="font-ui text-sm font-medium text-copper">{price}</span>
@@ -89,20 +99,28 @@ export function PlpCard({ product }: { product: CatalogProduct }) {
               <button
                 onClick={(e) => {
                   e.preventDefault()
-                  add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
+                  if (!inCart) {
+                    add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
+                  } else {
+                    cart.open()
+                  }
                 }}
                 className="hidden md:inline-flex h-8 items-center border border-[rgba(191,94,24,0.45)] px-3 font-ui text-[9px] tracking-[0.16em] text-copper uppercase"
               >
-                Add to Bag
+                {inCart ? 'Go to Cart' : 'Add to Bag'}
               </button>
               {/* Mobile — icon only, matching the h-8 sold-out badge in this row */}
               <button
                 onClick={(e) => {
                   e.preventDefault()
-                  add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
+                  if (!inCart) {
+                    add({ id: product.id, productId: product.id, slug, name, price, priceNum, gradient, label, image: img })
+                  } else {
+                    cart.open()
+                  }
                 }}
                 className="md:hidden h-8 w-8 flex items-center justify-center border border-[rgba(191,94,24,0.45)] text-copper"
-                aria-label={`Add ${name} to bag`}
+                aria-label={inCart ? `Go to cart` : `Add ${name} to bag`}
               >
                 <IconCart size={15} />
               </button>

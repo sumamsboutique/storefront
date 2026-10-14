@@ -73,9 +73,12 @@ export async function saveAddress(input: unknown): Promise<ActionResult<{ id: st
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid address.' }
   }
   const supabase = await createAdminServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Please sign in again.' }
   const { data, error } = await supabase
     .from('customer_addresses')
     .insert({
+      user_id: user.id,
       label: parsed.data.label,
       name: parsed.data.name,
       phone: parsed.data.phone,

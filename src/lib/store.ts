@@ -27,12 +27,14 @@ interface CartStore {
   isOpen: boolean
   open: () => void
   close: () => void
+  /** `qty` is managed by the store and supplied via the optional arg — callers omit it. */
   add: (line: Omit<CartLine, 'qty'>, qty?: number) => void
   setQty: (id: string, qty: number) => void
   remove: (id: string) => void
   clear: () => void
   count: () => number
   subtotal: () => number
+  has: (id: string) => boolean
 }
 
 export const useCart = create<CartStore>()(
@@ -67,6 +69,7 @@ export const useCart = create<CartStore>()(
       clear: () => set({ items: [] }),
       count: () => get().items.reduce((a, i) => a + i.qty, 0),
       subtotal: () => get().items.reduce((a, i) => a + i.priceNum * i.qty, 0),
+      has: (id: string) => get().items.some((i) => i.id === id || i.productId === id),
     }),
     { name: 'sumams-cart' },
   ),
@@ -88,6 +91,13 @@ export const useWishlist = create<WishlistStore>()(
         })),
       has: (id) => get().ids.includes(id),
     }),
-    { name: 'sumams-wishlist' },
+    {
+      name: 'sumams-wishlist',
+      version: 1,
+      // ponytail: v0 stored mixed UUID/catalog ids that never resolved to a
+      // product on the wishlist page; wipe rather than migrate — nothing ever
+      // rendered from it. Keys are slugs from now on.
+      migrate: () => ({ ids: [] }),
+    },
   ),
 )

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useToast } from '@/components/admin/AdminToast'
 import { saveProduct } from '@/lib/admin/actions'
 import { AdminCard } from '@/components/admin/AdminCard'
+import { Dropdown } from '@/components/shared/Dropdown'
 import { ImageGalleryManager, type ImageItem } from '@/components/admin/ImageUploader'
 import { VariantEditor, type VariantItem } from '@/components/admin/VariantEditor'
 import type { ProductFormValues } from '@/lib/admin/schemas'
@@ -200,18 +201,16 @@ export function ProductForm({
                   <label className="block text-[11px] font-sans font-medium uppercase tracking-wider text-muted mb-1.5">
                     Category
                   </label>
-                  <select
+                  <Dropdown
                     value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
+                    onChange={setCategoryId}
+                    ariaLabel="Category"
+                    options={[
+                      { value: '', label: 'Select Category' },
+                      ...categories.map((c) => ({ value: c.id, label: c.parent_name ? `${c.parent_name} → ${c.name}` : c.name })),
+                    ]}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#DCC9A8]/80 text-dark font-sans focus:outline-none focus:border-copper"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.parent_name ? `${c.parent_name} → ${c.name}` : c.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                   <div className="flex items-center justify-between mt-1 text-[10px] text-muted font-sans">
                     <span>Taxonomy classification</span>
                     <Link
@@ -458,18 +457,18 @@ export function ProductForm({
                 <label className="block text-[11px] font-medium uppercase tracking-wider text-muted mb-1.5">
                   Inventory State
                 </label>
-                <select
+                <Dropdown
                   value={stockStatus}
-                  onChange={(e) =>
-                    setStockStatus(e.target.value as 'in_stock' | 'low_stock' | 'out_of_stock' | 'sold')
-                  }
+                  onChange={(v) => setStockStatus(v as 'in_stock' | 'low_stock' | 'out_of_stock' | 'sold')}
+                  ariaLabel="Inventory State"
+                  options={[
+                    { value: 'in_stock', label: 'In Stock' },
+                    { value: 'low_stock', label: 'Low Stock' },
+                    { value: 'out_of_stock', label: 'Out of Stock' },
+                    { value: 'sold', label: 'Sold' },
+                  ]}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
-                >
-                  <option value="in_stock">In Stock</option>
-                  <option value="low_stock">Low Stock</option>
-                  <option value="out_of_stock">Out of Stock</option>
-                  <option value="sold">Sold</option>
-                </select>
+                />
               </div>
             </div>
           </AdminCard>
@@ -494,14 +493,16 @@ export function ProductForm({
                 <label className="block text-[11px] font-medium uppercase tracking-wider text-muted mb-1.5">
                   Badge Color
                 </label>
-                <select
+                <Dropdown
                   value={badgeColor}
-                  onChange={(e) => setBadgeColor(e.target.value)}
+                  onChange={setBadgeColor}
+                  ariaLabel="Badge Color"
+                  options={[
+                    { value: '#BF5E18', label: 'Copper Accent (#BF5E18)' },
+                    { value: '#D4880A', label: 'Gold Accent (#D4880A)' },
+                  ]}
                   className="w-full px-3 py-2 bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
-                >
-                  <option value="#BF5E18">Copper Accent (#BF5E18)</option>
-                  <option value="#D4880A">Gold Accent (#D4880A)</option>
-                </select>
+                />
               </div>
 
               <div className="flex items-center justify-between p-3 border border-[#DCC9A8]/40 bg-white mt-4">

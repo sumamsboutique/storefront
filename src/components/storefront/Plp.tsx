@@ -7,22 +7,29 @@ import { WEAVES } from '@/lib/catalog'
 import { PlpCard } from './PlpCard'
 import { PAD, Eyebrow } from '@/components/shared/primitives'
 import { IconSearch } from '@/components/icons'
+import { Dropdown } from '@/components/shared/Dropdown'
 import { cn } from '@/lib/cn'
 
 const LIMIT = 12
 
 function PriceCheck({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) {
   return (
-    <label
-      onClick={onToggle}
-      className="group flex cursor-pointer items-center gap-2.5"
-    >
+    <label className="group flex cursor-pointer items-center gap-2.5">
+      {/* A real checkbox: Space/Enter toggle it and it is keyboard-reachable. */}
+      <input type="checkbox" checked={active} onChange={onToggle} className="peer sr-only" />
       <span
+        aria-hidden
         className={cn(
-          'flex h-3.5 w-3.5 shrink-0 items-center justify-center border transition-colors',
+          'flex h-3.5 w-3.5 shrink-0 items-center justify-center border transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-copper',
           active ? 'border-copper bg-copper' : 'border-[rgba(140,106,85,0.4)] bg-transparent group-hover:border-copper'
         )}
-      />
+      >
+        {active && (
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="#F5EFE6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1.5 5.2l2.3 2.3L8.5 2.5" />
+          </svg>
+        )}
+      </span>
       <span className="font-ui text-xs font-light text-[rgba(28,10,6,0.8)]">{label}</span>
     </label>
   )
@@ -32,9 +39,9 @@ function FilterGroup({ title, children }: { title: string; children: React.React
   const [open, setOpen] = useState(true)
   return (
     <div className="border-b border-[rgba(140,106,85,0.25)] py-5">
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
         <span className="font-ui text-[11px] font-medium tracking-[0.18em] text-dark uppercase">{title}</span>
-        <span className="font-ui text-base text-muted leading-none">{open ? '−' : '+'}</span>
+        <span className="font-ui text-base text-muted leading-none" aria-hidden>{open ? '−' : '+'}</span>
       </button>
       {open && <div className="mt-4 flex flex-col gap-3">{children}</div>}
     </div>
@@ -61,6 +68,21 @@ function PageHeader({ keyword, title, count }: { keyword: string; title: string;
 }
 
 const SORTS = ['Featured', 'Price: Low to High', 'Price: High to Low'] as const
+
+/** One sort control for both toolbars — the mobile one previously had no caret. */
+function SortSelect({ value, onChange, className }: { value: (typeof SORTS)[number]; onChange: (s: (typeof SORTS)[number]) => void; className?: string }) {
+  return (
+    <div className={cn('relative inline-flex items-center', className)}>
+      <Dropdown
+        value={value}
+        onChange={(v) => onChange(v as (typeof SORTS)[number])}
+        options={SORTS.map((s) => ({ value: s, label: s }))}
+        ariaLabel="Sort products"
+        className="w-full cursor-pointer border border-[rgba(140,106,85,0.3)] bg-cream/70 py-1.5 pl-3 pr-2.5 font-ui text-[10px] uppercase tracking-[0.16em] text-dark outline-none transition-colors hover:border-copper focus:border-copper"
+      />
+    </div>
+  )
+}
 
 export default function Plp({ products, keyword, title, types = ['saree'] }: { products: CatalogProduct[]; keyword: string; title: string; types?: CatalogProduct['type'][] }) {
   const params = useSearchParams()
@@ -124,7 +146,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               setPage(1)
             }}
             placeholder="Search weaves, sarees, motifs..."
-            className="w-full bg-cream/70 border border-[rgba(140,106,85,0.3)] pl-9 pr-8 py-2 font-ui text-xs text-dark placeholder:text-[rgba(28,10,6,0.45)] focus:outline-none focus:border-copper"
+            className="w-full bg-cream/70 border border-[rgba(140,106,85,0.3)] pl-9 pr-8 py-2 font-ui text-xs text-dark placeholder:text-[rgba(28,10,6,0.45)] focus:border-copper"
           />
           {term && (
             <button
@@ -141,6 +163,8 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowMobileFilters((v) => !v)}
+            aria-expanded={showMobileFilters}
+            aria-controls="mobile-filter-sheet"
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 border font-ui text-[10px] tracking-[0.16em] uppercase transition-colors',
               showMobileFilters || weaves.length > 0 || stock !== 'all' || price !== null
@@ -154,23 +178,14 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
             Filters {weaves.length + (stock !== 'all' ? 1 : 0) + (price !== null ? 1 : 0) > 0 && `(${weaves.length + (stock !== 'all' ? 1 : 0) + (price !== null ? 1 : 0)})`}
           </button>
 
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
-            className="flex-1 bg-cream/70 border border-[rgba(140,106,85,0.3)] px-2.5 py-1.5 font-ui text-[10px] tracking-[0.14em] text-dark uppercase outline-none"
-            aria-label="Sort products"
-          >
-            {SORTS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          <SortSelect value={sort} onChange={setSort} className="flex-1" />
           <span className="font-ui text-[10px] text-muted whitespace-nowrap">{filtered.length} items</span>
         </div>
       </div>
 
       {/* Mobile filter sheet */}
       {showMobileFilters && (
-        <div className="border-b border-[rgba(140,106,85,0.25)] bg-[#FAF6F0] px-5 py-4 md:hidden animate-fadeIn">
+        <div id="mobile-filter-sheet" className="border-b border-[rgba(140,106,85,0.25)] bg-[#FAF6F0] px-5 py-4 md:hidden animate-fadeIn">
           <div className="flex items-center justify-between pb-2 border-b border-[rgba(140,106,85,0.2)]">
             <span className="font-ui text-xs font-semibold tracking-wider text-dark uppercase">Filter Collection</span>
             {(weaves.length > 0 || stock !== 'all' || price !== null) && (
@@ -246,7 +261,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
         </aside>
 
         {/* Grid */}
-        <div className={cn(PAD, 'flex-1 pb-16')}>
+        <div className={cn(PAD, 'flex-1 w-full mx-auto max-w-[1440px] pb-16')}>
           {/* Desktop Search & Sort Toolbar */}
           <div className="hidden items-center justify-between gap-4 pt-6 pb-5 border-b border-[rgba(140,106,85,0.2)] md:flex">
             {/* Desktop Search Input */}
@@ -262,7 +277,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
                   setPage(1)
                 }}
                 placeholder="Search by name, weave, or motif..."
-                className="w-full bg-cream/70 border border-[rgba(140,106,85,0.3)] pl-9 pr-8 py-2 font-ui text-xs text-dark placeholder:text-[rgba(28,10,6,0.45)] focus:outline-none focus:border-copper"
+                className="w-full bg-cream/70 border border-[rgba(140,106,85,0.3)] pl-9 pr-8 py-2 font-ui text-xs text-dark placeholder:text-[rgba(28,10,6,0.45)] focus:border-copper"
               />
               {term && (
                 <button
@@ -282,16 +297,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               </span>
               <div className="flex items-center gap-2">
                 <span className="font-ui text-[10px] uppercase tracking-wider text-muted">Sort:</span>
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
-                  className="bg-transparent font-ui text-[11px] tracking-[0.14em] text-dark uppercase outline-none cursor-pointer border-b border-copper/40 pb-0.5"
-                  aria-label="Sort products"
-                >
-                  {SORTS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                <SortSelect value={sort} onChange={setSort} />
               </div>
             </div>
           </div>
@@ -320,27 +326,42 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
             <>
               {/* items-stretch plus h-full on the card makes every card in a row
                   share the tallest height, so panels line up across the row. */}
-              <div className="pt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 items-stretch">
-                {paged.map((p) => (
-                  <PlpCard key={p.id} product={p} />
+              <div className="pt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 items-stretch">
+                {paged.map((p, i) => (
+                  <PlpCard key={p.id} product={p} priority={i < 4} />
                 ))}
               </div>
             </>
           )}
 
           {pageCount > 1 && (
-            <div className="flex items-center justify-center gap-1 pt-12 pb-4">
-              <button onClick={() => setPage(Math.max(1, safePage - 1))} className="px-2 py-1.5 font-ui text-sm text-[rgba(140,106,85,0.6)]" aria-label="Previous page">‹</button>
+            <div className="flex items-center justify-center gap-2 pt-12 pb-4">
+              <button
+                onClick={() => setPage(Math.max(1, safePage - 1))}
+                disabled={safePage === 1}
+                aria-label="Previous page"
+                className="h-10 min-w-10 px-2 flex items-center justify-center border border-[rgba(140,106,85,0.3)] font-ui text-2xl leading-none text-muted hover:text-dark hover:border-copper transition-colors disabled:opacity-40"
+              >
+                ‹
+              </button>
               {Array.from({ length: pageCount }).map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setPage(i + 1)}
-                  className={cn('h-9 w-9 font-ui text-xs transition-colors', safePage === i + 1 ? 'bg-copper text-ivory' : 'text-muted hover:text-dark')}
+                  aria-current={safePage === i + 1 ? 'page' : undefined}
+                  className={cn('h-10 w-10 font-ui text-sm transition-colors', safePage === i + 1 ? 'bg-copper text-ivory' : 'text-muted hover:text-dark')}
                 >
                   {i + 1}
                 </button>
               ))}
-              <button onClick={() => setPage(Math.min(pageCount, safePage + 1))} className="px-2 py-1.5 font-ui text-sm text-[rgba(140,106,85,0.6)]" aria-label="Next page">›</button>
+              <button
+                onClick={() => setPage(Math.min(pageCount, safePage + 1))}
+                disabled={safePage === pageCount}
+                aria-label="Next page"
+                className="h-10 min-w-10 px-2 flex items-center justify-center border border-[rgba(140,106,85,0.3)] font-ui text-2xl leading-none text-muted hover:text-dark hover:border-copper transition-colors disabled:opacity-40"
+              >
+                ›
+              </button>
             </div>
           )}
         </div>

@@ -11,7 +11,7 @@ Comprehensive guide for building, configuring, and deploying **Sumam's Boutique*
 - **Package Manager**: pnpm (`11.17.0`+)
 - **Image Processing**: `sharp` (hardware-accelerated WebP & AVIF generation)
 - **Database & Auth**: Supabase (PostgreSQL 15+)
-- **Payments**: Razorpay (India INR) / Stripe (International)
+- **Payments**: Razorpay (India INR)
 - **Build Mode**: Standalone output (`output: 'standalone'`)
 
 ---

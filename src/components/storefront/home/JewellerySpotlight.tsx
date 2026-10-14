@@ -65,15 +65,16 @@ function JewelleryCard({ product }: { product: Jewellery }) {
   const [hov, setHov] = useState(false)
   const add = useCart((s) => s.add)
   const wishlist = useWishlist((s) => s)
-  const wished = wishlist.has(product.catalogId)
+  const wished = wishlist.has(product.slug)
   return (
     <div
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      className="flex flex-col cursor-pointer"
+      className="flex flex-col"
     >
+      <Link href={`/products/${product.slug}`} className="flex flex-col flex-1">
       {/* Image — 3:4 */}
-      <Link href={`/products/${product.slug}`} className="relative w-full aspect-[3/4] overflow-hidden block bg-cream">
+      <div className="relative w-full aspect-[3/4] overflow-hidden block bg-cream max-h-[520px]">
         {product.images?.[0] ? (
           <Image
             fill
@@ -103,7 +104,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
           suppressHydrationWarning
           onClick={(e) => {
             e.preventDefault()
-            wishlist.toggle(product.catalogId)
+            wishlist.toggle(product.slug)
           }}
           className="absolute top-3 right-3 w-[30px] h-[30px] flex items-center justify-center cursor-pointer bg-[rgba(245,239,230,0.85)] md:bg-[rgba(28,10,6,0.32)] border border-[rgba(245,239,230,0.18)] transition-opacity duration-200"
           style={{ opacity: hov ? 1 : undefined }}
@@ -118,7 +119,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
         >
           QUICK VIEW
         </div>
-      </Link>
+      </div>
 
       {/* Info panel */}
       <div className="bg-cream px-5 py-[18px] pb-[22px] flex-1 flex flex-col justify-between">
@@ -138,7 +139,8 @@ function JewelleryCard({ product }: { product: Jewellery }) {
             {/* Desktop — labelled button */}
             <button
               suppressHydrationWarning
-              onClick={() =>
+              onClick={(e) => {
+                e.preventDefault()
                 add({
                   id: product.catalogId,
                   productId: product.catalogId,
@@ -150,7 +152,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
                   label: product.label,
                   image: product.images?.[0],
                 })
-              }
+              }}
               className="hidden md:inline-flex bg-none border border-[rgba(191,94,24,0.38)] text-copper font-sans text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 cursor-pointer transition-colors hover:bg-copper hover:text-ivory"
               aria-label={`Add ${product.name} to bag`}
             >
@@ -159,7 +161,8 @@ function JewelleryCard({ product }: { product: Jewellery }) {
             {/* Mobile — icon only, same 32px footprint as the other cards */}
             <button
               suppressHydrationWarning
-              onClick={() =>
+              onClick={(e) => {
+                e.preventDefault()
                 add({
                   id: product.catalogId,
                   productId: product.catalogId,
@@ -171,7 +174,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
                   label: product.label,
                   image: product.images?.[0],
                 })
-              }
+              }}
               className="md:hidden flex items-center justify-center w-8 h-8 border border-[rgba(191,94,24,0.38)] text-copper transition-colors active:bg-copper active:text-ivory"
               aria-label={`Add ${product.name} to bag`}
             >
@@ -180,6 +183,7 @@ function JewelleryCard({ product }: { product: Jewellery }) {
           </div>
         </div>
       </div>
+      </Link>
     </div>
   )
 }
@@ -212,7 +216,7 @@ export default function JewellerySpotlight({ data }: { data?: JewelSpotContent }
         }}
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 mx-auto w-full max-w-[1440px]">
         <AlponaDivider className="mb-8 md:mb-16" />
 
         {/* Header */}

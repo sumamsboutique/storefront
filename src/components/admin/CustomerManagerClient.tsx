@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { AdminCustomerRow } from '@/lib/admin/queries'
 import { RoleBadge } from '@/components/admin/AdminBadge'
+import { Dropdown } from '@/components/shared/Dropdown'
 import { ConfirmModal } from '@/components/admin/AdminModal'
 import { useToast } from '@/components/admin/AdminToast'
 import { updateUserRole } from '@/lib/admin/actions'
@@ -165,20 +166,22 @@ export function CustomerManagerClient({
                   </td>
                   {isAdmin && (
                     <td className="px-6 py-3.5 text-right">
-                      <select
+                      <Dropdown
                         value={c.role}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setRoleTarget({
                             user: c,
-                            newRole: e.target.value as 'admin' | 'staff' | 'customer',
+                            newRole: v as 'admin' | 'staff' | 'customer',
                           })
                         }
+                        ariaLabel="Role"
+                        options={[
+                          { value: 'customer', label: 'Customer' },
+                          { value: 'staff', label: 'Staff' },
+                          { value: 'admin', label: 'Admin' },
+                        ]}
                         className="px-2 py-1 text-[11px] bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
-                      >
-                        <option value="customer">Customer</option>
-                        <option value="staff">Staff</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                      />
                     </td>
                   )}
                 </tr>

@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { useCart, cartImage } from '@/lib/store'
 import { TrashIcon } from '@/components/icons'
 import { useMounted } from '@/lib/useMounted'
+import { useDialog } from '@/lib/dialog'
 
 export function CartDrawer() {
   const mounted = useMounted()
   const { items: rawItems, isOpen, close, setQty, remove, subtotal, count } = useCart()
+  const panelRef = useDialog<HTMLElement>(isOpen, close)
 
   const items = mounted ? rawItems : []
   const cartCount = mounted ? count() : 0
@@ -22,16 +24,19 @@ export function CartDrawer() {
       <div
         onClick={close}
         aria-hidden
-        className={`fixed inset-0 z-[90] bg-[rgba(28,10,6,0.5)] transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[90] bg-[rgba(28,10,6,0.5)] transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       />
-      {/* Panel */}
+      {/* Panel — `invisible` when closed (transitioned, so exit still plays)
+          keeps its links out of the tab order. */}
       <aside
+        ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-label="Shopping bag"
-        className={`fixed right-0 top-0 z-[100] flex h-full w-full max-w-[420px] flex-col bg-ivory shadow-2xl transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-[100] flex h-full w-full max-w-[420px] flex-col bg-ivory shadow-2xl transition-[transform,visibility] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isOpen ? 'translate-x-0' : 'invisible translate-x-full'
         }`}
       >
         <header className="flex items-center justify-between border-b border-[rgba(140,106,85,0.25)] px-6 py-5">
@@ -53,7 +58,7 @@ export function CartDrawer() {
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[rgba(191,94,24,0.3)]">
-              <svg width="26" height="26" viewBox="0 0 22 22" fill="none" stroke="#BF5E18" strokeWidth="1.2" strokeLinecap="round">
+              <svg aria-hidden width="26" height="26" viewBox="0 0 22 22" fill="none" stroke="#BF5E18" strokeWidth="1.2" strokeLinecap="round">
                 <path d="M2 2h2.5l2.5 10a1 1 0 001 .8h8a1 1 0 001-.8L19 6H5" />
               </svg>
             </div>
@@ -61,13 +66,22 @@ export function CartDrawer() {
             <p className="font-ui text-xs font-light text-muted">
               Discover handpicked sarees &amp; jewellery from Bengal.
             </p>
-            <Link
-              href="/sarees"
-              onClick={close}
-              className="mt-2 bg-dark px-6 py-3 font-ui text-[10px] font-medium tracking-[0.18em] text-ivory uppercase"
-            >
-              Shop Sarees
-            </Link>
+            <div className="mt-2 flex flex-col items-center gap-3">
+              <Link
+                href="/sarees"
+                onClick={close}
+                className="bg-dark px-6 py-3 font-ui text-[10px] font-medium tracking-[0.18em] text-ivory uppercase"
+              >
+                Shop Sarees
+              </Link>
+              <Link
+                href="/jewellery"
+                onClick={close}
+                className="font-ui text-[10px] tracking-[0.18em] text-copper uppercase border-b border-[rgba(191,94,24,0.4)] pb-0.5 hover:text-dark hover:border-dark"
+              >
+                Browse Jewellery
+              </Link>
+            </div>
           </div>
         ) : (
           <>
@@ -119,7 +133,7 @@ export function CartDrawer() {
                 Proceed to Checkout
               </Link>
               <p className="mt-3 text-center font-ui text-[10px] font-light text-muted">
-                Shipping &amp; taxes calculated at checkout · secure Razorpay/Stripe
+                Shipping &amp; taxes calculated at checkout · secure Razorpay checkout
               </p>
             </footer>
           </>

@@ -101,8 +101,9 @@ function Avatar({
   }
 
   return (
-    <div className="relative h-28 w-28 shrink-0">
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-copper/30 bg-dark">
+      <div className="relative h-28 w-28 shrink-0">
+        {/* relative so the fill Image's containing block is the rounded+overflow-hidden box itself */}
+        <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-copper/30 bg-dark" style={{ borderRadius: '9999px' }}>
         {url ? (
           <Image src={url} alt="" fill sizes="112px" className="object-cover" unoptimized />
         ) : (
@@ -145,13 +146,21 @@ function Avatar({
   )
 }
 
-function LedgerRow({ items }: { items: { label: string; value: string }[] }) {
+function LedgerRow({ items }: { items: { label: string; value: string; href?: string }[] }) {
   return (
     <dl className="flex flex-wrap items-baseline gap-x-10 gap-y-4">
       {items.map((i) => (
         <div key={i.label}>
           <dt className={LABEL}>{i.label}</dt>
-          <dd className="mt-1 font-display text-2xl font-light text-dark">{i.value}</dd>
+          <dd className="mt-1 font-display text-2xl font-light text-dark">
+            {i.href ? (
+              <Link href={i.href} className="hover:text-copper transition-colors underline decoration-copper/40 underline-offset-4">
+                {i.value}
+              </Link>
+            ) : (
+              i.value
+            )}
+          </dd>
         </div>
       ))}
     </dl>
@@ -217,9 +226,9 @@ export default function AccountDashboard({
       <div className="mt-12 border-t border-[#DCC9A8] pt-8">
         <LedgerRow
           items={[
-            { label: 'Orders placed', value: orders === null ? '—' : String(paid.length) },
-            { label: 'Lifetime value', value: orders === null ? '—' : inr(paid.reduce((a, o) => a + o.total, 0)) },
-            { label: 'Sarees saved', value: mounted ? String(wishlistCount) : '—' },
+            { label: 'Orders placed', value: orders === null ? '-' : String(paid.length), href: '/account?tab=orders' },
+            { label: 'Lifetime value', value: orders === null ? '-' : inr(paid.reduce((a, o) => a + o.total, 0)) },
+            { label: 'Sarees saved', value: mounted ? String(wishlistCount) : '-', href: '/wishlist' },
           ]}
         />
       </div>

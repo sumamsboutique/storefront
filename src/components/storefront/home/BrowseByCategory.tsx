@@ -226,7 +226,7 @@ export default function BrowseByCategory({ data }: { data?: BbcContent }) {
         <MobileHeroTile hero={sarees.hero} />
         <div className="grid grid-cols-2 gap-3 my-8">
           {sarees.small.map((t, i) => (
-            <div key={i} style={{ aspectRatio: '1/1.4', overflow: 'hidden' }}>
+            <div key={i} style={{ aspectRatio: '3/4', overflow: 'hidden' }}>
               <MobileTile cat={t} />
             </div>
           ))}
