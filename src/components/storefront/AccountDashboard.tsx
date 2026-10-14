@@ -7,7 +7,6 @@ import { getMyOrders, uploadMyAvatar, removeMyAvatar, type CustomerOrder } from 
 import { customerLogoutAction } from '@/lib/admin/actions'
 import { useWishlist } from '@/lib/store'
 import { useMounted } from '@/lib/useMounted'
-import { Eyebrow } from '@/components/shared/primitives'
 import ProfileTab, { type AccountProfile } from './ProfileTab'
 import OrdersList from './OrdersList'
 import AddressBook from './AddressBook'
@@ -16,10 +15,10 @@ export type AccountTab = 'profile' | 'orders' | 'addresses'
 
 // Tabs are links, not state: they work without JS, are shareable, and the
 // browser back button behaves. The route validates `?tab` and falls back to profile.
-const TABS: { key: AccountTab; ordinal: string; label: string }[] = [
-  { key: 'profile', ordinal: 'I', label: 'Profile' },
-  { key: 'orders', ordinal: 'II', label: 'Orders' },
-  { key: 'addresses', ordinal: 'III', label: 'Addresses' },
+const TABS: { key: AccountTab; label: string; description: string }[] = [
+  { key: 'profile', label: 'Profile', description: 'Update your name, contact details and password.' },
+  { key: 'orders', label: 'Orders', description: 'Every order you have placed — open one for its full breakdown.' },
+  { key: 'addresses', label: 'Addresses', description: 'Saved delivery addresses for a faster checkout.' },
 ]
 
 const LABEL = 'font-sans text-[10px] tracking-[0.16em] text-muted uppercase'
@@ -101,20 +100,20 @@ function Avatar({
   }
 
   return (
-      <div className="relative h-28 w-28 shrink-0">
+      <div className="relative h-20 w-20 shrink-0 lg:h-28 lg:w-28">
         {/* relative so the fill Image's containing block is the rounded+overflow-hidden box itself */}
         <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-copper/30 bg-dark" style={{ borderRadius: '9999px' }}>
         {url ? (
-          <Image src={url} alt="" fill sizes="112px" className="object-cover" unoptimized />
+          <Image src={url} alt="" fill sizes="(min-width: 1024px) 112px, 80px" className="object-cover" unoptimized />
         ) : (
-          <span aria-hidden className="font-bengali text-4xl font-light text-ivory select-none">
+          <span aria-hidden className="font-bengali text-2xl font-light text-ivory select-none lg:text-4xl">
             {monogram(name, email)}
           </span>
         )}
       </div>
       <label
         title={busy ? 'Uploading…' : 'Change photo'}
-        className="absolute right-0 bottom-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-copper bg-ivory text-copper transition-colors hover:bg-copper hover:text-ivory"
+        className="absolute right-0 bottom-0 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-copper bg-ivory text-copper transition-colors hover:bg-copper hover:text-ivory lg:h-8 lg:w-8"
       >
         <span className="sr-only">Change profile photo</span>
         <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -133,7 +132,7 @@ function Avatar({
         <button
           type="button"
           onClick={() => void clear()}
-          className="absolute bottom-0 left-0 h-8 w-8 cursor-pointer rounded-full border border-[#DCC9A8] bg-ivory text-muted transition-colors hover:border-copper hover:text-copper"
+          className="absolute bottom-0 left-0 h-7 w-7 cursor-pointer rounded-full border border-[#DCC9A8] bg-ivory text-muted transition-colors hover:border-copper hover:text-copper lg:h-8 lg:w-8"
         >
           <span className="sr-only">Remove profile photo</span>
           <svg aria-hidden viewBox="0 0 24 24" className="mx-auto h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -141,20 +140,49 @@ function Avatar({
           </svg>
         </button>
       )}
-      {error && <p className="absolute top-full left-0 mt-1 w-28 font-sans text-[10px] text-[#B00020]">{error}</p>}
+      {error && <p className="absolute top-full left-0 mt-1 w-24 font-sans text-[10px] text-[#B00020] lg:w-28">{error}</p>}
     </div>
   )
 }
 
-function LedgerRow({ items }: { items: { label: string; value: string; href?: string }[] }) {
+// Sections are links, not state: they work without JS, are shareable, and the
+// browser back button behaves. A persistent rail keeps every section in view.
+function SectionNav({ tab }: { tab: AccountTab }) {
   return (
-    <dl className="flex flex-wrap items-baseline gap-x-10 gap-y-4">
+    <nav aria-label="Account sections" className="border-b border-[#DCC9A8] lg:border-b-0">
+      <ul className="-mb-px grid grid-cols-3 lg:mb-0 lg:grid-cols-1 lg:gap-1">
+        {TABS.map((t) => {
+          const active = t.key === tab
+          return (
+            <li key={t.key}>
+              <Link
+                href={t.key === 'profile' ? '/account' : `/account?tab=${t.key}`}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center justify-center border-b-2 px-3 py-3.5 font-sans text-[11px] tracking-[0.16em] uppercase transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper lg:justify-start lg:border-b-0 lg:border-l lg:px-4 lg:py-3 ${
+                  active
+                    ? 'border-copper text-dark lg:border-copper lg:bg-[#FDFBF7] lg:font-medium'
+                    : 'border-transparent text-muted hover:text-copper lg:border-transparent lg:hover:bg-[#FDFBF7]/60'
+                }`}
+              >
+                {t.label}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
+}
+
+function StatList({ items }: { items: { label: string; value: string; href?: string }[] }) {
+  return (
+    <dl className="grid grid-cols-3 gap-x-4 gap-y-4 lg:grid-cols-1">
       {items.map((i) => (
         <div key={i.label}>
           <dt className={LABEL}>{i.label}</dt>
-          <dd className="mt-1 font-display text-2xl font-light text-dark">
+          <dd className="mt-1 font-display text-lg leading-snug font-light text-dark tabular-nums">
             {i.href ? (
-              <Link href={i.href} className="hover:text-copper transition-colors underline decoration-copper/40 underline-offset-4">
+              <Link href={i.href} className="underline decoration-copper/40 underline-offset-4 transition-colors hover:text-copper">
                 {i.value}
               </Link>
             ) : (
@@ -164,6 +192,17 @@ function LedgerRow({ items }: { items: { label: string; value: string; href?: st
         </div>
       ))}
     </dl>
+  )
+}
+
+function SectionHeading({ id, title, description }: { id: string; title: string; description: string }) {
+  return (
+    <header className="border-b border-[#DCC9A8] pb-6">
+      <h2 id={id} className="font-display text-[26px] leading-tight font-light text-balance text-dark">
+        {title}
+      </h2>
+      <p className="mt-2 max-w-prose font-sans text-sm font-light text-muted">{description}</p>
+    </header>
   )
 }
 
@@ -181,88 +220,83 @@ export default function AccountDashboard({
   const wishlistCount = useWishlist((s) => s.ids.length)
 
   useEffect(() => {
-    getMyOrders().then((res) => {
-      if (res.ok) setOrders(res.data)
-      else {
+    getMyOrders()
+      .then((res) => {
+        if (res.ok) setOrders(res.data)
+        else {
+          setOrders([])
+          setOrderError(res.error)
+        }
+      })
+      .catch(() => {
         setOrders([])
-        setOrderError(res.error)
-      }
-    })
+        setOrderError('Could not load your orders.')
+      })
   }, [])
 
   const paid = orders?.filter(isPaid) ?? []
+  const activeSection = TABS.find((t) => t.key === tab) ?? TABS[0]
 
   return (
-    <div className="mx-auto w-full max-w-[1080px] px-[clamp(20px,6vw,48px)] py-14 md:py-20">
-      <Eyebrow label="Your account" />
+    <div className="mx-auto w-full max-w-[1120px] px-[clamp(20px,6vw,48px)] py-12 md:py-20">
+      <div className="lg:grid lg:grid-cols-[280px_1fr] lg:items-start lg:gap-14">
+        {/* Identity and every section stay in view on desktop; on mobile they
+            stack above the active section. */}
+        <aside className="lg:sticky lg:top-24">
+          <div className="flex items-center gap-5 lg:block">
+            <Avatar
+              url={profile.avatarUrl}
+              name={profile.fullName}
+              email={profile.email}
+              onChanged={(avatarUrl) => setProfile((p) => ({ ...p, avatarUrl }))}
+            />
+            <div className="min-w-0 lg:mt-5">
+              <h1 className="font-display text-[26px] leading-tight font-light text-dark lg:text-[32px]">
+                {profile.fullName || 'Your account'}
+              </h1>
+              <p className="mt-1.5 truncate font-sans text-sm font-light text-muted">{profile.email}</p>
+              {profile.createdAt && (
+                <p className="mt-1 font-sans text-[10px] tracking-[0.18em] text-muted uppercase">
+                  Patron since {longDate(profile.createdAt)}
+                </p>
+              )}
+            </div>
+          </div>
 
-      <div className="grid gap-10 md:grid-cols-[auto_1fr] md:gap-12">
-        <Avatar
-          url={profile.avatarUrl}
-          name={profile.fullName}
-          email={profile.email}
-          onChanged={(avatarUrl) => setProfile((p) => ({ ...p, avatarUrl }))}
-        />
-
-        <div>
-          <h1 className="font-display text-[clamp(34px,6vw,58px)] leading-[1.05] font-light text-dark">
-            {profile.fullName || 'Your account'}
-          </h1>
-          <p className="mt-3 font-sans text-sm font-light text-muted">{profile.email}</p>
-          {profile.createdAt && (
-            <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-muted">
-              Patron since {longDate(profile.createdAt)}
-            </p>
-          )}
           {profile.pendingEmail && (
-            <p role="status" className="mt-4 max-w-prose border-l-2 border-copper pl-4 font-sans text-xs leading-relaxed text-muted">
-              Email change to <span className="text-copper">{profile.pendingEmail}</span> is
-              waiting on your confirmation link.
+            <p role="status" className="mt-6 border-l border-copper pl-4 font-sans text-xs leading-relaxed text-muted">
+              Email change to <span className="text-copper">{profile.pendingEmail}</span> is waiting on your
+              confirmation link.
             </p>
           )}
-        </div>
-      </div>
 
-      <div className="mt-12 border-t border-[#DCC9A8] pt-8">
-        <LedgerRow
-          items={[
-            { label: 'Orders placed', value: orders === null ? '-' : String(paid.length), href: '/account?tab=orders' },
-            { label: 'Lifetime value', value: orders === null ? '-' : inr(paid.reduce((a, o) => a + o.total, 0)) },
-            { label: 'Sarees saved', value: mounted ? String(wishlistCount) : '-', href: '/wishlist' },
-          ]}
-        />
-      </div>
+          <div className="mt-7">
+            <SectionNav tab={tab} />
+          </div>
 
-      <nav aria-label="Account sections" className="mt-14 border-b border-[#DCC9A8]">
-        <ul className="-mb-px flex flex-wrap gap-x-8 gap-y-2">
-          {TABS.map((t) => {
-            const active = t.key === tab
-            return (
-              <li key={t.key}>
-                <Link
-                  href={t.key === 'profile' ? '/account' : `/account?tab=${t.key}`}
-                  aria-current={active ? 'page' : undefined}
-                  className={`flex items-baseline gap-2 border-b-2 pb-3 transition-colors ${
-                    active
-                      ? 'border-copper text-dark'
-                      : 'border-transparent text-muted hover:text-copper'
-                  }`}
-                >
-                  <span className={`font-display text-xs italic ${active ? 'text-copper' : 'text-muted/70'}`}>
-                    {t.ordinal}
-                  </span>
-                  <span className="font-sans text-[11px] uppercase tracking-[0.2em]">{t.label}</span>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
+          <div className="mt-7 border-t border-[#DCC9A8] pt-6">
+            <StatList
+              items={[
+                { label: 'Orders placed', value: orders === null ? '-' : String(paid.length), href: '/account?tab=orders' },
+                { label: 'Lifetime value', value: orders === null ? '-' : inr(paid.reduce((a, o) => a + o.total, 0)) },
+                { label: 'Sarees saved', value: mounted ? String(wishlistCount) : '-', href: '/wishlist' },
+              ]}
+            />
+          </div>
+        </aside>
 
-      <div className="mt-12 max-w-[720px]">
-        {tab === 'profile' && <ProfileTab profile={profile} onSaved={setProfile} />}
-        {tab === 'orders' && <OrdersList orders={orders} error={orderError} email={profile.email} />}
-        {tab === 'addresses' && <AddressBook email={profile.email} />}
+        <section aria-labelledby={`${tab}-heading`} className="mt-10 min-w-0 lg:mt-0">
+          <SectionHeading
+            id={`${tab}-heading`}
+            title={activeSection.label}
+            description={activeSection.description}
+          />
+          <div className="mt-8">
+            {tab === 'profile' && <ProfileTab profile={profile} onSaved={setProfile} />}
+            {tab === 'orders' && <OrdersList orders={orders} error={orderError} email={profile.email} />}
+            {tab === 'addresses' && <AddressBook email={profile.email} />}
+          </div>
+        </section>
       </div>
 
       <div className="mt-16 flex flex-wrap items-center gap-8 border-t border-[#DCC9A8] pt-8">
