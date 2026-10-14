@@ -31,6 +31,9 @@ function loadRazorpayScript(): Promise<void> {
 }
 
 export async function openRazorpayCheckout(props: RazorpayCheckoutProps): Promise<void> {
+  // An empty key means NEXT_PUBLIC_RAZORPAY_KEY_ID was absent at build time;
+  // Razorpay would otherwise fail with a cryptic "authentication key missing".
+  if (!props.keyId) return props.onFail('Payment gateway is not configured. Please contact support.')
   await loadRazorpayScript()
   const rzp = new window.Razorpay!({
     key: props.keyId,
