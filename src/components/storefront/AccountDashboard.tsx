@@ -22,6 +22,10 @@ const TABS: { key: AccountTab; label: string; description: string }[] = [
 ]
 
 const LABEL = 'font-sans text-[10px] tracking-[0.16em] text-muted uppercase'
+// Footer actions are outlined so they read as buttons rather than body links.
+// Colour stays out of the base: Sign out is deliberately quieter than the other two.
+const FOOTER_BTN =
+  'rounded-full border border-[#DCC9A8] px-5 py-2.5 font-sans text-[10px] tracking-[0.2em] uppercase transition-colors hover:border-copper hover:bg-[#FDFBF7] hover:text-copper'
 const BRAND = 'সু'
 
 const inr = (n: number) => '₹' + n.toLocaleString('en-IN')
@@ -299,23 +303,17 @@ export default function AccountDashboard({
         </section>
       </div>
 
-      <div className="mt-16 flex flex-wrap items-center gap-8 border-t border-[#DCC9A8] pt-8">
-        <Link
-          href="/sarees"
-          className="font-sans text-[10px] uppercase tracking-[0.2em] text-dark transition-colors hover:text-copper"
-        >
+      <div className="mt-16 flex flex-wrap items-center gap-3 border-t border-[#DCC9A8] pt-8">
+        <Link href="/sarees" className={`${FOOTER_BTN} text-dark`}>
           Browse the collection
         </Link>
-        <Link
-          href="/wishlist"
-          className="font-sans text-[10px] uppercase tracking-[0.2em] text-dark transition-colors hover:text-copper"
-        >
+        <Link href="/wishlist" className={`${FOOTER_BTN} text-dark`}>
           Your wishlist
         </Link>
         <button
           type="button"
           onClick={() => void customerLogoutAction()}
-          className="ml-auto font-sans text-[10px] uppercase tracking-[0.2em] text-muted transition-colors hover:text-copper"
+          className={`${FOOTER_BTN} ml-auto text-muted`}
         >
           Sign out
         </button>
