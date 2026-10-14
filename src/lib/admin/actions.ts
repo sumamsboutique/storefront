@@ -281,6 +281,38 @@ export async function customerLogoutAction() {
   redirect('/account')
 }
 
+// ── OAuth ────────────────────────────────────────────────────────────────────
+// Starts the Google round-trip. `provider` is a literal union rather than a
+// passthrough string so a crafted call cannot request a provider the project
+// has not configured.
+export async function oauthSignInAction(provider: 'google', next: string) {
+  const hdrs = await headers()
+  // Server Actions send Origin; NEXT_PUBLIC_SITE_URL is the fallback for
+  // environments that strip it.
+  const origin = hdrs.get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
+
+  try {
+    const supabase = await createAdminServerClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      // The code verifier is written to a cookie by createServerClient, so the
+      // callback can finish the exchange without a browser client.
+      options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
+    })
+
+    if (error || !data?.url) {
+      return { error: error?.message || 'Could not start sign-in.' }
+    }
+
+    redirect(data.url)
+  } catch (err) {
+    if (err && typeof err === 'object' && 'digest' in err) {
+      throw err // Next.js redirect
+    }
+    return { error: 'Could not start sign-in.' }
+  }
+}
+
 // ── Product Actions ──────────────────────────────────────────────────────────
 export async function saveProduct(
   id: string | null,

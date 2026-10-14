@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AlponaMotif } from '@/components/shared/primitives'
-import { adminLoginAction, adminSignupAction, customerLoginAction } from '@/lib/admin/actions'
+import { adminLoginAction, adminSignupAction, customerLoginAction, oauthSignInAction } from '@/lib/admin/actions'
 import { cn } from '@/lib/cn'
 
 type Mode = 'login' | 'signup'
@@ -94,7 +94,34 @@ function Spinner() {
   )
 }
 
-export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVariant }) {
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18Z"
+      />
+      <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33Z" />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z"
+      />
+    </svg>
+  )
+}
+
+export default function AuthScreen({
+  variant = 'admin',
+  initialError,
+}: {
+  variant?: AuthVariant
+  // Set when the OAuth callback hands the user back after a failed exchange.
+  initialError?: string
+}) {
   const isAdmin = variant === 'admin'
   const [mode, setMode] = useState<Mode>('login')
   const [isPending, startTransition] = useTransition()
@@ -114,7 +141,7 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
   const [showConfirm, setShowConfirm] = useState(false)
 
   // feedback
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initialError ?? null)
   const [notice, setNotice] = useState<string | null>(null)
   const [forgot, setForgot] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -199,6 +226,15 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
     setLoginEmail(isAdmin ? DEMO_ADMIN_EMAIL : DEMO_CUSTOMER_EMAIL)
     setLoginPassword(isAdmin ? DEMO_ADMIN_PASSWORD : DEMO_CUSTOMER_PASSWORD)
     setError(null)
+  }
+
+  const handleGoogle = () => {
+    setError(null)
+    setNotice(null)
+    startTransition(async () => {
+      const res = await oauthSignInAction('google', '/account')
+      if (res?.error) setError(res.error)
+    })
   }
 
   return (
@@ -571,6 +607,29 @@ export default function AuthScreen({ variant = 'admin' }: { variant?: AuthVarian
                     Sign in
                   </button>
                 </p>
+              </div>
+            )}
+
+            {/* Customer-only: the admin CRM stays on the password path, since a
+                Google signup lands as a 'customer' profile and would be denied. */}
+            {!isAdmin && (
+              <div className="mt-8">
+                <div className="flex items-center gap-3" aria-hidden>
+                  <span className="h-px flex-1 bg-[rgba(140,106,85,0.25)]" />
+                  <span className="font-sans text-[11px] uppercase tracking-[0.22em] text-muted">
+                    or
+                  </span>
+                  <span className="h-px flex-1 bg-[rgba(140,106,85,0.25)]" />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGoogle}
+                  disabled={isPending}
+                  className="mt-4 flex w-full items-center justify-center gap-3 rounded-full border border-[rgba(140,106,85,0.32)] bg-white/80 py-3.5 text-[15px] font-medium text-dark transition-all duration-200 hover:border-copper hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper disabled:opacity-60"
+                >
+                  <GoogleIcon />
+                  Continue with Google
+                </button>
               </div>
             )}
 

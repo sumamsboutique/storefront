@@ -10,14 +10,17 @@ export const dynamic = 'force-dynamic'
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string | string[] }>
+  searchParams: Promise<{ tab?: string | string[]; error?: string | string[] }>
 }) {
   const session = await getCustomerSession()
-  const { tab } = await searchParams
+  const { tab, error } = await searchParams
 
   // Unknown or missing tab falls back to the first tab, so a stale link still lands.
   const key = Array.isArray(tab) ? tab[0] : tab
   const active: AccountTab = key === 'orders' || key === 'addresses' ? key : 'profile'
+
+  // A cancelled or failed Google round-trip comes back as ?error=oauth.
+  const oauthError = (Array.isArray(error) ? error[0] : error) === 'oauth'
 
   return (
     <main className="min-h-screen bg-ivory flex flex-col">
@@ -38,7 +41,12 @@ export default async function AccountPage({
           />
         </div>
       ) : (
-        <AuthScreen variant="customer" />
+        <AuthScreen
+          variant="customer"
+          initialError={
+            oauthError ? 'Google sign-in did not complete. Please try again.' : undefined
+          }
+        />
       )}
 
       <SareeBorderDivider />
