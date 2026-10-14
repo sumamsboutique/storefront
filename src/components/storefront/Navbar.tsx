@@ -63,13 +63,22 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
             {l.label}
           </Link>
         ))}
-        <Link
-          href="/wishlist"
-          onClick={onClose}
-          className="mt-auto font-sans text-[11px] tracking-[0.2em] text-[rgba(212,136,10,0.7)] uppercase"
-        >
-          Wishlist
-        </Link>
+        <div className="mt-auto border-t border-[rgba(212,136,10,0.15)] pt-4">
+          <Link
+            href="/account"
+            onClick={onClose}
+            className="block py-2 font-sans text-[11px] tracking-[0.2em] text-[rgba(212,136,10,0.85)] uppercase"
+          >
+            Account
+          </Link>
+          <Link
+            href="/wishlist"
+            onClick={onClose}
+            className="block py-2 font-sans text-[11px] tracking-[0.2em] text-[rgba(212,136,10,0.7)] uppercase"
+          >
+            Wishlist
+          </Link>
+        </div>
       </div>
     </>
   )
@@ -131,8 +140,13 @@ export default function Navbar() {
           <Link href="/search" className="flex bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)]" aria-label="Search">
             <IconSearch />
           </Link>
-          <Link href="/account" className="hidden md:flex bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)]" aria-label="Account">
+          <Link
+            href="/account"
+            className="hidden md:flex items-center gap-2 bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)] transition-colors hover:text-gold focus-visible:text-gold"
+            aria-label="Account"
+          >
             <IconAccount />
+            <span className="hidden font-sans text-[11px] tracking-[0.18em] uppercase lg:inline">Account</span>
           </Link>
           <button suppressHydrationWarning onClick={openCart} className="bg-none border-0 cursor-pointer p-0 text-[rgba(245,239,230,0.8)] relative" aria-label="Open shopping bag">
             <IconCart />
