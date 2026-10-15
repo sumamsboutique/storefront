@@ -11,7 +11,7 @@ type W =
   | { kind: 'area'; p: string; l: string; rows?: number }
   | { kind: 'num'; p: string; l: string; min?: number; max?: number; step?: number; hint?: string }
   | { kind: 'bool'; p: string; l: string }
-  | { kind: 'image'; p: string; l: string; index?: number }
+  | { kind: 'image'; p: string; l: string; index?: number; hint?: string }
   | { kind: 'parts'; p: string; l: string }
   | { kind: 'price'; p: string; priceP: string; l: string }
   | { kind: 'enbn'; en: string; bn: string; l: string }
@@ -152,15 +152,16 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
           { kind: 'num', p: '#.id', l: 'ID' },
           { kind: 'area', p: '#.quote', l: 'Quote', rows: 3 },
           { kind: 'text', p: '#.name', l: 'Name' },
-          { kind: 'text', p: '#.detail', l: 'Detail', hint: 'e.g. Married in Varanasi' },
+          { kind: 'text', p: '#.detail', l: 'Detail', hint: 'Role/city, then the purchased product after "·" — e.g. Bride, Kolkata · Chandrakala Benarasi' },
           { kind: 'num', p: '#.rating', l: 'Rating', min: 1, max: 5, step: 1 },
+          { kind: 'image', p: '#.image', l: 'Instagram post image', hint: 'Optional thumbnail shown on the card.' },
         ],
       },
     ],
   },
   instagram_strip: {
     l: 'Instagram Gallery',
-    hint: 'Handle and lifestyle posts. Image # points to the built-in gallery image (1–4).',
+    hint: 'Handle and lifestyle posts. Image falls back to the gradient when left blank.',
     w: [
       { kind: 'text', p: 'handle', l: 'Handle', hint: 'e.g. sumams.boutique' },
       { kind: 'text', p: 'url', l: 'Profile URL' },
@@ -170,10 +171,10 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
         l: 'Posts',
         item: 'Post',
         w: [
-          { kind: 'num', p: '#.img', l: 'Image #' },
+          { kind: 'image', p: '#.image', l: 'Post image' },
           { kind: 'text', p: '#.user', l: 'Username' },
           { kind: 'text', p: '#.capt', l: 'Caption' },
-          { kind: 'text', p: '#.gradient', l: 'Gradient' },
+          { kind: 'text', p: '#.gradient', l: 'Gradient (fallback)' },
         ],
       },
     ],
@@ -462,7 +463,7 @@ function RenderWidget({
       const raw = getAt(content, pathOf(spec.p, replaces))
       const one = Array.isArray(raw) ? raw[spec.index ?? 0] : raw
       return (
-        <FieldShell label={spec.l}>
+        <FieldShell label={spec.l} hint={spec.hint}>
           <ImageWidget
             value={typeof one === 'string' ? one : ''}
             onChange={(nv) => {

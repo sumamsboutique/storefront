@@ -1,25 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { InstagramGlyph } from '@/components/icons'
 import { Reveal } from '@/lib/reveal'
-import type { TestimonialContent, InstaContent } from '@/lib/data'
+import { splitReviewDetail } from '@/lib/reviews'
+import type { TestimonialContent, InstaContent, InstaPost } from '@/lib/data'
 
-type ModalStory = {
+type Card = {
   id: string
-  type: 'review' | 'instagram'
+  kind: 'review' | 'instagram'
   author: string
-  subtitle: string
-  text: string
+  context: string
+  product: string
+  caption: string
+  review: string
   rating?: number
+  image?: string
   gradient: string
-  tag: string
-  location: string
-  date: string
   instagramUrl: string
+  tag: string
 }
 
 const DEFAULT_IG_URL = 'https://instagram.com/sumams.boutique'
+
+const REVIEW_GRADIENTS = [
+  'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)',
+  'linear-gradient(160deg, #3D1408, #6B2310 40%, #D4880A)',
+]
 
 const FALLBACK_TESTIMONIALS: TestimonialContent = [
   {
@@ -28,6 +35,7 @@ const FALLBACK_TESTIMONIALS: TestimonialContent = [
     name: 'Ananya Sen',
     detail: 'Bride, Kolkata · Chandrakala Benarasi',
     rating: 5,
+    image: '/Products/Banarasi/chandrakala-benarasi-silk.png',
   },
   {
     id: 2,
@@ -35,6 +43,7 @@ const FALLBACK_TESTIMONIALS: TestimonialContent = [
     name: 'Ishita Roy',
     detail: 'Patron, Bengaluru · Shantiniketan Tant',
     rating: 5,
+    image: '/Products/Handlooms/nilima-tant-cotton.png',
   },
   {
     id: 3,
@@ -42,15 +51,22 @@ const FALLBACK_TESTIMONIALS: TestimonialContent = [
     name: 'Priya Chatterjee',
     detail: 'Festive Patron, Mumbai · Durga Temple Set',
     rating: 5,
+    image: '/Products/jewellery/durga-temple-necklace-set.png',
   },
 ]
 
-const FALLBACK_INSTA_POSTS = [
-  { img: 1, user: '@sumams.boutique', capt: 'Benarasi in the morning light — pure mulberry silk bathed in Shantiniketan dawn #handloom', gradient: 'linear-gradient(145deg,#2A1008,#8B3A14 55%,#BF5E18)' },
-  { img: 2, user: '@sumams.boutique', capt: 'Founder Sumam supervising the cutting of a fine Shantiniketan Tant drape #craft', gradient: 'linear-gradient(145deg,#F5EFE6,#D4B896 55%,#8C6A55)' },
-  { img: 3, user: '@sumams.boutique', capt: 'The Shantiniketan pit loom at work — two weeks for a single Jamdani pallu #heritage', gradient: 'linear-gradient(145deg,#EDE3D6,#C4A87A 55%,#6B5238)' },
-  { img: 4, user: '@sumams.boutique', capt: 'Brass temple jewellery fresh from the artisan forge — chased and finished by hand #finejewels', gradient: 'linear-gradient(145deg,#4A2010,#D4880A 55%,#5A2A14)' },
+const FALLBACK_INSTA_POSTS: InstaPost[] = [
+  { user: '@sumams.boutique', capt: 'Benarasi in the morning light — pure mulberry silk bathed in Shantiniketan dawn #handloom', gradient: 'linear-gradient(145deg,#2A1008,#8B3A14 55%,#BF5E18)', image: '/Banners/banarasi-saree.png' },
+  { user: '@sumams.boutique', capt: 'Founder Sumam supervising the cutting of a fine Shantiniketan Tant drape #craft', gradient: 'linear-gradient(145deg,#F5EFE6,#D4B896 55%,#8C6A55)', image: '/Banners/spring-edit.jpeg' },
+  { user: '@sumams.boutique', capt: 'The Shantiniketan pit loom at work — two weeks for a single Jamdani pallu #heritage', gradient: 'linear-gradient(145deg,#EDE3D6,#C4A87A 55%,#6B5238)', image: '/Banners/tant-saree.jpeg' },
+  { user: '@sumams.boutique', capt: 'Brass temple jewellery fresh from the artisan forge — chased and finished by hand #finejewels', gradient: 'linear-gradient(145deg,#4A2010,#D4880A 55%,#5A2A14)', image: '/Banners/temple-jewellery.jpeg' },
 ]
+
+// CMS images may be absolute URLs or site-relative; normalize bare paths to root.
+function imageSrc(image?: string) {
+  if (!image) return undefined
+  return image.startsWith('http') || image.startsWith('/') ? image : `/${image}`
+}
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -72,6 +88,35 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
+// Post media: the real Instagram thumbnail when set, gradient placeholder otherwise.
+function PostMedia({
+  image,
+  gradient,
+  className,
+  children,
+}: {
+  image?: string
+  gradient: string
+  className?: string
+  children?: React.ReactNode
+}) {
+  const src = imageSrc(image)
+  return (
+    <div className={`relative overflow-hidden ${className ?? ''}`} style={src ? undefined : { background: gradient }}>
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <span className="absolute inset-0 flex items-center justify-center font-display text-4xl font-light text-white/85 drop-shadow select-none">
+          সু
+        </span>
+      )}
+      <div className="absolute inset-0 bg-black/15 group-hover:bg-black/5 transition-colors" />
+      {children}
+    </div>
+  )
+}
+
 export default function ReviewsAndInstagram({
   testimonials,
   instagram,
@@ -79,8 +124,9 @@ export default function ReviewsAndInstagram({
   testimonials?: TestimonialContent
   instagram?: InstaContent
 }) {
-  const [activeStory, setActiveStory] = useState<ModalStory | null>(null)
-  const [filter, setFilter] = useState<'all' | 'reviews' | 'instagram'>('all')
+  const [activeCard, setActiveCard] = useState<Card | null>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [nav, setNav] = useState({ start: true, end: true })
 
   const igUrl = instagram?.url || DEFAULT_IG_URL
   const rawReviews = testimonials && testimonials.length ? testimonials : FALLBACK_TESTIMONIALS
@@ -89,10 +135,10 @@ export default function ReviewsAndInstagram({
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        setActiveStory(null)
+        setActiveCard(null)
       }
     }
-    if (activeStory) {
+    if (activeCard) {
       document.body.style.overflow = 'hidden'
       window.addEventListener('keydown', onKeyDown)
     } else {
@@ -102,44 +148,66 @@ export default function ReviewsAndInstagram({
       document.body.style.overflow = ''
       window.removeEventListener('keydown', onKeyDown)
     }
-  }, [activeStory])
+  }, [activeCard])
 
-  const reviewStories: ModalStory[] = rawReviews.map((t, idx) => ({
-    id: `review-${t.id || idx}`,
-    type: 'review',
-    author: t.name,
-    subtitle: t.detail,
-    text: t.quote,
-    rating: t.rating,
-    gradient: idx % 2 === 0
-      ? 'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)'
-      : 'linear-gradient(160deg, #3D1408, #6B2310 40%, #D4880A)',
-    tag: 'Verified Patron',
-    location: t.detail.includes('·') ? t.detail.split('·')[0].trim() : 'Kolkata, India',
-    date: 'Recent Purchase',
-    instagramUrl: igUrl,
-  }))
+  const reviewCards: Card[] = rawReviews.map((t, idx) => {
+    const { context, product } = splitReviewDetail(t.detail || '')
+    return {
+      id: `review-${t.id || idx}`,
+      kind: 'review',
+      author: t.name,
+      context,
+      product,
+      caption: '',
+      review: t.quote,
+      rating: t.rating,
+      image: t.image,
+      gradient: REVIEW_GRADIENTS[idx % REVIEW_GRADIENTS.length],
+      instagramUrl: igUrl,
+      tag: 'Verified Patron',
+    }
+  })
 
-  const instaStories: ModalStory[] = rawPosts.map((p, idx) => ({
-    id: `insta-${p.img || idx}`,
-    type: 'instagram',
-    author: p.user || '@sumams.boutique',
-    subtitle: 'Atelier Dispatch · Shantiniketan',
-    text: p.capt,
+  const postCards: Card[] = rawPosts.map((p, idx) => ({
+    id: `insta-${p.img ?? idx}`,
+    kind: 'instagram',
+    author: p.user || `@${instagram?.handle || 'sumams.boutique'}`,
+    context: 'Atelier Dispatch · Shantiniketan',
+    product: '',
+    caption: p.capt,
+    review: '',
+    image: p.image,
     gradient: p.gradient || 'linear-gradient(145deg,#2A1008,#8B3A14 55%,#BF5E18)',
-    tag: 'Instagram Feed',
-    location: 'Shantiniketan Atelier',
-    date: 'Studio Journal',
     instagramUrl: igUrl,
+    tag: 'Instagram Post',
   }))
 
-  const allStories = [...reviewStories, ...instaStories]
-  const displayedStories =
-    filter === 'reviews'
-      ? reviewStories
-      : filter === 'instagram'
-      ? instaStories
-      : allStories
+  const cards = [...reviewCards, ...postCards]
+
+  // Slider: 4 cards per view; arrows page by one view. Track scroll state to enable/disable arrows.
+  useEffect(() => {
+    const el = trackRef.current
+    if (!el) return
+    const update = () => {
+      setNav({ start: el.scrollLeft <= 4, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 })
+    }
+    update()
+    el.addEventListener('scroll', update, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', update)
+      ro.disconnect()
+    }
+  }, [cards.length])
+
+  const page = (dir: 1 | -1) => {
+    const el = trackRef.current
+    if (!el) return
+    el.scrollBy({ left: dir * el.clientWidth, behavior: 'smooth' })
+  }
+
+  const hasOverflow = !(nav.start && nav.end)
 
   return (
     <section className="py-14 md:py-24 px-5 md:px-[clamp(32px,6vw,85px)] bg-[#FDFBF7] border-t border-[#DCC9A8]/40 relative">
@@ -157,234 +225,214 @@ export default function ReviewsAndInstagram({
             Worn with pride, <span className="italic text-copper">celebrated across the world</span>
           </h2>
           <p className="font-sans text-xs md:text-sm text-muted max-w-xl mt-3 leading-relaxed">
-            Explore authentic patron reflections and live studio dispatches from our Shantiniketan handloom atelier. Click any review or post to read the full story.
+            Our patrons share their fits on Instagram. Tap any post to open the full reel, its caption, and the review behind it.
           </p>
-
-          {/* Filter Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-7">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-1.5 text-xs font-sans uppercase tracking-wider transition-all border ${
-                filter === 'all'
-                  ? 'bg-[#1C0A06] text-ivory border-[#1C0A06] shadow-sm'
-                  : 'bg-white text-muted border-[#DCC9A8]/60 hover:text-dark hover:border-copper'
-              }`}
-            >
-              All Stories ({allStories.length})
-            </button>
-            <button
-              onClick={() => setFilter('reviews')}
-              className={`px-4 py-1.5 text-xs font-sans uppercase tracking-wider transition-all border ${
-                filter === 'reviews'
-                  ? 'bg-[#1C0A06] text-ivory border-[#1C0A06] shadow-sm'
-                  : 'bg-white text-muted border-[#DCC9A8]/60 hover:text-dark hover:border-copper'
-              }`}
-            >
-              Patron Reviews ({reviewStories.length})
-            </button>
-            <button
-              onClick={() => setFilter('instagram')}
-              className={`px-4 py-1.5 text-xs font-sans uppercase tracking-wider transition-all border flex items-center gap-1.5 ${
-                filter === 'instagram'
-                  ? 'bg-[#1C0A06] text-ivory border-[#1C0A06] shadow-sm'
-                  : 'bg-white text-muted border-[#DCC9A8]/60 hover:text-dark hover:border-copper'
-              }`}
-            >
-              <InstagramGlyph className="w-3 h-3" />
-              Instagram Moments ({instaStories.length})
-            </button>
-          </div>
         </div>
       </Reveal>
 
-      {/* Stories Grid */}
+      {/* Cards slider — 4 per view, arrow-paged */}
       <Reveal delay={80}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 justify-items-center">
-          {displayedStories.map((story) => (
+        <div>
+          {hasOverflow && (
+            <div className="flex items-center justify-end gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => page(-1)}
+                disabled={nav.start}
+                aria-label="Previous posts and reviews"
+                className="w-9 h-9 flex items-center justify-center border border-[#DCC9A8]/70 text-dark hover:border-copper hover:text-copper transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => page(1)}
+                disabled={nav.end}
+                aria-label="Next posts and reviews"
+                className="w-9 h-9 flex items-center justify-center border border-[#DCC9A8]/70 text-dark hover:border-copper hover:text-copper transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                →
+              </button>
+            </div>
+          )}
+          <div
+            ref={trackRef}
+            className="flex gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+          {cards.map((card) => (
             <div
-              key={story.id}
-              onClick={() => setActiveStory(story)}
+              key={card.id}
+              onClick={() => setActiveCard(card)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
-                  setActiveStory(story)
+                  setActiveCard(card)
                 }
               }}
-              className="group relative bg-white border border-[#DCC9A8]/60 hover:border-copper p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-left"
+              className="group relative bg-white border border-[#DCC9A8]/60 hover:border-copper flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-left overflow-hidden h-full snap-start shrink-0 basis-[85%] sm:basis-[calc((100%-1.25rem)/2)] lg:basis-[calc((100%-2.5rem)/3)] xl:basis-[calc((100%-3.75rem)/4)]"
             >
-              {/* Type Badge & Meta */}
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <span
-                    className={`inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.16em] font-sans px-2 py-0.5 ${
-                      story.type === 'instagram'
-                        ? 'bg-[#BF5E18]/10 text-copper border border-[#BF5E18]/25'
-                        : 'bg-[#1C0A06]/5 text-dark border border-[#1C0A06]/15 font-semibold'
-                    }`}
-                  >
-                    {story.type === 'instagram' && <InstagramGlyph className="w-2.5 h-2.5" />}
-                    {story.tag}
+              {/* Top: Instagram post / thumbnail */}
+              <PostMedia image={card.image} gradient={card.gradient} className="w-full aspect-[4/5]">
+                <span className="absolute top-3 left-3 text-[9px] uppercase tracking-[0.16em] font-sans px-2 py-0.5 bg-black/45 text-white/95 backdrop-blur-sm">
+                  {card.tag}
+                </span>
+                <span className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/45 text-white/95 backdrop-blur-sm flex items-center justify-center">
+                  <InstagramGlyph className="w-3.5 h-3.5" />
+                </span>
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[10px] font-sans uppercase tracking-[0.18em] text-white bg-black/55 px-3 py-1 backdrop-blur-sm">
+                    {card.kind === 'instagram' ? 'View Post' : 'Read Review'}
                   </span>
-                  {story.rating && <Stars rating={story.rating} />}
                 </div>
+              </PostMedia>
 
-                {/* Visual Accent Banner */}
-                {story.type === 'instagram' ? (
-                  <div
-                    className="relative w-full aspect-[4/3] rounded-sm overflow-hidden mb-3 flex items-center justify-center"
-                    style={{ background: story.gradient }}
-                  >
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-                    <span className="font-display text-2xl font-light text-white/90 drop-shadow select-none">
-                      সু
-                    </span>
-                    <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-white/90 font-sans">
-                      <span className="font-medium truncate">@sumams.boutique</span>
-                      <InstagramGlyph className="w-3 h-3 shrink-0" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mb-3 flex items-center gap-2">
+              {/* Bottom: reviewer detail + purchased product */}
+              <div className="p-4 flex flex-col gap-3 grow">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <div className="w-8 h-8 rounded-full bg-[#1C0A06] text-[#E8D5B0] flex items-center justify-center font-display text-sm shrink-0">
-                      {story.author.charAt(0)}
+                      {card.kind === 'instagram' ? 'সু' : card.author.charAt(0)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="font-sans text-xs font-semibold text-dark truncate">
-                        {story.author}
-                      </div>
-                      <div className="font-sans text-[10px] text-muted truncate">
-                        {story.subtitle}
-                      </div>
+                      <div className="font-sans text-xs font-semibold text-dark truncate">{card.author}</div>
+                      {card.context && (
+                        <div className="font-sans text-[10px] text-muted truncate">{card.context}</div>
+                      )}
                     </div>
                   </div>
+                  {card.rating && <Stars rating={card.rating} />}
+                </div>
+
+                {card.product && (
+                  <div className="mt-auto pt-3 border-t border-[#DCC9A8]/30 flex items-baseline gap-1.5 font-sans">
+                    <span className="text-[9px] uppercase tracking-[0.16em] text-muted shrink-0">Purchased</span>
+                    <span className="text-[11px] font-medium text-dark truncate">{card.product}</span>
+                  </div>
                 )}
-
-                {/* Quote / Caption text */}
-                <p className="font-display text-sm font-light leading-relaxed text-dark line-clamp-3">
-                  {story.type === 'review' ? `“${story.text}”` : story.text}
-                </p>
-              </div>
-
-              {/* Bottom prompt */}
-              <div className="mt-4 pt-3 border-t border-[#DCC9A8]/30 flex items-center justify-between text-[11px] font-sans text-copper font-medium group-hover:underline">
-                <span>Read Full Story</span>
-                <span className="transform group-hover:translate-x-1 transition-transform">→</span>
               </div>
             </div>
           ))}
+          </div>
         </div>
       </Reveal>
       </div>
 
-      {/* Interactive Modal Popup */}
-      {activeStory && (
+      {/* Expanded post / review */}
+      {activeCard && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm animate-fadeIn"
-          onClick={() => setActiveStory(null)}
+          onClick={() => setActiveCard(null)}
           role="dialog"
           aria-modal="true"
-          aria-label="Review and Story Details"
+          aria-label="Instagram post and review details"
         >
           <div
             className="relative w-full max-w-xl bg-[#FDFBF7] border border-[#DCC9A8] shadow-2xl rounded-sm overflow-hidden flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with Author and Close */}
+            {/* Header with author and close */}
             <div className="p-5 sm:p-6 border-b border-[#DCC9A8]/50 flex items-center justify-between bg-white">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-full bg-[#1C0A06] text-[#E8D5B0] flex items-center justify-center font-display text-base font-medium shrink-0 shadow-sm">
-                  {activeStory.type === 'instagram' ? 'সু' : activeStory.author.charAt(0)}
+                  {activeCard.kind === 'instagram' ? 'সু' : activeCard.author.charAt(0)}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="font-display text-base font-medium text-dark">
-                      {activeStory.author}
-                    </h3>
-                    <span className="inline-flex items-center justify-center w-3.5 h-3.5 bg-copper text-white rounded-full text-[9px]" title="Verified">
+                    <h3 className="font-display text-base font-medium text-dark truncate">{activeCard.author}</h3>
+                    <span className="inline-flex items-center justify-center w-3.5 h-3.5 bg-copper text-white rounded-full text-[9px] shrink-0" title="Verified">
                       ✓
                     </span>
                   </div>
-                  <p className="font-sans text-xs text-muted">
-                    {activeStory.subtitle}
-                  </p>
+                  {activeCard.context && <p className="font-sans text-xs text-muted truncate">{activeCard.context}</p>}
                 </div>
               </div>
 
               <button
-                onClick={() => setActiveStory(null)}
+                onClick={() => setActiveCard(null)}
                 aria-label="Close modal"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-dark/70 hover:text-dark hover:bg-black/5 transition-colors text-lg font-sans"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-dark/70 hover:text-dark hover:bg-black/5 transition-colors text-lg font-sans shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            {/* Scrollable Story Body */}
-            <div className="p-6 sm:p-7 overflow-y-auto space-y-5 flex-1">
-              {/* Visual artwork preview */}
-              <div
-                className="w-full h-44 sm:h-52 rounded-sm overflow-hidden relative flex flex-col justify-between p-4 shadow-inner"
-                style={{ background: activeStory.gradient }}
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1">
+              <PostMedia
+                image={activeCard.image}
+                gradient={activeCard.gradient}
+                className="w-full aspect-[4/5] sm:aspect-[4/3]"
               >
-                <div className="flex items-center justify-between text-white/90 text-xs font-sans">
-                  <span className="uppercase tracking-widest text-[10px] bg-black/40 px-2 py-0.5 backdrop-blur-sm">
-                    {activeStory.tag}
-                  </span>
-                  <span className="text-[10px] bg-black/40 px-2 py-0.5 backdrop-blur-sm">
-                    {activeStory.location}
-                  </span>
-                </div>
-
-                <div className="text-center select-none">
-                  <span className="font-display text-4xl text-white/95 drop-shadow">
-                    সু
-                  </span>
-                  <p className="font-sans text-[11px] text-white/80 tracking-widest uppercase mt-1">
-                    Sumam&apos;s Handloom Atelier
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between text-white/90 text-xs font-sans">
-                  <span className="text-[11px]">{activeStory.date}</span>
+                <span className="absolute top-4 left-4 text-[10px] uppercase tracking-widest bg-black/45 text-white px-2 py-0.5 backdrop-blur-sm">
+                  {activeCard.tag}
+                </span>
+                <span className="absolute bottom-4 right-4 w-9 h-9 rounded-full bg-black/45 text-white flex items-center justify-center backdrop-blur-sm">
                   <InstagramGlyph className="w-4 h-4" />
-                </div>
-              </div>
+                </span>
+              </PostMedia>
 
-              {/* Rating if review */}
-              {activeStory.rating && (
-                <div className="flex items-center gap-2 pt-1">
-                  <Stars rating={activeStory.rating} />
-                  <span className="font-sans text-xs text-copper font-medium">
-                    5.0 / 5.0 Rating
-                  </span>
-                </div>
-              )}
+              <div className="p-6 sm:p-7 space-y-4">
+                {activeCard.rating && (
+                  <div className="flex items-center gap-2">
+                    <Stars rating={activeCard.rating} />
+                    <span className="font-sans text-xs text-copper font-medium">
+                      {activeCard.rating.toFixed(1)} / 5.0 Rating
+                    </span>
+                  </div>
+                )}
 
-              {/* Full Text */}
-              <div className="space-y-3">
-                <blockquote className="font-display text-base sm:text-lg font-light leading-relaxed text-dark">
-                  {activeStory.type === 'review' ? `“${activeStory.text}”` : activeStory.text}
-                </blockquote>
+                {/* Instagram caption */}
+                {activeCard.caption && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-copper font-sans">
+                      <InstagramGlyph className="w-3 h-3" />
+                      Post Caption
+                    </div>
+                    <p className="font-sans text-sm leading-relaxed text-dark">{activeCard.caption}</p>
+                  </div>
+                )}
+
+                {/* Customer review */}
+                {activeCard.review && (
+                  <div className="space-y-1.5">
+                    {activeCard.caption && (
+                      <div className="text-[10px] uppercase tracking-[0.16em] text-copper font-sans">
+                        Patron Review
+                      </div>
+                    )}
+                    <blockquote className="font-display text-base sm:text-lg font-light leading-relaxed text-dark">
+                      “{activeCard.review}”
+                    </blockquote>
+                  </div>
+                )}
+
+                {activeCard.product && (
+                  <div className="pt-3 border-t border-[#DCC9A8]/40 flex items-baseline gap-2 font-sans">
+                    <span className="text-[10px] uppercase tracking-[0.16em] text-muted">Purchased</span>
+                    <span className="text-sm font-medium text-dark">{activeCard.product}</span>
+                  </div>
+                )}
+
                 <p className="font-sans text-xs text-muted leading-relaxed">
                   Each handloom creation at Sumam&apos;s is handwoven by master artisans across Shantiniketan, Murshidabad, and Bishnupur, preserving the traditional craft heritage of Bengal.
                 </p>
               </div>
             </div>
 
-            {/* Bottom Actions Bar with 'Check Our Instagram' Button */}
+            {/* Actions */}
             <div className="p-4 sm:p-5 border-t border-[#DCC9A8]/60 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
               <button
                 type="button"
-                onClick={() => setActiveStory(null)}
+                onClick={() => setActiveCard(null)}
                 className="w-full sm:w-auto px-4 py-2.5 text-xs font-sans uppercase tracking-wider text-muted hover:text-dark transition-colors border border-transparent hover:border-[#DCC9A8]/60"
               >
                 Close Preview
               </button>
 
               <a
-                href={activeStory.instagramUrl}
+                href={activeCard.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#1C0A06] hover:bg-[#8B3A14] text-ivory text-xs font-sans font-semibold uppercase tracking-[0.18em] transition-all shadow-md hover:shadow-lg"

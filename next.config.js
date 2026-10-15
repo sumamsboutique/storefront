@@ -37,7 +37,8 @@ const nextConfig = {
               // dev callstacks/HMR. Next never evals in production mode.
               `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://*.supabase.co https://*.razorpay.com",
+              // ponytail: Instagram review thumbnails may be pasted as post image URLs.
+              "img-src 'self' data: blob: https://*.supabase.co https://*.razorpay.com https://*.cdninstagram.com https://*.fbcdn.net",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.razorpay.com https://api.razorpay.com",
               "frame-src 'self' https://*.razorpay.com https://checkout.razorpay.com",

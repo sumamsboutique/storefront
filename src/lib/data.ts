@@ -196,7 +196,7 @@ export type OurHeritageContent = {
   founder: { en: string; bn: string }
   photoLabel: string
 }
-export type InstaPost = { img: number; user: string; capt: string; gradient: string }
+export type InstaPost = { img?: number; user: string; capt: string; gradient: string; image?: string }
 export type InstaContent = { handle: string; url: string; posts: InstaPost[] }
 export type JewelSpotItem = {
   id: number
@@ -225,6 +225,7 @@ export type Testimonial = {
   name: string
   detail: string
   rating: number
+  image?: string
 }
 export type TestimonialContent = Testimonial[]
 
