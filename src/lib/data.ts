@@ -19,7 +19,8 @@ type Row = {
   is_featured_large: boolean
   stock_status: string | null
   occasion_tags: string[] | null
-  product_images: { storage_path: string }[]
+  product_images: { storage_path: string; variant_id: string | null; display_order: number }[]
+  product_variants: { id: string; variant_type: string; variant_value: string; created_at: string }[] | null
   categories: { name: string } | null
 }
 
@@ -50,6 +51,16 @@ function toProduct(row: Row, parentOf: Map<string, string>): CatalogProduct {
   const type = parentName === 'Jewellery' ? 'jewel' : 'saree'
   const priceNum = Number(row.price)
   const firstTag = row.occasion_tags?.[0] ?? 'Festive'
+  const imgs = (row.product_images ?? []).slice().sort((a, b) => a.display_order - b.display_order)
+  const variants = (row.product_variants ?? [])
+    .slice()
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .map((v) => ({
+      id: v.id,
+      type: v.variant_type,
+      value: v.variant_value,
+      images: imgs.filter((i) => i.variant_id === v.id).map((i) => i.storage_path),
+    }))
   return {
     id: row.id,
     slug: row.slug,
@@ -65,7 +76,8 @@ function toProduct(row: Row, parentOf: Map<string, string>): CatalogProduct {
     sold: row.stock_status === 'sold',
     weave: weave || 'Benarasi',
     occasion: firstTag,
-    images: row.product_images?.map((i) => i.storage_path) ?? [],
+    images: imgs.map((i) => i.storage_path),
+    variants,
   }
 }
 
@@ -115,11 +127,12 @@ async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, str
         supabase!.from('categories').select('id, name, parent_id'),
         supabase!
           .from('products')
-          .select('id, name, slug, category_id, short_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, product_images(storage_path), categories(name)')
+          .select('id, name, slug, category_id, short_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, product_images(storage_path, variant_id, display_order), product_variants(id, variant_type, variant_value, created_at), categories(name)')
           .eq('is_published', true)
           .eq('is_active', true),
       ]),
-      1500
+      // Cold queries exceed 1.5s; a timeout here serves the static demo catalog for 60s.
+      5000
     )
     const [{ data: cats, error: catErr }, { data, error }] = res
     if (error || catErr) {
@@ -239,6 +252,8 @@ export type HomeContent = {
   testimonials: Testimonial[]
   instagram_strip: InstaContent
   footer: FooterContent
+  // Section keys whose block is published; null = content layer unavailable → show all.
+  published_sections: string[] | null
 }
 
 const emptyHomeContent: HomeContent = {
@@ -251,6 +266,7 @@ const emptyHomeContent: HomeContent = {
   testimonials: [],
   instagram_strip: {} as InstaContent,
   footer: {} as FooterContent,
+  published_sections: null,
 }
 
 type ContentBlockRow = {
@@ -266,7 +282,7 @@ async function fetchAllContentBlocks(): Promise<Record<string, unknown> | null> 
         .from('content_blocks')
         .select('section_key, content')
         .eq('is_published', true),
-      1500
+      5000
     )
     if (error || !data) {
       markSupabaseFailure(error)
@@ -303,6 +319,7 @@ export async function getHomeContent(): Promise<HomeContent> {
     if (blockMap.testimonials) out.testimonials = blockMap.testimonials as Testimonial[]
     if (blockMap.instagram_strip) out.instagram_strip = blockMap.instagram_strip as InstaContent
     if (blockMap.footer) out.footer = blockMap.footer as FooterContent
+    out.published_sections = Object.keys(blockMap)
   }
 
   cachedHomeContent = { data: out, expiresAt: now + CACHE_TTL_MS }

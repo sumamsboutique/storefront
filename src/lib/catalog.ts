@@ -18,6 +18,7 @@ export interface CatalogProduct {
   weave: string // filter bucket (Benarasi, Tant, …)
   occasion: string // Bridal, Festive, Everyday…
   images?: string[] // optional product photos (fallback → gradient placeholder)
+  variants?: { id: string; type: string; value: string; images: string[] }[] // own gallery per variant, when photo sets are variant-linked
 }
 
 const G = {

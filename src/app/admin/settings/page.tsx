@@ -31,6 +31,7 @@ export default async function AdminSettingsPage() {
             email: settings.general.email,
             phone: settings.general.phone,
             whatsapp: settings.general.whatsapp,
+            pdp_whatsapp: settings.general.pdp_whatsapp !== false,
             address: settings.general.address,
           },
           commerce: {

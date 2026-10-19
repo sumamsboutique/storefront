@@ -12,6 +12,7 @@ import {
 import {
   ProductFormSchema,
   CategoryFormSchema,
+  ContentBlockKeySchema,
   SaveContentBlockSchema,
   UpdateOrderStatusSchema,
   UpdateUserRoleSchema,
@@ -21,6 +22,7 @@ import {
   type OrderStatus,
 } from './schemas'
 import { logAudit } from './audit'
+import { clearStoreSettingsCache } from '../settings'
 
 // ponytail: in-memory login throttle, per-instance only. Fine until we run
 // multiple server instances; swap for a shared store (Redis/DB) if that happens.
@@ -742,6 +744,45 @@ export async function saveContentBlock(rawPayload: unknown): Promise<ActionResul
   }
 }
 
+// Publish or unpublish a homepage section without touching its content.
+export async function setContentBlockPublished(
+  section_key: unknown,
+  published: boolean
+): Promise<ActionResult> {
+  const session = await requireAdminOrStaff()
+  const parsed = ContentBlockKeySchema.safeParse(section_key)
+  if (!parsed.success) return { success: false, error: 'Unknown section.' }
+  if (typeof published !== 'boolean') return { success: false, error: 'Invalid publish state.' }
+
+  const supabase = await createAdminServerClient()
+  try {
+    // updated_at is also set by a DB trigger; written here so the flow does not
+    // depend on the trigger existing (same convention as saveContentBlock).
+    const { data, error } = await supabase
+      .from('content_blocks')
+      .update({ is_published: published, updated_at: new Date().toISOString() })
+      .eq('section_key', parsed.data)
+      .select('id')
+
+    if (error) return { success: false, error: error.message }
+    if (!data?.length) return { success: false, error: 'No saved content for this section yet — save it first.' }
+
+    await logAudit({
+      tableName: 'content_blocks',
+      recordId: data[0].id,
+      action: published ? 'publish' : 'update',
+      userId: session.user.id,
+      diff: { section_key: parsed.data, is_published: published },
+    })
+
+    revalidatePath('/admin/content')
+    revalidatePath('/')
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update section' }
+  }
+}
+
 // ── Orders ───────────────────────────────────────────────────────────────────
 export async function updateOrderStatus(rawPayload: unknown): Promise<ActionResult> {
   const session = await requireAdminOrStaff()
@@ -989,6 +1030,11 @@ export async function saveStoreSettings(rawPayload: unknown): Promise<ActionResu
 
   const supabase = await createAdminServerClient()
   const data = parsed.data
+  // Demo sessions ("admin-dev-01") are not uuids and store_settings.updated_by
+  // is `uuid references profiles(id)`, so attribute the change only when it is.
+  const updatedBy = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id)
+    ? session.user.id
+    : null
 
   try {
     const entries = [
@@ -999,12 +1045,14 @@ export async function saveStoreSettings(rawPayload: unknown): Promise<ActionResu
     ]
 
     for (const item of entries) {
-      await supabase.from('store_settings').upsert({
+      const { error: upsertError } = await supabase.from('store_settings').upsert({
         key: item.key,
         value: item.value,
         updated_at: new Date().toISOString(),
-        updated_by: session.user.id,
+        updated_by: updatedBy,
       })
+      // Unchecked, a blocked write returns 0 rows with no error and the admin sees a false success.
+      if (upsertError) return { success: false, error: `${item.key}: ${upsertError.message}` }
     }
 
     await logAudit({
@@ -1016,6 +1064,7 @@ export async function saveStoreSettings(rawPayload: unknown): Promise<ActionResu
     })
 
     revalidatePath('/admin/settings')
+    await clearStoreSettingsCache()
     return { success: true }
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Failed to save settings' }

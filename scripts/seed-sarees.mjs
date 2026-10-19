@@ -76,7 +76,7 @@ function parseCsv(text) {
 async function compress(abs) {
   return sharp(await readFile(abs))
     .rotate()
-    .resize({ width: 1600, height: 2133, fit: 'inside', withoutEnlargement: true })
+    .resize({ width: 1600, height: 2133, fit: 'cover', position: 'center' })
     .webp({ quality: 82 })
     .toBuffer()
 }

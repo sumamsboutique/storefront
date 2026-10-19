@@ -5,6 +5,11 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 2592000,
+    // This network's DNS64 resolver answers *.supabase.co with NAT64 addresses
+    // (64:ff9b::/96), which ipaddr.js classes as "reserved" — Next 16's SSRF
+    // guard then treats them as private IPs and 400s every remote image in dev.
+    // Prod DNS returns normal unicast addresses, so the guard stays on there.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === 'development',
     remotePatterns: [
       {
         protocol: 'https',

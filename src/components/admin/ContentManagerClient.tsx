@@ -7,7 +7,7 @@ import type { AdminContentBlock } from '@/lib/admin/queries'
 import { AdminCard } from '@/components/admin/AdminCard'
 import { PublicationBadge } from '@/components/admin/AdminBadge'
 import { useToast } from '@/components/admin/AdminToast'
-import { saveContentBlock } from '@/lib/admin/actions'
+import { saveContentBlock, setContentBlockPublished } from '@/lib/admin/actions'
 import { ContentBlockForm } from '@/components/admin/ContentBlockForm'
 
 const SECTIONS = [
@@ -66,6 +66,18 @@ export function ContentManagerClient({
         router.refresh()
       } else {
         error(res.error || 'Failed to save content block.')
+      }
+    })
+  }
+
+  const handleUnpublish = () => {
+    startTransition(async () => {
+      const res = await setContentBlockPublished(activeTab, false)
+      if (res.success) {
+        success(`"${activeTab}" unpublished — hidden from the storefront.`)
+        router.refresh()
+      } else {
+        error(res.error || 'Failed to unpublish section.')
       }
     })
   }
@@ -174,6 +186,16 @@ export function ContentManagerClient({
                 >
                   {isPending ? 'Publishing...' : 'Publish to Live Store'}
                 </button>
+                {currentBlock?.is_published && (
+                  <button
+                    type="button"
+                    onClick={handleUnpublish}
+                    disabled={isPending}
+                    className="px-5 py-2 text-xs font-sans font-medium uppercase tracking-wider bg-white border border-[#DCC9A8] hover:border-[#A04A18] hover:text-[#A04A18] text-dark transition-colors disabled:opacity-50"
+                  >
+                    {isPending ? 'Unpublishing...' : 'Unpublish'}
+                  </button>
+                )}
               </div>
             </div>
           </div>

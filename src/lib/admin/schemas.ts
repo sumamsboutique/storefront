@@ -159,6 +159,7 @@ export const StoreSettingsSchema = z.object({
     email: z.string().trim().email('Invalid email address'),
     phone: z.string().trim().min(5).max(30),
     whatsapp: z.string().trim().max(30).optional(),
+    pdp_whatsapp: z.boolean().optional(),
     address: z.string().trim().max(300).optional(),
   }),
   commerce: z.object({

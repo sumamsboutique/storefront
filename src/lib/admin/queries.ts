@@ -982,6 +982,7 @@ export async function getAdminStoreSettings() {
         email: 'concierge@sumamsboutique.com',
         phone: '+91 98300 12345',
         whatsapp: '+91 98300 12345',
+        pdp_whatsapp: true,
         address: '42 Southern Avenue, Kolkata 700029, West Bengal',
       },
       commerce: (settingsMap.get('commerce') as Record<string, unknown>) || {
@@ -1011,6 +1012,7 @@ export async function getAdminStoreSettings() {
         email: 'concierge@sumamsboutique.com',
         phone: '+91 98300 12345',
         whatsapp: '+91 98300 12345',
+        pdp_whatsapp: true,
         address: '42 Southern Avenue, Kolkata 700029, West Bengal',
       },
       commerce: {

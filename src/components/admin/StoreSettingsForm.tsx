@@ -31,6 +31,7 @@ export function StoreSettingsForm({
         email: general.email.trim(),
         phone: general.phone.trim(),
         whatsapp: general.whatsapp?.trim(),
+        pdp_whatsapp: general.pdp_whatsapp,
         address: general.address?.trim(),
       },
       commerce: {
@@ -160,6 +161,21 @@ export function StoreSettingsForm({
                 />
               </div>
             </div>
+
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={general.pdp_whatsapp !== false}
+                onChange={(e) => setGeneral({ ...general, pdp_whatsapp: e.target.checked })}
+                className="mt-0.5 h-3.5 w-3.5 accent-copper"
+              />
+              <span className="text-[11px] font-sans font-medium uppercase tracking-wider text-muted">
+                Show WhatsApp Button on Product Pages
+                <span className="mt-1 block text-[10px] font-normal normal-case tracking-normal">
+                  Adds the green “Chat on WhatsApp” button below Add to Bag on every product page.
+                </span>
+              </span>
+            </label>
           </div>
         </AdminCard>
 

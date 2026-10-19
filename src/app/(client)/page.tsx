@@ -16,6 +16,10 @@ export const revalidate = 300
 export default async function Home() {
   const [content, all] = await Promise.all([getHomeContent(), getAllProducts()])
 
+  // Sections unpublished from Admin → Content are skipped. Null = content layer
+  // unavailable, keep rendering (components fall back to built-in content).
+  const shown = (key: string) => !content.published_sections || content.published_sections.includes(key)
+
   const featured: ProductCardData[] = content.featured_collection
     .map((f) => {
       const p = all.find((x) => x.slug === f.slug)
@@ -42,15 +46,18 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-ivory">
       <Navbar />
-      <Hero slides={content.hero} />
-      <Marquee items={content.marquee} />
-      <FeaturedCollection products={featured} />
-      <BrowseByCategory data={content.browse_by_category} />
+      {shown('hero') && <Hero slides={content.hero} />}
+      {shown('marquee') && <Marquee items={content.marquee} />}
+      {shown('featured_collection') && <FeaturedCollection products={featured} />}
+      {shown('browse_by_category') && <BrowseByCategory data={content.browse_by_category} />}
       <SareeBorderDivider />
-      <OurHeritage data={content.our_heritage} />
-      <JewellerySpotlight data={content.jewellery_spotlight} />
-      <ReviewsAndInstagram testimonials={content.testimonials} instagram={content.instagram_strip} />
-      <Footer footer={content.footer} />
+      {shown('our_heritage') && <OurHeritage data={content.our_heritage} />}
+      {shown('jewellery_spotlight') && <JewellerySpotlight data={content.jewellery_spotlight} />}
+      {/* sections 7 + 8 render as one combined block, so both must be live */}
+      {shown('testimonials') && shown('instagram_strip') && (
+        <ReviewsAndInstagram testimonials={content.testimonials} instagram={content.instagram_strip} />
+      )}
+      {shown('footer') && <Footer footer={content.footer} />}
     </main>
   )
 }

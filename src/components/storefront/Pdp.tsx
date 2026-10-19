@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { CatalogProduct } from '@/lib/catalog'
@@ -11,6 +11,7 @@ import { AlponaDivider, PAD, SareeBorderDivider } from '@/components/shared/prim
 import { cn } from '@/lib/cn'
 import { useCart, useWishlist } from '@/lib/store'
 import { useMounted } from '@/lib/useMounted'
+import { getStoreSocials } from '@/lib/settings'
 
 function fmt(n: number) {
   return '₹' + n.toLocaleString('en-IN')
@@ -97,10 +98,11 @@ function Breadcrumb({ p }: { p: CatalogProduct }) {
 }
 
 // ── 2. Gallery — luxury editorial layout ──
-function Gallery({ p }: { p: CatalogProduct }) {
+function Gallery({ p, variantId }: { p: CatalogProduct; variantId: string | null }) {
   const [active, setActive] = useState(0)
+  const variant = p.variants?.find((v) => v.id === variantId)
   const hasImages = !!p.images?.length
-  const shots = p.images ?? []
+  const shots = variant?.images.length ? variant.images : p.images ?? []
 
   if (!hasImages) {
     // Fallback: gradient placeholder, full width
@@ -227,7 +229,7 @@ function BulletList({ items }: { items: string[] }) {
 }
 
 // ── 3. Info panel ──
-function ProductInfo({ p }: { p: CatalogProduct }) {
+function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; variantId: string | null; setVariantId: (id: string | null) => void }) {
   const mounted = useMounted()
   const { add } = useCart()
   const { has, toggle } = useWishlist()
@@ -235,7 +237,24 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
   const wished = mounted ? has(p.slug) : false
   const sub = p.type === 'jewel' ? p.tag : p.sub
   const copy = accordionCopy(p)
-  const addItem = () => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] })
+  // 2+ variants → tappable design picker; a lone variant isn't a choice.
+  const choices = p.variants && p.variants.length > 1 ? p.variants : undefined
+  const chosen = choices?.find((v) => v.id === variantId)
+  const addItem = () => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: chosen?.images[0] ?? p.images?.[0] })
+
+  // Concierge button, admin-toggleable in Store Settings (60s server cache — mirrors WhatsAppFab).
+  const [waHref, setWaHref] = useState<string>()
+  useEffect(() => {
+    getStoreSocials()
+      .then((s) => {
+        if (s.pdpWhatsapp === false) return
+        const digits = s.whatsapp && !s.whatsapp.startsWith('http') ? s.whatsapp.replace(/\D/g, '') : ''
+        setWaHref(
+          `https://wa.me/${digits}?text=${encodeURIComponent(`Hi Sumam, I'm interested in the ${p.name} (${p.price}). Could you share more details?`)}`
+        )
+      })
+      .catch(() => {})
+  }, [p.name, p.price])
 
   return (
     <div className="flex flex-col gap-8 lg:flex-[0_0_40%]">
@@ -288,9 +307,33 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
         </div>
       </div>
 
-      {/* D — CTA cluster (WhatsApp removed per client MOM) */}
+      {/* Variant design selector — shown only when the product has a real choice */}
+      {choices && (
+        <div>
+          <div className="mb-2 font-sans text-[10px] uppercase tracking-[0.24em] text-copper">Select {choices[0].type}</div>
+          <div className="flex gap-2">
+            {choices.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setVariantId(v.id)}
+                aria-pressed={variantId === v.id}
+                className={cn(
+                  'h-10 flex-1 border px-4 font-ui text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors',
+                  variantId === v.id
+                    ? 'border-copper bg-copper text-ivory'
+                    : 'border-[rgba(140,106,85,0.4)] text-dark hover:border-copper'
+                )}
+              >
+                {v.value}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* D — CTA cluster */}
       <div>
-        <div className="flex gap-3">
+        <div className={cn('flex gap-3', waHref && 'mb-3')}>
           <button
             onClick={addItem}
             disabled={p.sold}
@@ -316,6 +359,21 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
             </svg>
           </button>
         </div>
+
+        {waHref && (
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-4 flex h-[52px] w-full items-center justify-center gap-3 bg-[#25D366] font-sans text-xs font-medium uppercase tracking-[0.18em] text-white"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+              <path d="M11.998 2.003C6.476 2.003 2 6.479 2 12.001c0 1.762.457 3.45 1.33 4.931L2 22l5.218-1.299A9.955 9.955 0 0012 21.999c5.522 0 9.998-4.476 9.998-9.998 0-5.523-4.476-9.998-9.998-9.998zm0 18.286a8.27 8.27 0 01-4.208-1.154l-.303-.18-3.098.772.794-3.001-.198-.311A8.265 8.265 0 013.73 12c0-4.568 3.714-8.282 8.268-8.282 4.555 0 8.267 3.714 8.267 8.282 0 4.567-3.712 8.289-8.267 8.289z" />
+            </svg>
+            Chat on WhatsApp
+          </a>
+        )}
       </div>
 
       {/* E — Description */}
@@ -355,10 +413,13 @@ function ProductInfo({ p }: { p: CatalogProduct }) {
 
 // ── 3. ProductHero (two-column) ──
 function ProductHero({ p }: { p: CatalogProduct }) {
+  // default to the first variant so its gallery shows (others fall back to p.images)
+  const [variantId, setVariantId] = useState<string | null>(p.variants?.[0]?.id ?? null)
   return (
     <section className={cn(PAD, 'flex flex-col gap-10 pb-24 pt-8 lg:flex-row lg:gap-[60px] lg:pb-24')}>
-      <Gallery p={p} />
-      <ProductInfo p={p} />
+      {/* key: remount on variant switch → gallery snaps back to its first photo */}
+      <Gallery key={variantId ?? 'all'} p={p} variantId={variantId} />
+      <ProductInfo p={p} variantId={variantId} setVariantId={setVariantId} />
     </section>
   )
 }

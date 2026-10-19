@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { createServiceClient } from '@/lib/supabase'
 
 export type UserRole = 'admin' | 'staff' | 'customer'
 
@@ -27,7 +28,7 @@ export type AdminSession = {
 
 export async function createAdminServerClient() {
   const cookieStore = await cookies()
-  return createServerClient(
+  const client = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -50,6 +51,19 @@ export async function createAdminServerClient() {
       },
     }
   )
+
+  // Dev demo sessions never sign into Supabase, so the cookie client would be
+  // anonymous and RLS would silently block admin writes (0 rows, no error).
+  // Only that session-less dev case bypasses RLS; production keeps the guard.
+  if (DEMO_ENABLED && cookieStore.get('sumams_admin_session')?.value) {
+    const { data: { session } } = await client.auth.getSession()
+    if (!session) {
+      const service = createServiceClient()
+      if (service) return service
+    }
+  }
+
+  return client
 }
 
 // Demo admin session. Unsigned and user-plantable, so production trusts only
