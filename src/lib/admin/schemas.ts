@@ -84,6 +84,16 @@ export const ContentBlockKeySchema = z.enum([
   'footer',
 ])
 
+// ── Product image upload ─────────────────────────────────────────────────────
+export const UploadProductImageSchema = z.object({
+  file: z.instanceof(File).refine((f) => f.size > 0, 'That file is empty.'),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9-]+$/, 'Slug may only contain lowercase letters, digits and dashes.'),
+})
+
 export const SaveContentBlockSchema = z.object({
   section_key: ContentBlockKeySchema,
   content: z.unknown(),

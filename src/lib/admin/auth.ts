@@ -55,7 +55,7 @@ export async function createAdminServerClient() {
   // Dev demo sessions never sign into Supabase, so the cookie client would be
   // anonymous and RLS would silently block admin writes (0 rows, no error).
   // Only that session-less dev case bypasses RLS; production keeps the guard.
-  if (DEMO_ENABLED && cookieStore.get('sumams_admin_session')?.value) {
+  if (demoEnabled() && cookieStore.get('sumams_admin_session')?.value === DEMO_COOKIE_VALUE) {
     const { data: { session } } = await client.auth.getSession()
     if (!session) {
       const service = createServiceClient()
@@ -67,33 +67,34 @@ export async function createAdminServerClient() {
 }
 
 // Demo admin session. Unsigned and user-plantable, so production trusts only
-// the Supabase path below. Dev-only for the same reason as DEMO_ENABLED.
-const DEMO_ENABLED = process.env.NODE_ENV !== 'production'
+// the Supabase path below. Dev-only for the same reason as the demo login.
+// Read at call time, not module load, so a running dev server picks the value
+// up immediately instead of depending on how its module cache was warmed.
+const demoEnabled = () => process.env.NODE_ENV !== 'production'
+// The demo cookie acts as a password: anyone who knows it is the local admin.
+// It must be a fixed server-side value, never anything the client chooses,
+// otherwise any visitor can mint themselves an admin session by setting it.
+export const DEMO_COOKIE_VALUE = 'sumams-demo-admin'
 
 export async function getAdminSession(): Promise<AdminSession | null> {
   try {
     // 1. Check for local/demo admin session cookie
-    if (DEMO_ENABLED) {
+    if (demoEnabled()) {
       const cookieStore = await cookies()
       const demoCookie = cookieStore.get('sumams_admin_session')?.value
-      if (demoCookie) {
-        try {
-          const parsed = JSON.parse(demoCookie)
-          return {
-            user: {
-              id: 'admin-dev-01',
-              email: parsed.email || 'admin@sumamsboutique.com',
-            },
-            profile: {
-              id: 'admin-dev-01',
-              role: parsed.role || 'admin',
-              full_name: parsed.full_name || 'Sunit Saha (Atelier Admin)',
-              email: parsed.email || 'admin@sumamsboutique.com',
-              phone: '+91 98765 43210',
-            },
-          }
-        } catch {
-          // invalid cookie payload
+      if (demoCookie === DEMO_COOKIE_VALUE) {
+        return {
+          user: {
+            id: 'admin-dev-01',
+            email: 'admin@sumamsboutique.com',
+          },
+          profile: {
+            id: 'admin-dev-01',
+            role: 'admin',
+            full_name: 'Sunit Saha (Atelier Admin)',
+            email: 'admin@sumamsboutique.com',
+            phone: '+91 98765 43210',
+          },
         }
       }
     }

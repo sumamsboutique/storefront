@@ -4,6 +4,7 @@ import {
   CategoryFormSchema,
   SaveContentBlockSchema,
   StoreSettingsSchema,
+  UploadProductImageSchema,
   isValidOrderTransition,
 } from './schemas'
 
@@ -148,6 +149,25 @@ describe('Admin Schemas & Domain Logic', () => {
         content: {},
       }
       const result = SaveContentBlockSchema.safeParse(invalid)
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('UploadProductImageSchema', () => {
+    const file = (bytes = 4) => new File([new Uint8Array(bytes)], 'saree.png', { type: 'image/png' })
+
+    it('accepts a real file and a slug-safe folder', () => {
+      const result = UploadProductImageSchema.safeParse({ file: file(), slug: 'crimson-kadwa-jangla' })
+      expect(result.success).toBe(true)
+    })
+
+    it('rejects a slug that could escape its folder', () => {
+      const result = UploadProductImageSchema.safeParse({ file: file(), slug: '../../other' })
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects an empty file', () => {
+      const result = UploadProductImageSchema.safeParse({ file: file(0), slug: 'assam-silk' })
       expect(result.success).toBe(false)
     })
   })

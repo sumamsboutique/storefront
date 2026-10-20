@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { DEMO_COOKIE_VALUE } from './auth'
 
 const cookieJar = new Map<string, string>()
 
@@ -33,7 +34,6 @@ describe('Admin auth demo-cookie gate', () => {
   beforeEach(() => {
     cookieJar.clear()
   })
-
   afterEach(() => {
     vi.resetModules()
     vi.unstubAllEnvs()
@@ -41,7 +41,7 @@ describe('Admin auth demo-cookie gate', () => {
 
   it('rejects a planted admin session cookie in production', async () => {
     vi.stubEnv('NODE_ENV', 'production')
-    cookieJar.set('sumams_admin_session', JSON.stringify({ role: 'admin' }))
+    cookieJar.set('sumams_admin_session', DEMO_COOKIE_VALUE)
     const { getAdminSession } = await import('./auth')
     const session = await getAdminSession()
     expect(session).toBeNull()
@@ -49,9 +49,17 @@ describe('Admin auth demo-cookie gate', () => {
 
   it('accepts the demo session cookie outside production', async () => {
     vi.stubEnv('NODE_ENV', 'development')
-    cookieJar.set('sumams_admin_session', JSON.stringify({ role: 'admin' }))
+    cookieJar.set('sumams_admin_session', DEMO_COOKIE_VALUE)
     const { getAdminSession } = await import('./auth')
     const session = await getAdminSession()
     expect(session?.profile.role).toBe('admin')
+  })
+
+  it('rejects a self-chosen cookie value where an admin session is claimed', async () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    cookieJar.set('sumams_admin_session', JSON.stringify({ role: 'admin' }))
+    const { getAdminSession } = await import('./auth')
+    const session = await getAdminSession()
+    expect(session).toBeNull()
   })
 })

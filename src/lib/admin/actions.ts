@@ -8,12 +8,14 @@ import {
   requireAdminOrStaff,
   requireAdmin,
   createAdminServerClient,
+  DEMO_COOKIE_VALUE,
 } from './auth'
 import {
   ProductFormSchema,
   CategoryFormSchema,
   ContentBlockKeySchema,
   SaveContentBlockSchema,
+  UploadProductImageSchema,
   UpdateOrderStatusSchema,
   UpdateUserRoleSchema,
   StoreSettingsSchema,
@@ -58,7 +60,8 @@ export type ActionResult<T = unknown> = {
 // A user can plant this cookie by hand, so it must never be trusted in prod.
 const DEMO_EMAIL = 'admin@sumamsboutique.com'
 const DEMO_PASSWORDS = ['admin', 'admin123', 'sumams2026', 'sumams']
-const DEMO_ENABLED = process.env.NODE_ENV !== 'production'
+// Read at call time, not module load — see the note in auth.ts.
+const demoEnabled = () => process.env.NODE_ENV !== 'production'
 
 export async function adminLoginAction(
   prevState: { error?: string } | null,
@@ -79,13 +82,9 @@ export async function adminLoginAction(
     return { error: 'Too many attempts. Please try again in 15 minutes.' }
   }
 
-  if (DEMO_ENABLED && emailClean === DEMO_EMAIL && DEMO_PASSWORDS.includes(password)) {
+  if (demoEnabled() && emailClean === DEMO_EMAIL && DEMO_PASSWORDS.includes(password)) {
     const cookieStore = await cookies()
-    cookieStore.set('sumams_admin_session', JSON.stringify({
-      email: DEMO_EMAIL,
-      role: 'admin',
-      full_name: 'Sunit Saha (Atelier Admin)',
-    }), {
+    cookieStore.set('sumams_admin_session', DEMO_COOKIE_VALUE, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -984,6 +983,51 @@ export async function updateUserRole(rawPayload: unknown): Promise<ActionResult>
 
 // ── Media Library ────────────────────────────────────────────────────────────
 const mediaPathSchema = z.object({ path: z.string().trim().min(1) })
+
+// Matches the `sarees` bucket limits (public read, 5 MB) set in the dashboard.
+const PRODUCT_IMAGE_BUCKET = 'sarees'
+const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+const PRODUCT_IMAGE_MIME: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
+
+// Product photos live in the public `sarees` bucket. The object path is built
+// from the product slug, never from client input, so a crafted call cannot write
+// outside the product's own folder. The file is written here, but the
+// product_images row is only written when the product itself is saved.
+export async function uploadProductImage(
+  rawPayload: unknown
+): Promise<ActionResult<{ url: string }>> {
+  await requireAdminOrStaff()
+  const parsed = UploadProductImageSchema.safeParse(rawPayload)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message || 'Choose an image to upload.' }
+  }
+
+  const { file, slug } = parsed.data
+  const ext = PRODUCT_IMAGE_MIME[file.type]
+  if (!ext) return { success: false, error: 'Use a JPG, PNG or WebP image.' }
+  if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
+    return { success: false, error: 'Image must be under 5 MB.' }
+  }
+
+  const supabase = await createAdminServerClient()
+  // uuid filename, not Date.now(): two uploads in the same millisecond would
+  // collide, and a stable name would keep serving the replaced image from cache.
+  const path = `${slug}/${crypto.randomUUID()}.${ext}`
+  const { error: upErr } = await supabase.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: true })
+  if (upErr) return { success: false, error: upErr.message || 'Could not upload that image.' }
+
+  const { data: pub } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path)
+  if (!pub?.publicUrl) return { success: false, error: 'Could not read the uploaded image.' }
+
+  revalidatePath('/admin/media')
+  return { success: true, data: { url: pub.publicUrl } }
+}
 
 // Deletes DB-backed product image rows for a path. Bundled repo assets return
 // managed_by_code so the UI doesn't pretend to delete git-tracked files.
