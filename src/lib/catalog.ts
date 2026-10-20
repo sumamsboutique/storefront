@@ -19,7 +19,20 @@ export interface CatalogProduct {
   occasion: string // Bridal, Festive, Everyday…
   images?: string[] // optional product photos (fallback → gradient placeholder)
   variants?: { id: string; type: string; value: string; images: string[] }[] // own gallery per variant, when photo sets are variant-linked
+  categorySlug?: string // products category slug (category page filtering); '' on the demo catalog
+  createdAt?: string // products.created_at, ISO — used by the "Newest" sort
 }
+
+/** The five shop categories: drives the navbar category bar and the /sarees/[slug] routes.
+ *  shortcut: labels/slugs mirror the `categories` rows — renaming a category in Admin
+ *  updates product data but not this list; move it to a DB read if the set becomes editable. */
+export const SHOP_CATEGORIES: { label: string; slug: string }[] = [
+  { label: 'Silk Sarees', slug: 'silk-sarees' },
+  { label: 'Tussar & Ghicha Sarees', slug: 'tussar-ghicha-sarees' },
+  { label: 'Cotton & Blended Sarees', slug: 'cotton-blended-sarees' },
+  { label: 'Printed & Artistic Sarees', slug: 'printed-artistic-sarees' },
+  { label: 'Traditional Weaves & Special Designs', slug: 'traditional-weaves-special-designs' },
+]
 
 const G = {
   benarasiHero: 'linear-gradient(155deg, #2A0D06, #6B2410 35%, #A04514 70%, #BF5E18)',
@@ -67,5 +80,3 @@ export const CATALOG: CatalogProduct[] = [
 ]
 
 export const JEWELLERY = CATALOG.filter((p) => p.type === 'jewel')
-
-export const WEAVES = ['Benarasi', 'Tant', 'Muslin', 'Jamdani', 'Kantha', 'Garad', 'Silk', 'Temple', 'Contemporary', 'Gold-Plated']

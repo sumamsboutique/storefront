@@ -8,6 +8,9 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // local-only working dirs (agent notes / browser tooling), never in CI
+    'repo-docs/**',
+    '.playwright-cli/**',
   ]),
 ])
 

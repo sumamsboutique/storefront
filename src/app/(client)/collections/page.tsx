@@ -1,41 +1,43 @@
 import Navbar from '@/components/storefront/Navbar'
 import Footer from '@/components/storefront/Footer'
 import Image from 'next/image'
+import Link from 'next/link'
 import { SareeBorderDivider, AlponaDivider, PAD } from '@/components/shared/primitives'
 import { cn } from '@/lib/cn'
 import { getAllProducts } from '@/lib/data'
 import { PlpCard } from '@/components/storefront/PlpCard'
+import { SHOP_CATEGORIES } from '@/lib/catalog'
 
-const COLLECTIONS = [
-  {
-    name: 'Bridal Edit',
-    href: '/sarees',
-    desc: 'Showstopping Benarasi & garad for the big day.',
-    gradient: 'linear-gradient(155deg,#2A0D06,#7A2C0C 50%,#BF5E18)',
-    image: '/Banners/banarasi-saree.png',
+/* Card copy/photos for the five shop categories; hrefs derive from SHOP_CATEGORIES. */
+const img = (p: string) => `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/${p}`
+
+const TILE_META: Record<string, { desc: string; gradient: string; image?: string }> = {
+  'silk-sarees': {
+    desc: 'Rich silk drapes for weddings and celebrations.',
+    gradient: 'linear-gradient(155deg,#2A0D06,#6B2E0E 50%,#BF5E18)',
+    image: 'bangalore-silk-katha/01_Main_Product.png',
   },
-  {
-    name: 'Festive Weaves',
-    href: '/sarees',
-    desc: 'Puja-ready silk, tant & jamdani with a golden glow.',
-    gradient: 'linear-gradient(160deg,#3D1408,#6B2310 40%,#BF5E18 70%,#D4880A)',
-    image: '/Banners/spring-edit.jpeg',
+  'tussar-ghicha-sarees': {
+    desc: 'Textured tussar and ghicha weaves with a natural sheen.',
+    gradient: 'linear-gradient(175deg,#2A1408,#6B4A1E 55%,#A07038)',
+    image: 'madhubani-ghicha/01_Main_Product.png',
   },
-  {
-    name: 'Everyday Heritage',
-    href: '/sarees',
-    desc: 'Breathable muslin & kantha for daily grace.',
-    gradient: 'linear-gradient(170deg,#EDE3D6,#C9B488 50%,#8E6F4A)',
-    image: '/Banners/tant-saree.jpeg',
+  'cotton-blended-sarees': {
+    desc: 'Light, breathable cotton blends for everyday grace.',
+    gradient: 'linear-gradient(175deg,#1A1C14,#3E4432 55%,#6E7455)',
+    image: 'cotton-silk-pashmina/01_Main_Product.png',
   },
-  {
-    name: 'Temple Jewellery',
-    href: '/jewellery',
-    desc: 'Antique-gold craft, hand-finished to last.',
-    gradient: 'linear-gradient(165deg,#4A2010,#8B3A14 40%,#C4611A 70%,#7A2C0C)',
-    image: '/Banners/temple-jewellery.jpeg',
+  'printed-artistic-sarees': {
+    desc: 'Artful prints carrying a painter’s touch.',
+    gradient: 'linear-gradient(160deg,#16222B,#2E4658 55%,#55788F)',
+    image: 'kalamkari/01_Main_Product.png',
   },
-]
+  'traditional-weaves-special-designs': {
+    desc: 'Timeless weaves and special-design sarees.',
+    gradient: 'linear-gradient(175deg,#1C0A06,#4A2010 55%,#8C6A55)',
+    image: 'jaal-katal/01_Main_Product.png',
+  },
+}
 
 export default async function Collections() {
   const bridal = (await getAllProducts()).filter((p) => p.occasion === 'Bridal')
@@ -54,18 +56,23 @@ export default async function Collections() {
       </div>
 
       <div className={cn(PAD, 'grid grid-cols-1 gap-6 pb-12 sm:grid-cols-2')}>
-        {COLLECTIONS.map((c) => (
-          <a key={c.name} href={c.href} className="group block">
-            <div className="relative flex aspect-[4/3] items-end overflow-hidden p-6" style={{ background: c.gradient }}>
-              <Image fill src={c.image} alt={c.name} sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
-              <div className="absolute inset-0 bg-[rgba(28,10,6,0.25)] transition-opacity group-hover:opacity-0" />
-              <div className="relative">
-                <div className="font-display text-3xl font-light text-ivory">{c.name}</div>
-                <p className="mt-1 font-ui text-xs font-light text-[rgba(245,239,230,0.8)]">{c.desc}</p>
+        {SHOP_CATEGORIES.map((c) => {
+          const m = TILE_META[c.slug] ?? { desc: '', gradient: 'linear-gradient(170deg,#EDE3D6,#C4A878 55%,#6B5238)' }
+          return (
+            <Link key={c.slug} href={`/sarees/${c.slug}`} className="group block">
+              <div className="relative flex aspect-[4/3] items-end overflow-hidden p-6" style={{ background: m.gradient }}>
+                {m.image && (
+                  <Image fill src={img(m.image)} alt={c.label} sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+                )}
+                <div className="absolute inset-0 bg-[rgba(28,10,6,0.25)] transition-opacity group-hover:opacity-0" />
+                <div className="relative">
+                  <div className="font-display text-3xl font-light text-ivory">{c.label}</div>
+                  <p className="mt-1 font-ui text-xs font-light text-[rgba(245,239,230,0.8)]">{m.desc}</p>
+                </div>
               </div>
-            </div>
-          </a>
-        ))}
+            </Link>
+          )
+        })}
       </div>
 
       <div className={cn(PAD, 'pb-14')}>
@@ -73,7 +80,7 @@ export default async function Collections() {
           <div className="font-display text-3xl font-light text-dark">
             Bridal <em className="italic text-copper">Picks</em>
           </div>
-          <a href="/sarees" className="font-ui text-[10px] tracking-[0.18em] text-copper uppercase border-b border-copper pb-0.5">View all →</a>
+          <Link href="/sarees" className="font-ui text-[10px] tracking-[0.18em] text-copper uppercase border-b border-copper pb-0.5">View all →</Link>
         </div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-x-4">
           {bridal.slice(0, 4).map((p) => (

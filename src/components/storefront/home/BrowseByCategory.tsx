@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Reveal } from '@/lib/reveal'
+import { SHOP_CATEGORIES } from '@/lib/catalog'
 import type { BbcContent } from '@/lib/data'
 
 interface Cat {
@@ -16,27 +17,33 @@ interface Cat {
   hero?: boolean
 }
 
-const SAREE_HERO: Cat = {
-  id: 'benarasi',
-  bn: 'বেনারসি',
-  en: 'Benarasi',
-  gradient: 'linear-gradient(155deg, #2A0D06, #7A2C0C 50%, #BF5E18)',
-  image: '/Products/Banarasi/royal-crimson-benarasi.png',
+/** Tile → its category page; tiles whose label/id no longer match a shop
+ *  category (edited in CMS) fall back to the PLP weave filter instead of 404. */
+const catHref = (cat: Cat) => {
+  const hit = SHOP_CATEGORIES.find((c) => c.label === cat.en || c.slug === cat.id)
+  return hit ? `/sarees/${hit.slug}` : `/sarees?weave=${encodeURIComponent(cat.en)}`
+}
+
+/* Fallback tiles — the five real shop categories, used only when CMS content is
+ *  unavailable. Dark gradients so the light tile text stays readable without photos. */
+const HERO: Cat = {
+  id: 'silk-sarees',
+  bn: 'সিল্ক শাড়ি',
+  en: 'Silk Sarees',
+  gradient: 'linear-gradient(155deg, #2A0D06, #6B2E0E 50%, #BF5E18)',
   dark: true,
   hero: true,
 }
 
-const SAREE_SMALL: Cat[] = [
-  { id: 'tant', bn: 'তাঁত', en: 'Tant', gradient: 'linear-gradient(175deg, #F5EFE6, #D4B896 50%, #8C6A55)', image: '/Products/Handlooms/nilima-tant-cotton.png', dark: false },
-  { id: 'muslin', bn: 'মসলিন', en: 'Muslin', gradient: 'linear-gradient(175deg, #EDE3D6, #C4A87A 60%, #8C6A55)', image: '/Products/Handlooms/aarohi-muslin-drape.png', dark: false },
-  { id: 'silk', bn: 'সিল্ক', en: 'Silk', gradient: 'linear-gradient(175deg, #2A1008, #6B2E0E 50%, #BF5E18)', image: '/Products/Handlooms/madhubani-silk-weave.png', dark: true },
-  { id: 'kantha', bn: 'কাঁথা', en: 'Kantha', gradient: 'linear-gradient(175deg, #1C0A06, #4A2010 50%, #8C6A55)', image: '/Products/Handlooms/priya-kantha-stitch.png', dark: true },
-  { id: 'jamdani', bn: 'জামদানি', en: 'Jamdani', gradient: 'linear-gradient(175deg, #EDE3D6, #BFA678 60%, #6B5238)', image: '/Products/Handlooms/rukmini-jamdani-cotton.png', dark: false },
-  { id: 'garad', bn: 'গরদ', en: 'Garad', gradient: 'linear-gradient(175deg, #F5EFE6, #E8D5B0 50%, #BF5E18)', image: '/Products/Handlooms/shankha-garad-silk.png', dark: false },
+const SMALL: Cat[] = [
+  { id: 'tussar-ghicha-sarees', bn: 'তসর ও ঘিচা শাড়ি', en: 'Tussar & Ghicha Sarees', gradient: 'linear-gradient(175deg, #2A1408, #6B4A1E 55%, #A07038)', dark: true },
+  { id: 'cotton-blended-sarees', bn: 'সুতি ও মিশ্র কাপড়ের শাড়ি', en: 'Cotton & Blended Sarees', gradient: 'linear-gradient(175deg, #1A1C14, #3E4432 55%, #6E7455)', dark: true },
+  { id: 'printed-artistic-sarees', bn: 'প্রিন্টেড ও শৈল্পিক শাড়ি', en: 'Printed & Artistic Sarees', gradient: 'linear-gradient(160deg, #16222B, #2E4658 55%, #55788F)', dark: true },
+  { id: 'traditional-weaves-special-designs', bn: 'ঐতিহ্যবাহী বুনন ও বিশেষ নকশার শাড়ি', en: 'Traditional Weaves & Special Designs', gradient: 'linear-gradient(175deg, #1C0A06, #4A2010 55%, #8C6A55)', dark: true },
 ]
 
 const DEFAULT: BbcContent = {
-  sarees: { hero: SAREE_HERO, small: SAREE_SMALL },
+  sarees: { hero: HERO, small: SMALL },
   jewellery: [],
 }
 
@@ -45,7 +52,7 @@ function HeroTile({ cat }: { cat: Cat }) {
   const [hov, setHov] = useState(false)
   return (
     <Link
-      href={`/sarees?weave=${cat.en}`}
+      href={catHref(cat)}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       className="cursor-pointer relative overflow-hidden min-h-[420px] block bg-cream"
@@ -83,7 +90,7 @@ function SmallTile({ cat, showHover = false }: { cat: Cat; showHover?: boolean }
   const barColor = cat.dark ? '#D4880A' : '#BF5E18'
   return (
     <Link
-      href={`/sarees?weave=${cat.en}`}
+      href={catHref(cat)}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => !showHover && setHov(false)}
       className="cursor-pointer relative overflow-hidden min-h-[200px] block bg-cream"
@@ -122,7 +129,7 @@ function SmallTile({ cat, showHover = false }: { cat: Cat; showHover?: boolean }
 function MobileTile({ cat, height }: { cat: Cat; height?: string | number }) {
   return (
     <Link
-      href={`/sarees?weave=${cat.en}`}
+      href={catHref(cat)}
       className="relative w-full overflow-hidden cursor-pointer shrink-0 block bg-cream"
       style={{ height: height ?? '100%' }}
     >
@@ -153,7 +160,7 @@ function MobileTile({ cat, height }: { cat: Cat; height?: string | number }) {
 function MobileHeroTile({ hero }: { hero: Cat }) {
   const c = hero
   return (
-    <Link href="/sarees" className="relative w-full h-[219px] overflow-hidden block bg-cream">
+    <Link href={catHref(c)} className="relative w-full h-[219px] overflow-hidden block bg-cream">
       <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gold" />
       {c.image ? (
         <Image fill src={c.image} alt={c.en} sizes="(min-width: 768px) 33vw, 50vw" className="object-cover" />
@@ -185,6 +192,8 @@ function SubHeader({ bn, en }: { bn: string; en: string }) {
 export default function BrowseByCategory({ data }: { data?: BbcContent }) {
   const d = data && data.sarees?.hero?.en ? data : DEFAULT
   const { sarees } = d
+  // CMS-edited blocks can omit fields — never let that white-screen the section.
+  const small = sarees.small ?? []
   return (
     <section className="bg-cream px-5 py-14 md:py-24 md:px-[clamp(32px,6vw,85px)]">
       {/* Header */}
@@ -207,16 +216,9 @@ export default function BrowseByCategory({ data }: { data?: BbcContent }) {
       <Reveal delay={80}>
       <div className="hidden md:grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
         <HeroTile cat={sarees.hero} />
-        <SmallTile cat={sarees.small[0]} />
-        <SmallTile cat={sarees.small[1]} />
-        <SmallTile cat={sarees.small[2]} showHover />
-        <SmallTile cat={sarees.small[3]} />
-        <div style={{ gridColumn: '1 / 2' }}>
-          <SmallTile cat={sarees.small[4]} />
-        </div>
-        <div style={{ gridColumn: '2 / 4' }}>
-          <SmallTile cat={sarees.small[5]} />
-        </div>
+        {small.map((t, i) => (
+          <SmallTile key={t.id || i} cat={t} showHover={i === 2} />
+        ))}
       </div>
       </Reveal>
 
@@ -225,7 +227,7 @@ export default function BrowseByCategory({ data }: { data?: BbcContent }) {
       <div className="md:hidden">
         <MobileHeroTile hero={sarees.hero} />
         <div className="grid grid-cols-2 gap-3 my-8">
-          {sarees.small.map((t, i) => (
+          {small.map((t, i) => (
             <div key={i} style={{ aspectRatio: '3/4', overflow: 'hidden' }}>
               <MobileTile cat={t} />
             </div>

@@ -19,9 +19,10 @@ type Row = {
   is_featured_large: boolean
   stock_status: string | null
   occasion_tags: string[] | null
+  created_at: string
   product_images: { storage_path: string; variant_id: string | null; display_order: number }[]
   product_variants: { id: string; variant_type: string; variant_value: string; created_at: string }[] | null
-  categories: { name: string } | null
+  categories: { name: string; slug: string } | null
 }
 
 type CategoryRow = { id: string; name: string; parent_id: string | null }
@@ -78,6 +79,8 @@ function toProduct(row: Row, parentOf: Map<string, string>): CatalogProduct {
     occasion: firstTag,
     images: imgs.map((i) => i.storage_path),
     variants,
+    categorySlug: row.categories?.slug ?? '',
+    createdAt: row.created_at,
   }
 }
 
@@ -127,7 +130,7 @@ async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, str
         supabase!.from('categories').select('id, name, parent_id'),
         supabase!
           .from('products')
-          .select('id, name, slug, category_id, short_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, product_images(storage_path, variant_id, display_order), product_variants(id, variant_type, variant_value, created_at), categories(name)')
+          .select('id, name, slug, category_id, short_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, created_at, product_images(storage_path, variant_id, display_order), product_variants(id, variant_type, variant_value, created_at), categories(name, slug)')
           .eq('is_published', true)
           .eq('is_active', true),
       ]),
@@ -176,6 +179,14 @@ export async function getProductsByType(type: 'saree' | 'jewel'): Promise<Catalo
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | undefined> {
   const all = await getAllProducts()
   return all.find((p) => p.slug === slug)
+}
+
+/** Products in one category, by its `categories.slug`. Reuses the cached product
+ *  list (no extra query); an unreachable DB falls back to the demo catalog,
+ *  which has no category slugs, so the page renders its empty state. */
+export async function getProductsByCategory(categorySlug: string): Promise<CatalogProduct[]> {
+  const all = await getAllProducts()
+  return all.filter((p) => p.categorySlug === categorySlug)
 }
 
 // ── content_blocks ─────────────────────────────────────────────────────────

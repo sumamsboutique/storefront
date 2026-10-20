@@ -294,11 +294,11 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
       {/* C — Quick Highlights Spec Strip */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 p-3.5 bg-cream/70 border border-[rgba(140,106,85,0.25)]">
         <div>
-          <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Weave / Craft</div>
+          <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Category</div>
           <div className="font-ui text-xs font-semibold text-dark mt-0.5">{p.weave}</div>
         </div>
         <div>
-          <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Category</div>
+          <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Type</div>
           <div className="font-ui text-xs font-semibold text-dark mt-0.5">{p.type === 'saree' ? 'Handloom Saree' : 'Fine Jewellery'}</div>
         </div>
         <div className="col-span-2 sm:col-span-1">
@@ -385,7 +385,7 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
         <p className="font-ui text-[13px] font-light leading-[1.8] text-[rgba(28,10,6,0.85)]">
           {p.type === 'jewel'
             ? `${p.name} is crafted from hand-finished materials, each piece personally checked by Sumam before it reaches you. A one-of-one piece drawn from Bengal's temple and heirloom traditions.`
-            : `A ${p.weave} handwoven in the traditional technique, where each motif is woven separately into the fabric — never stitched on. The ${p.occasion.toLowerCase()} palette is hand-dyed, with intricate zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Bengal.`}
+            : `A ${p.weave.replace(/ Sarees$/, '')} saree handwoven in the traditional technique, where each motif is woven separately into the fabric — never stitched on. The ${p.occasion.toLowerCase()} palette is hand-dyed, with intricate zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Bengal.`}
         </p>
       </div>
 
@@ -541,7 +541,7 @@ function MoreFrom({ p }: { p: CatalogProduct }) {
           </h2>
         </div>
         <Link href={p.type === 'jewel' ? '/jewellery' : `/sarees?weave=${p.weave}`} className="mb-1.5 whitespace-nowrap border-b border-copper pb-0.5 font-sans text-[10px] uppercase tracking-[0.2em] text-copper">
-          View All {p.type === 'jewel' ? 'Jewellery' : `${p.weave} Sarees`} →
+          View All {p.type === 'jewel' ? 'Jewellery' : p.weave.endsWith('Sarees') ? p.weave : `${p.weave} Sarees`} →
         </Link>
       </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">

@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { CatalogProduct } from '@/lib/catalog'
-import { WEAVES } from '@/lib/catalog'
 import { PlpCard } from './PlpCard'
 import { PAD, Eyebrow } from '@/components/shared/primitives'
 import { IconSearch } from '@/components/icons'
@@ -67,7 +66,7 @@ function PageHeader({ keyword, title, count }: { keyword: string; title: string;
   )
 }
 
-const SORTS = ['Featured', 'Price: Low to High', 'Price: High to Low'] as const
+const SORTS = ['Featured', 'Price: Low to High', 'Price: High to Low', 'Newest'] as const
 
 /** One sort control for both toolbars — the mobile one previously had no caret. */
 function SortSelect({ value, onChange, className }: { value: (typeof SORTS)[number]; onChange: (s: (typeof SORTS)[number]) => void; className?: string }) {
@@ -84,13 +83,13 @@ function SortSelect({ value, onChange, className }: { value: (typeof SORTS)[numb
   )
 }
 
-export default function Plp({ products, keyword, title, types = ['saree'] }: { products: CatalogProduct[]; keyword: string; title: string; types?: CatalogProduct['type'][] }) {
+export default function Plp({ products, keyword, title, types = ['saree'], category }: { products: CatalogProduct[]; keyword: string; title: string; types?: CatalogProduct['type'][]; category?: string }) {
   const params = useSearchParams()
   const q = params.get('q') ?? ''
 
   const [term, setTerm] = useState(q)
   const [weaves, setWeaves] = useState<string[]>(() => {
-    const w = params.get('weave')
+    const w = params.get('weave') || category
     return w ? w.split(',').filter(Boolean) : []
   })
   const [stock, setStock] = useState<'all' | 'in' | 'sold'>('all')
@@ -115,13 +114,16 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
     }
     if (sort === 'Price: Low to High') list = [...list].sort((a, b) => a.priceNum - b.priceNum)
     if (sort === 'Price: High to Low') list = [...list].sort((a, b) => b.priceNum - a.priceNum)
+    if (sort === 'Newest') list = [...list].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
     return list
   }, [products, types, term, weaves, stock, price, sort])
 
-  const weaveOptions = useMemo(
-    () => WEAVES.filter((w) => products.some((p) => types.includes(p.type) && p.weave === w)),
-    [products, types],
-  )
+  // Options come from the products' own categories, so a new/renamed category
+  // shows up without touching a hardcoded weave list.
+  const weaveOptions = useMemo(() => {
+    const seen = new Set(products.filter((p) => types.includes(p.type)).map((p) => p.weave))
+    return [...seen].sort((a, b) => a.localeCompare(b))
+  }, [products, types])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / LIMIT))
   const safePage = Math.min(page, pageCount)
@@ -201,7 +203,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               </button>
             )}
           </div>
-          <FilterGroup title="Weave">
+          <FilterGroup title="Category">
             {weaveOptions.map((w) => (
               <PriceCheck
                 key={w}
@@ -243,7 +245,7 @@ export default function Plp({ products, keyword, title, types = ['saree'] }: { p
               </button>
             )}
           </div>
-          <FilterGroup title="Weave">
+          <FilterGroup title="Category">
             {weaveOptions.map((w) => (
               <PriceCheck key={w} label={w} active={weaves.includes(w)} onToggle={() => toggleWeave(w)} />
             ))}

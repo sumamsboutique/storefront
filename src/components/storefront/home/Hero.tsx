@@ -34,7 +34,7 @@ export const HERO_SLIDES: HeroSlide[] = [
     href: '/collections',
   },
   {
-id: 2,
+    id: 2,
     gradient: 'linear-gradient(155deg, #1C0A06, #4A2010, #8C6A55)',
     image: '/Banners/banarasi-saree.png',
     imageMobile: '/Banners/banarasi-saree-mob.jpeg',
