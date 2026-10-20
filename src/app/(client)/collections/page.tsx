@@ -4,8 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { SareeBorderDivider, AlponaDivider, PAD } from '@/components/shared/primitives'
 import { cn } from '@/lib/cn'
-import { getAllProducts } from '@/lib/data'
-import { PlpCard } from '@/components/storefront/PlpCard'
 import { SHOP_CATEGORIES } from '@/lib/catalog'
 
 /* Card copy/banners for the five shop categories; hrefs derive from SHOP_CATEGORIES. */
@@ -40,7 +38,6 @@ const TILE_META: Record<string, { desc: string; gradient: string; image?: string
 }
 
 export default async function Collections() {
-  const bridal = (await getAllProducts()).filter((p) => p.occasion === 'Bridal')
   return (
     <main className="min-h-screen bg-ivory">
       <Navbar />
@@ -73,20 +70,6 @@ export default async function Collections() {
             </Link>
           )
         })}
-      </div>
-
-      <div className={cn(PAD, 'pb-14')}>
-        <div className="flex items-center justify-between pb-6">
-          <div className="font-display text-3xl font-light text-dark">
-            Bridal <em className="italic text-copper">Picks</em>
-          </div>
-          <Link href="/sarees" className="font-ui text-[10px] tracking-[0.18em] text-copper uppercase border-b border-copper pb-0.5">View all →</Link>
-        </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-x-4">
-          {bridal.slice(0, 4).map((p) => (
-            <PlpCard key={p.id} product={p} />
-          ))}
-        </div>
       </div>
 
       <SareeBorderDivider />
