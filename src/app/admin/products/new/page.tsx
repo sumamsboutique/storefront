@@ -24,7 +24,7 @@ export default async function AdminNewProductPage() {
           Add <span className="italic text-copper">Product</span>
         </h1>
         <p className="font-sans text-xs text-muted mt-1">
-          Create a new handloom saree or jewellery piece with images, pricing, and craft notes.
+          Create a new handloom saree with images, pricing, and craft notes.
         </p>
       </div>
 

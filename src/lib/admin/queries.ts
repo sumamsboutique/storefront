@@ -579,45 +579,6 @@ export const FALLBACK_ADMIN_CATEGORIES: AdminCategoryItem[] = [
     is_active: true,
     product_count: 1,
   },
-  {
-    id: 'cat-jewellery',
-    name: 'Heritage Jewellery',
-    name_bn: 'ঐতিহ্যবাহী গয়না',
-    slug: 'jewellery',
-    parent_id: null,
-    parent_name: null,
-    is_hero_tile: true,
-    tile_gradient_fallback: 'linear-gradient(165deg, #4A2010, #8B3A14 40%, #C4611A 70%, #7A2C0C)',
-    display_order: 8,
-    is_active: true,
-    product_count: 2,
-  },
-  {
-    id: 'cat-temple',
-    name: 'Temple Collection',
-    name_bn: 'মন্দির কালেকশন',
-    slug: 'temple-jewellery',
-    parent_id: 'cat-jewellery',
-    parent_name: 'Heritage Jewellery',
-    is_hero_tile: false,
-    tile_gradient_fallback: 'linear-gradient(165deg, #4A2010, #8B3A14 40%, #C4611A 70%, #7A2C0C)',
-    display_order: 9,
-    is_active: true,
-    product_count: 1,
-  },
-  {
-    id: 'cat-contemporary',
-    name: 'Contemporary Jewels',
-    name_bn: 'আধুনিক গয়না',
-    slug: 'contemporary-jewellery',
-    parent_id: 'cat-jewellery',
-    parent_name: 'Heritage Jewellery',
-    is_hero_tile: false,
-    tile_gradient_fallback: 'linear-gradient(165deg, #5A2A14, #8B3A14 40%, #C4611A 70%, #4A2010)',
-    display_order: 10,
-    is_active: true,
-    product_count: 1,
-  },
 ]
 
 export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
@@ -909,62 +870,136 @@ export async function getAdminCustomers({
 }
 
 // ── Media Library ────────────────────────────────────────────────────────────
+export type MediaSource = 'product' | 'content' | 'local'
+
 export type MediaFile = {
   id: string
   name: string
   path: string
-  size?: number
   created_at: string
   is_in_use: boolean
   usage_count: number
+  source: MediaSource
+  /** Where it is referenced, e.g. "Hero slides" or "Product: Assam Silk". */
+  used_by: string[]
 }
 
+const IMAGE_EXT = /\.(png|jpe?g|webp|avif|gif|svg)$/i
+
+// Walks every string in a content block and collects image paths.
+function collectImages(value: unknown, into: Set<string>) {
+  if (typeof value === 'string') {
+    if (IMAGE_EXT.test(value) || value.includes('/storage/v1/object/public/')) {
+      into.add(value)
+    }
+    return
+  }
+  if (Array.isArray(value)) {
+    for (const v of value) collectImages(v, into)
+    return
+  }
+  if (value && typeof value === 'object') {
+    for (const v of Object.values(value)) collectImages(v, into)
+  }
+}
+
+/** Every image the site can serve: product photos, content-block images, local /public assets. */
 export async function getAdminMedia(): Promise<MediaFile[]> {
   try {
     const supabase = await createAdminServerClient()
-    const { data: imageRows } = await supabase
-      .from('product_images')
-      .select('storage_path')
+    const [{ data: imageRows }, { data: blockRows }] = await Promise.all([
+      supabase
+        .from('product_images')
+        .select('storage_path, alt_text, products(name)'),
+      supabase.from('content_blocks').select('section_key, content, is_published'),
+    ])
 
-    const usedPaths = new Set<string>()
-    for (const img of imageRows || []) {
-      if (img.storage_path) usedPaths.add(img.storage_path)
+    const out: MediaFile[] = []
+
+    // 1. Product photos (deletable — backed by product_images rows).
+    for (const [idx, img] of (imageRows ?? []).entries()) {
+      const path = img.storage_path
+      if (!path) continue
+      const productName = (img.products as unknown as { name?: string } | null)?.name
+      out.push({
+        id: `product-${idx + 1}`,
+        name: path.split('/').pop() || path,
+        path,
+        created_at: '2026-09-01T00:00:00.000Z',
+        is_in_use: true,
+        usage_count: 1,
+        source: 'product',
+        used_by: productName ? [`Product: ${productName}`] : ['Product photo'],
+      })
     }
 
-    // Default assets from public catalog
-    const localAssets = [
-      '/Banners/spring-edit.jpeg',
-      '/Banners/spring-edit-mob.jpeg',
-      '/Banners/banarasi-saree.png',
-      '/Banners/banarasi-saree-mob.jpeg',
-      '/Banners/tant-saree.jpeg',
-      '/Banners/tant-saree-mob.jpeg',
-      '/Banners/temple-jewellery.jpeg',
-      '/Banners/temple-jewellery-mob.jpeg',
-      '/Products/crimson-kadwa-benarasi.png',
-      '/Products/shantipur-neelambari-tant.png',
-      '/Products/baluchari-mythological.png',
-      '/Products/dhakai-jamdani-antique-gold.png',
-      '/Products/murshidabad-printed-silk.png',
-      '/Products/temple-choker-set.png',
-      '/Products/kantha-stitch-tussar.png',
-      '/Products/jhumka-antique-finish.png',
-      '/logo.png',
-      '/saree_figure.png',
-    ]
+    // 2. Images referenced by homepage content blocks.
+    const contentPaths = new Map<string, string[]>()
+    for (const block of blockRows ?? []) {
+      const found = new Set<string>()
+      collectImages(block.content, found)
+      for (const p of found) {
+        const label = `${block.section_key}${block.is_published ? '' : ' (draft)'}`
+        contentPaths.set(p, [...(contentPaths.get(p) ?? []), label])
+      }
+    }
+    for (const [idx, [path, usedBy]] of [...contentPaths.entries()].entries()) {
+      out.push({
+        id: `content-${idx + 1}`,
+        name: path.split('/').pop() || path,
+        path,
+        created_at: '2026-09-01T00:00:00.000Z',
+        is_in_use: usedBy.some((u) => !u.includes('(draft)')),
+        usage_count: usedBy.length,
+        source: 'content',
+        used_by: usedBy,
+      })
+    }
 
-    return localAssets.map((path, idx) => ({
-      id: `asset-${idx + 1}`,
-      name: path.split('/').pop() || path,
-      path,
-      created_at: '2026-09-01T00:00:00.000Z',
-      is_in_use: usedPaths.has(path) || path.includes('Banners') || path.includes('logo'),
-      usage_count: usedPaths.has(path) ? 1 : 0,
-    }))
+    // 3. Local assets bundled in /public. Read-only at runtime (git-tracked).
+    for (const path of await listPublicImages()) {
+      const usedBy = contentPaths.get(path) ?? []
+      out.push({
+        id: `local-${path}`,
+        name: path.split('/').pop() || path,
+        path,
+        created_at: '2026-09-01T00:00:00.000Z',
+        is_in_use: usedBy.length > 0,
+        usage_count: usedBy.length,
+        source: 'local',
+        used_by: usedBy.length ? usedBy : ['Bundled asset'],
+      })
+    }
+
+    return out
   } catch (err) {
     console.error('[admin/queries] getAdminMedia error:', err)
     return []
   }
+}
+
+// Scans public/ at runtime. Node-only; the media page is a server component.
+async function listPublicImages(): Promise<string[]> {
+  const { readdir } = await import('node:fs/promises')
+  const { join } = await import('node:path')
+  const root = join(process.cwd(), 'public')
+  const found: string[] = []
+
+  const walk = async (dir: string, prefix: string) => {
+    const entries = await readdir(dir, { withFileTypes: true })
+    for (const e of entries) {
+      const url = `${prefix}/${e.name}`
+      if (e.isDirectory()) await walk(join(dir, e.name), url)
+      else if (IMAGE_EXT.test(e.name)) found.push(url)
+    }
+  }
+
+  try {
+    await walk(root, '')
+  } catch (err) {
+    console.error('[admin/queries] listPublicImages error:', err)
+  }
+  return found.sort()
 }
 
 // ── Settings ─────────────────────────────────────────────────────────────────
@@ -978,12 +1013,12 @@ export async function getAdminStoreSettings() {
     return {
       general: (settingsMap.get('general') as Record<string, string>) || {
         store_name: "Sumam's Boutique",
-        tagline: 'Bengal-heritage sarees and fine jewellery',
-        email: 'concierge@sumamsboutique.com',
-        phone: '+91 98300 12345',
-        whatsapp: '+91 98300 12345',
+        tagline: 'Bengal-heritage handloom sarees',
+        email: 'hello@sumamsboutique.com',
+        phone: '+91 70205 52557',
+        whatsapp: '+91 70205 52557',
         pdp_whatsapp: true,
-        address: '42 Southern Avenue, Kolkata 700029, West Bengal',
+        address: 'Nagpur, India',
       },
       commerce: (settingsMap.get('commerce') as Record<string, unknown>) || {
         free_shipping_threshold: 10000,
@@ -1008,12 +1043,12 @@ export async function getAdminStoreSettings() {
     return {
       general: {
         store_name: "Sumam's Boutique",
-        tagline: 'Bengal-heritage sarees and fine jewellery',
-        email: 'concierge@sumamsboutique.com',
-        phone: '+91 98300 12345',
-        whatsapp: '+91 98300 12345',
+        tagline: 'Bengal-heritage handloom sarees',
+        email: 'hello@sumamsboutique.com',
+        phone: '+91 70205 52557',
+        whatsapp: '+91 70205 52557',
         pdp_whatsapp: true,
-        address: '42 Southern Avenue, Kolkata 700029, West Bengal',
+        address: 'Nagpur, India',
       },
       commerce: {
         free_shipping_threshold: 10000,

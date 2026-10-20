@@ -150,7 +150,7 @@ export function CategoryManagerClient({
 
       <AdminCard
         title="Category Hierarchy & Weaves"
-        subtitle="Manage primary product lines (Sarees, Fine Jewellery) and authentic weave classifications."
+        subtitle="Manage primary product lines and authentic weave classifications."
       >
         <div className="overflow-x-auto -mx-6 -my-6">
           <table className="w-full text-left font-sans text-xs">

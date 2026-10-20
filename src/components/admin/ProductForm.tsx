@@ -11,6 +11,15 @@ import { ImageGalleryManager, type ImageItem } from '@/components/admin/ImageUpl
 import { VariantEditor, type VariantItem } from '@/components/admin/VariantEditor'
 import type { ProductFormValues } from '@/lib/admin/schemas'
 
+// Single source of truth for the product URL: the form never asks for a slug,
+// and the image uploader files photos under the same value.
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export type CategoryOption = {
   id: string
   name: string
@@ -33,6 +42,9 @@ export function ProductForm({
 
   // Form State
   const [name, setName] = useState(initialData?.name || '')
+  // Name is locked behind an explicit confirm so the derived URL can't be set by
+  // accident. Editing an existing product starts confirmed.
+  const [confirmedName, setConfirmedName] = useState(Boolean(initialData?.name))
   const [slug, setSlug] = useState(initialData?.slug || '')
   const [categoryId, setCategoryId] = useState(initialData?.category_id || '')
   const [sku, setSku] = useState(initialData?.sku || '')
@@ -80,20 +92,27 @@ export function ProductForm({
   const [seoTitle, setSeoTitle] = useState(initialData?.seo_title || '')
   const [seoDesc, setSeoDesc] = useState(initialData?.seo_description || '')
 
-  // Auto slug generation from name
+  // Auto slug generation from name. Existing products keep the slug they were
+  // saved with — renaming one must not silently change its live URL.
   const handleNameChange = (val: string) => {
     setName(val)
-    if (!isEdit && !slug) {
-      const generated = val
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '')
-      setSlug(generated)
-    }
+    if (!isEdit) setSlug(slugify(val))
+  }
+
+  // Confirm locks the name in; on a new product this also fixes the slug that
+  // the image uploader files photos under.
+  const handleConfirmName = () => {
+    if (!isEdit) setSlug(slugify(name))
+    setConfirmedName(true)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!confirmedName) {
+      error('Confirm the product name before saving.')
+      return
+    }
 
     const occasion_tags = occasionTagsStr
       .split(',')
@@ -102,7 +121,7 @@ export function ProductForm({
 
     const payload: ProductFormValues = {
       name: name.trim(),
-      slug: slug.trim().toLowerCase(),
+      slug: isEdit ? slug || slugify(name) : slugify(name),
       category_id: categoryId || null,
       sku: sku.trim() || null,
       price: parseFloat(price) || 0,
@@ -172,31 +191,50 @@ export function ProductForm({
                 <label className="block text-[11px] font-sans font-medium uppercase tracking-wider text-muted mb-1.5">
                   Product Name <span className="text-[#A62719]">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="e.g. Crimson Kadwa Jangla Benarasi"
-                  className="w-full px-3 py-2 text-sm bg-white border border-[#DCC9A8]/80 text-dark font-sans focus:outline-none focus:border-copper"
-                />
+                {confirmedName ? (
+                  <div className="flex items-center justify-between gap-3 border border-copper/60 bg-cream/30 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-sans text-dark truncate">{name}</p>
+                      <p className="font-mono text-[10px] text-muted truncate">/products/{slug}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmedName(false)}
+                      className="shrink-0 text-[11px] font-sans text-copper hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        placeholder="e.g. Crimson Kadwa Jangla Benarasi"
+                        className="w-full px-3 py-2 text-sm bg-white border border-[#DCC9A8]/80 text-dark font-sans focus:outline-none focus:border-copper"
+                      />
+                      {name.trim() && (
+                        <p className="font-mono text-[10px] text-muted mt-1 truncate">
+                          Web address: /products/{slugify(name)}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!name.trim()}
+                      onClick={handleConfirmName}
+                      className="shrink-0 px-3 py-2 text-[11px] font-sans font-medium uppercase tracking-wider bg-dark text-ivory hover:bg-copper transition-colors disabled:opacity-40"
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-sans font-medium uppercase tracking-wider text-muted mb-1.5">
-                    URL Slug <span className="text-[#A62719]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    placeholder="crimson-kadwa-jangla-benarasi"
-                    className="w-full px-3 py-2 text-xs font-mono bg-white border border-[#DCC9A8]/80 text-dark focus:outline-none focus:border-copper"
-                  />
-                </div>
-
                 <div>
                   <label className="block text-[11px] font-sans font-medium uppercase tracking-wider text-muted mb-1.5">
                     Category
@@ -306,7 +344,7 @@ export function ProductForm({
             title="Product Imagery"
             subtitle="Multi-angle photography with mandatory alt text for accessibility."
           >
-            <ImageGalleryManager images={images} onChange={setImages} />
+            <ImageGalleryManager images={images} onChange={setImages} slug={slug} />
           </AdminCard>
 
           {/* PDP Specifications & Accordions */}
@@ -414,7 +452,7 @@ export function ProductForm({
                   rows={2}
                   value={seoDesc}
                   onChange={(e) => setSeoDesc(e.target.value)}
-                  placeholder="Discover authentic Bengal handloom sarees and heritage jewellery hand-crafted in Varanasi and Bengal..."
+                  placeholder="Discover authentic Bengal handloom sarees hand-crafted in Varanasi and Bengal..."
                   className="w-full px-3 py-2 text-xs bg-white border border-[#DCC9A8]/80 text-dark font-sans focus:outline-none focus:border-copper"
                 />
               </div>

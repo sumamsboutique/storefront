@@ -19,7 +19,7 @@ export default async function AdminCategoriesPage() {
           Category <span className="italic text-copper">Structure</span>
         </h1>
         <p className="font-sans text-xs text-muted mt-1">
-          Organize Bengal handloom varieties, jewellery collections, Bengali typography, and homepage highlights.
+          Organize Bengal handloom varieties, Bengali typography, and homepage highlights.
         </p>
       </div>
 

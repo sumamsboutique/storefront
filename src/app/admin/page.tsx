@@ -116,7 +116,7 @@ export default async function AdminDashboardPage() {
             </span>
           </div>
           <p className="font-sans text-[11px] text-muted mt-1">
-            Active handloom & jewellery items
+            Active handloom sarees
           </p>
         </div>
 

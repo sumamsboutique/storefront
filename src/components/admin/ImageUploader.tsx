@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import Image from 'next/image'
+import { uploadProductImage } from '@/lib/admin/actions'
 
 export type ImageItem = {
   id?: string
@@ -15,36 +16,53 @@ export type ImageItem = {
 export function ImageGalleryManager({
   images,
   onChange,
+  slug,
 }: {
   images: ImageItem[]
   onChange: (images: ImageItem[]) => void
+  /** Product slug; new photos are stored under it. Falls back to 'unassigned'. */
+  slug?: string
 }) {
-  const [newPath, setNewPath] = useState('')
   const [newAlt, setNewAlt] = useState('')
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInput = useRef<HTMLInputElement>(null)
 
-  const handleAdd = () => {
+  const handleAdd = async (file: File) => {
     setError('')
-    if (!newPath.trim()) {
-      setError('Please provide an image path or URL.')
-      return
-    }
     if (!newAlt.trim()) {
       setError('Alt text is required for accessibility.')
       return
     }
-
-    const newImg: ImageItem = {
-      storage_path: newPath.trim(),
-      alt_text: newAlt.trim(),
-      display_order: images.length,
-      is_primary: images.length === 0, // make first image primary automatically
-      aspect_ratio: '3/4',
+    // The folder must match the slug the product saves under, so require it first.
+    const cleanSlug = slug?.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '')
+    if (!cleanSlug) {
+      setError('Enter the product name first — it sets the web address the photo is filed under.')
+      return
     }
 
-    onChange([...images, newImg])
-    setNewPath('')
+    setUploading(true)
+    const res = await uploadProductImage({ file, slug: cleanSlug })
+    setUploading(false)
+
+    if (!res.success || !res.data) {
+      setError(res.error || 'Upload failed.')
+      return
+    }
+
+    onChange([
+      ...images,
+      {
+        storage_path: res.data.url,
+        alt_text: newAlt.trim(),
+        display_order: images.length,
+        is_primary: images.length === 0, // make first image primary automatically
+        aspect_ratio: '3/4',
+      },
+    ])
     setNewAlt('')
+    // Clearing lets the same file be picked again after a failed validation.
+    if (fileInput.current) fileInput.current.value = ''
   }
 
   const handleRemove = (index: number) => {
@@ -191,14 +209,18 @@ export function ImageGalleryManager({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-[11px] font-sans text-muted mb-1">
-              Storage Path or URL
+              Image file (JPG, PNG or WebP · max 5 MB)
             </label>
             <input
-              type="text"
-              value={newPath}
-              onChange={(e) => setNewPath(e.target.value)}
-              placeholder="/Products/crimson-kadwa-benarasi.png"
-              className="w-full px-3 py-1.5 text-xs border border-[#DCC9A8]/80 bg-white font-sans text-dark focus:outline-none focus:border-copper"
+              ref={fileInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={uploading}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) void handleAdd(file)
+              }}
+              className="w-full text-xs font-sans text-dark file:mr-3 file:px-3 file:py-1.5 file:border-0 file:bg-dark file:text-ivory file:text-[11px] file:uppercase file:tracking-wider hover:file:bg-copper disabled:opacity-50"
             />
           </div>
           <div>
@@ -215,17 +237,12 @@ export function ImageGalleryManager({
           </div>
         </div>
 
+        {uploading && <p className="text-xs font-sans text-muted">Uploading…</p>}
         {error && <p className="text-xs text-[#A62719] font-sans">{error}</p>}
 
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="px-4 py-1.5 text-xs font-sans font-medium uppercase tracking-wider bg-dark text-ivory hover:bg-copper transition-colors"
-          >
-            + Add Image
-          </button>
-        </div>
+        <p className="text-[10px] font-sans text-muted">
+          Fill in the alt text first, then choose a file — it uploads straight away.
+        </p>
       </div>
     </div>
   )

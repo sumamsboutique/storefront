@@ -13,7 +13,6 @@ type W =
   | { kind: 'bool'; p: string; l: string }
   | { kind: 'image'; p: string; l: string; index?: number; hint?: string }
   | { kind: 'parts'; p: string; l: string }
-  | { kind: 'price'; p: string; priceP: string; l: string }
   | { kind: 'enbn'; en: string; bn: string; l: string }
   | { kind: 'strlist'; p: string; l: string; hint?: string }
   | { kind: 'list'; p: string; l: string; item?: string; max?: number; w: W[] }
@@ -66,7 +65,7 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
   },
   browse_by_category: {
     l: 'Browse By Category',
-    hint: 'One featured Sarees tile plus small grid tiles for Sarees and Jewellery.',
+    hint: 'One featured Sarees tile plus small grid tiles for the saree weaves.',
     w: [
       {
         kind: 'group',
@@ -80,7 +79,6 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
         ],
       },
       { kind: 'group', l: 'Sarees — Small Tiles', w: [{ kind: 'list', p: 'sarees.small', l: 'Tiles', item: 'Tile', w: TILE_FIELDS }] },
-      { kind: 'group', l: 'Jewellery Tiles', w: [{ kind: 'list', p: 'jewellery', l: 'Tiles', item: 'Tile', w: TILE_FIELDS }] },
     ],
   },
   featured_collection: {
@@ -113,30 +111,6 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
       { kind: 'text', p: 'founder.en', l: 'Founder name (EN)' },
       { kind: 'text', p: 'founder.bn', l: 'Founder name (BN)' },
       { kind: 'text', p: 'photoLabel', l: 'Photo caption' },
-    ],
-  },
-  jewellery_spotlight: {
-    l: 'Jewellery Spotlight',
-    hint: 'Curated antique temple jewellery pieces. Each piece links to its catalog page.',
-    w: [
-      { kind: 'text', p: 'eyebrow', l: 'Eyebrow' },
-      { kind: 'parts', p: 'headlineParts', l: 'Headline' },
-      { kind: 'text', p: 'sub', l: 'Subcopy' },
-      {
-        kind: 'list',
-        p: 'items',
-        l: 'Pieces',
-        item: 'Piece',
-        w: [
-          { kind: 'num', p: '#.id', l: 'Piece ID' },
-          { kind: 'text', p: '#.tag', l: 'Tag' },
-          { kind: 'text', p: '#.label', l: 'Label' },
-          { kind: 'text', p: '#.name', l: 'Name' },
-          { kind: 'price', p: '#.priceNum', priceP: '#.price', l: 'Price (₹)' },
-          { kind: 'text', p: '#.slug', l: 'Catalog slug' },
-          { kind: 'image', p: '#.images', l: 'Image', index: 0 },
-        ],
-      },
     ],
   },
   testimonials: {
@@ -194,7 +168,6 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
         { kind: 'text', p: 'newsletter.noteBn', l: 'Note (BN)' },
       ] },
       { kind: 'group', l: 'Sarees Links', w: [LINK_LIST('sarees')] },
-      { kind: 'group', l: 'Jewellery Links', w: [LINK_LIST('jewellery')] },
       { kind: 'group', l: 'Help Links', w: [LINK_LIST('help')] },
       { kind: 'strlist', p: 'paymentMethods', l: 'Payment methods', hint: 'One per line' },
       { kind: 'text', p: 'copyright', l: 'Copyright line' },
@@ -481,23 +454,6 @@ function RenderWidget({
       return (
         <FieldShell label={spec.l} hint="Accent word renders in italic copper. Text before/after stay plain.">
           <PartsWidget value={Array.isArray(v) ? v : []} onChange={(nv) => onChange(setAt(content, pathOf(spec.p, replaces), nv))} />
-        </FieldShell>
-      )
-    }
-    case 'price': {
-      const v = getAt(content, pathOf(spec.p, replaces))
-      return (
-        <FieldShell label={spec.l}>
-          <NumWidget
-            value={typeof v === 'number' ? v : undefined}
-            min={0}
-            suffix="₹"
-            onChange={(nv) => {
-              const n = typeof nv === 'number' ? nv : 0
-              onChange(setAt(content, pathOf(spec.p, replaces), nv))
-              onChange(setAt(content, pathOf(spec.priceP, replaces), n ? `₹${n.toLocaleString('en-IN')}` : '₹0'))
-            }}
-          />
         </FieldShell>
       )
     }

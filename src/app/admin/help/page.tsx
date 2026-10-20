@@ -67,7 +67,7 @@ export default async function AdminHelpPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Guide
           title="1. Put a new product in the shop"
-          summary="What happens when a saree or piece of jewellery is ready to sell."
+          summary="What happens when a saree is ready to sell."
           link="/admin/products/new"
           linkLabel="Open the form"
           steps={[

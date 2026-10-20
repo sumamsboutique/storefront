@@ -46,7 +46,7 @@ export default async function AdminProductsPage({
             All <span className="italic text-copper">Products</span>
           </h1>
           <p className="font-sans text-xs text-muted mt-1">
-            Manage handloom sarees, fine jewellery, pricing, inventory, and status.
+            Manage handloom sarees, pricing, inventory, and status.
           </p>
         </div>
 
