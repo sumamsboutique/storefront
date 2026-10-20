@@ -150,7 +150,7 @@ function Disclosure({
   )
 }
 
-function Details({ profile, onSaved }: { profile: AccountProfile; onSaved: (p: AccountProfile) => void }) {
+function Details({ profile, onSaved }: { profile: AccountProfile; onSaved?: (p: AccountProfile) => void }) {
   const [name, setName] = useState(profile.fullName ?? '')
   const [tel, setTel] = useState(profile.phone ?? '')
   const [error, setError] = useState('')
@@ -169,7 +169,8 @@ function Details({ profile, onSaved }: { profile: AccountProfile; onSaved: (p: A
         const res = await updateMyProfile({ fullName: name, phone: tel })
         setBusy(false)
         if (!res.ok) return setError(res.error)
-        onSaved({ ...profile, fullName: res.data.full_name, phone: res.data.phone })
+        const saved = { ...profile, fullName: res.data.full_name, phone: res.data.phone }
+        onSaved?.(saved)
         setSaved(true)
       }}
     >
@@ -388,7 +389,8 @@ export default function ProfileTab({
   onSaved,
 }: {
   profile: AccountProfile
-  onSaved: (p: AccountProfile) => void
+  /** Optional: the admin profile page has no parent state to lift into. */
+  onSaved?: (p: AccountProfile) => void
 }) {
   return (
     <div className="max-w-[760px] space-y-12">

@@ -48,14 +48,18 @@ export function AdminHeader({
         </Link>
 
         {/* User profile & Role pill */}
-        <div className="hidden sm:flex items-center gap-2 border-l border-[#DCC9A8]/40 pl-4">
+        <Link
+          href="/admin/profile"
+          className="hidden sm:flex items-center gap-2 border-l border-[#DCC9A8]/40 pl-4 transition-colors hover:opacity-80"
+          title="My profile"
+        >
           <div className="flex flex-col text-right">
-            <span className="text-xs font-sans font-medium text-dark">
+            <span className="text-xs font-sans font-medium text-dark hover:text-copper">
               {userName || 'Boutique Staff'}
             </span>
           </div>
           <RoleBadge role={userRole} />
-        </div>
+        </Link>
 
         {/* Sign Out Button */}
         <form action={adminLogoutAction}>

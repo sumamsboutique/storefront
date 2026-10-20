@@ -8,34 +8,34 @@ import { getAllProducts } from '@/lib/data'
 import { PlpCard } from '@/components/storefront/PlpCard'
 import { SHOP_CATEGORIES } from '@/lib/catalog'
 
-/* Card copy/photos for the five shop categories; hrefs derive from SHOP_CATEGORIES. */
-const img = (p: string) => `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/${p}`
+/* Card copy/banners for the five shop categories; hrefs derive from SHOP_CATEGORIES. */
+const IMG_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/banners/`
 
 const TILE_META: Record<string, { desc: string; gradient: string; image?: string }> = {
   'silk-sarees': {
     desc: 'Rich silk drapes for weddings and celebrations.',
     gradient: 'linear-gradient(155deg,#2A0D06,#6B2E0E 50%,#BF5E18)',
-    image: 'bangalore-silk-katha/01_Main_Product.png',
+    image: 'cat-silk-sarees.png',
   },
   'tussar-ghicha-sarees': {
     desc: 'Textured tussar and ghicha weaves with a natural sheen.',
     gradient: 'linear-gradient(175deg,#2A1408,#6B4A1E 55%,#A07038)',
-    image: 'madhubani-ghicha/01_Main_Product.png',
+    image: 'cat-tussar-ghicha-sarees.png',
   },
   'cotton-blended-sarees': {
     desc: 'Light, breathable cotton blends for everyday grace.',
     gradient: 'linear-gradient(175deg,#1A1C14,#3E4432 55%,#6E7455)',
-    image: 'cotton-silk-pashmina/01_Main_Product.png',
+    image: 'cat-cotton-blended-sarees.png',
   },
   'printed-artistic-sarees': {
     desc: 'Artful prints carrying a painter’s touch.',
     gradient: 'linear-gradient(160deg,#16222B,#2E4658 55%,#55788F)',
-    image: 'kalamkari/01_Main_Product.png',
+    image: 'cat-printed-artistic-sarees.png',
   },
   'traditional-weaves-special-designs': {
     desc: 'Timeless weaves and special-design sarees.',
     gradient: 'linear-gradient(175deg,#1C0A06,#4A2010 55%,#8C6A55)',
-    image: 'jaal-katal/01_Main_Product.png',
+    image: 'cat-traditional-weaves-special-designs.png',
   },
 }
 
@@ -62,7 +62,7 @@ export default async function Collections() {
             <Link key={c.slug} href={`/sarees/${c.slug}`} className="group block">
               <div className="relative flex aspect-[4/3] items-end overflow-hidden p-6" style={{ background: m.gradient }}>
                 {m.image && (
-                  <Image fill src={img(m.image)} alt={c.label} sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+                  <Image fill src={`${IMG_BASE}${m.image}`} alt={c.label} sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
                 )}
                 <div className="absolute inset-0 bg-[rgba(28,10,6,0.25)] transition-opacity group-hover:opacity-0" />
                 <div className="relative">
