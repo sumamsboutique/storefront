@@ -205,7 +205,7 @@ export default function BrowseByCategory({ data }: { data?: BbcContent }) {
           <div className="w-7 h-px bg-copper" />
         </div>
         <h2 className="font-display font-light text-[28px] md:text-[clamp(30px,3vw,42px)] leading-[1.15] text-dark">
-          Sarees &amp; <em className="italic text-copper">Jewellery</em>
+          Handwoven <em className="italic text-copper">Sarees</em>
         </h2>
         <div className="mt-4">
           <SubHeader bn="শাড়ি" en="SAREES" />

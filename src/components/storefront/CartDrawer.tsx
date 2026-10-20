@@ -64,7 +64,7 @@ export function CartDrawer() {
             </div>
             <h3 className="font-display text-xl text-dark">Your bag is empty</h3>
             <p className="font-ui text-xs font-light text-muted">
-              Discover handpicked sarees &amp; jewellery from Bengal.
+              Discover handpicked sarees from Bengal.
             </p>
             <div className="mt-2 flex flex-col items-center gap-3">
               <Link
@@ -73,13 +73,6 @@ export function CartDrawer() {
                 className="bg-dark px-6 py-3 font-ui text-[10px] font-medium tracking-[0.18em] text-ivory uppercase"
               >
                 Shop Sarees
-              </Link>
-              <Link
-                href="/jewellery"
-                onClick={close}
-                className="font-ui text-[10px] tracking-[0.18em] text-copper uppercase border-b border-[rgba(191,94,24,0.4)] pb-0.5 hover:text-dark hover:border-dark"
-              >
-                Browse Jewellery
               </Link>
             </div>
           </div>

@@ -12,6 +12,7 @@ export function PdpCard({
   name,
   sub,
   price,
+  compareAtPrice,
   badge,
   badgeColor,
   images,
@@ -23,6 +24,7 @@ export function PdpCard({
   name: string
   sub?: string
   price: string
+  compareAtPrice?: string | null
   badge?: string | null
   badgeColor?: string
   images?: string[]
@@ -78,7 +80,12 @@ export function PdpCard({
         {tag && <div className="mb-2.5 font-sans text-[10px] uppercase tracking-[0.2em] text-copper">{tag}</div>}
         <div className="mb-1.5 font-display text-[17px] leading-[1.3] text-dark">{name}</div>
         {sub && <div className="mb-3.5 font-sans text-[10px] uppercase tracking-[0.1em] text-muted">{sub}</div>}
-        <div className="mt-auto font-sans text-[15px] font-medium text-copper">{price}</div>
+        <div className="mt-auto flex items-baseline gap-2">
+          <span className="font-sans text-[15px] font-medium text-copper">{price}</span>
+          {compareAtPrice && (
+            <span className="font-sans text-[12px] text-muted line-through">{compareAtPrice}</span>
+          )}
+        </div>
       </div>
     </div>
   )

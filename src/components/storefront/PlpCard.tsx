@@ -10,7 +10,7 @@ import { useMounted } from '@/lib/useMounted'
 import { cn } from '@/lib/cn'
 
 export function PlpCard({ product, priority = false }: { product: CatalogProduct; priority?: boolean }) {
-  const { type, name, sub, price, priceNum, badge, gradient, label, sold, slug, tag, images } = product
+  const { type, name, sub, price, priceNum, compareAtPrice, badge, gradient, label, sold, slug, tag, images } = product
   const mounted = useMounted()
   const [pop, setPop] = useState(false)
   const add = useCart((s) => s.add)
@@ -87,7 +87,12 @@ export function PlpCard({ product, priority = false }: { product: CatalogProduct
           <div className="mb-1.5 h-[15px]" aria-hidden="true" />
         )}
         <div className="flex items-center justify-between">
-          <span className="font-ui text-sm font-medium text-copper">{price}</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="font-ui text-sm font-medium text-copper">{price}</span>
+            {compareAtPrice && (
+              <span className="font-ui text-[11px] text-muted line-through">{compareAtPrice}</span>
+            )}
+          </span>
           {sold ? (
             /* Same slot as the add-to-bag button so the row stays aligned. */
             <span className="inline-flex items-center justify-center h-8 shrink-0 bg-black text-white px-2.5 font-ui text-[10px] font-semibold tracking-[0.12em] uppercase">

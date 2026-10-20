@@ -58,7 +58,7 @@ function PageHeader({ keyword, title, count }: { keyword: string; title: string;
         </div>
         <h1 className="mt-3 font-display text-[clamp(30px,4vw,42px)] font-light leading-[1.1] text-dark">{title}</h1>
         <p className="mt-2 font-ui text-xs font-light text-[rgba(28,10,6,0.6)]">
-          {count} pieces · every piece, hand-verified by Sumam
+          {count} pieces · every piece, hand-verified by Nita
         </p>
         <div className="mt-5 h-px bg-[rgba(140,106,85,0.25)]" />
       </div>

@@ -17,6 +17,7 @@ export interface ProductCardData {
   sub: string
   price: string
   priceNum: number
+  compareAtPrice?: string | null
   label: string
   aspect?: number
   slug?: string
@@ -160,7 +161,12 @@ export function ProductCard({
           </p>
         </div>
         <div className="flex items-center justify-between mt-2.5">
-          <span className="font-sans text-[15px] font-medium text-copper">{product.price}</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="font-sans text-[15px] font-medium text-copper">{product.price}</span>
+            {product.compareAtPrice && (
+              <span className="font-sans text-[12px] text-muted line-through">{product.compareAtPrice}</span>
+            )}
+          </span>
           {product.sold ? (
             /* Same slot as the add-to-bag button so the row stays aligned. */
             <span className="shrink-0 bg-black text-white font-sans text-[10px] font-semibold tracking-[0.12em] uppercase px-2.5 py-1.5">

@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { CatalogProduct } from '@/lib/catalog'
-import { CATALOG, JEWELLERY } from '@/lib/catalog'
 import { PdpCard } from './PdpCard'
 import Reviews from './Reviews'
-import { AlponaDivider, PAD, SareeBorderDivider } from '@/components/shared/primitives'
+import { PAD, SareeBorderDivider } from '@/components/shared/primitives'
 import { cn } from '@/lib/cn'
 import { useCart, useWishlist } from '@/lib/store'
 import { useMounted } from '@/lib/useMounted'
@@ -19,12 +18,9 @@ function fmt(n: number) {
 
 /* ── Per-section PDP copy, faithful to the prototype's Royal Crimson example ── */
 function accordionCopy(p: CatalogProduct) {
-  const isSaree = p.type === 'saree'
   const fabric =
     p.weave === 'Benarasi'
-      ? isSaree
-        ? ['Pure Mulberry Silk', 'Banarasi Kadwa Jangla weave', '24-carat gold zari work']
-        : ['Antique-finish brass base', 'Hand-plated 24k gold', 'Traditional temple motifs']
+      ? ['Pure Mulberry Silk', 'Banarasi Kadwa Jangla weave', '24-carat gold zari work']
       : p.weave === 'Tant'
         ? ['Fine cotton yarn', 'Traditional tant handloom weave', 'Lightweight, breathable drape']
         : p.weave === 'Muslin'
@@ -37,13 +33,7 @@ function accordionCopy(p: CatalogProduct) {
                 ? ['Pure tussar garad silk', 'Classic Bengali border', 'Soft matte finish']
                 : p.weave === 'Silk'
                   ? ['Pure mulberry silk', 'Handwoven body', 'Subtle zari accents']
-                  : p.weave === 'Temple'
-                    ? ['Antique-finish brass base', 'Hand-plated gold', 'Traditional temple columns']
-                    : p.weave === 'Contemporary'
-                      ? ['Oxidised alloy', 'Modern geometric studs', 'Everyday-friendly finish']
-                      : p.weave === 'Gold-Plated'
-                        ? ['Brass core', '24k gold plating', 'Timeless heirloom styling']
-                        : ['Handcrafted materials', 'Traditional technique', 'Finished by hand']
+                  : ['Handcrafted materials', 'Traditional technique', 'Finished by hand']
   const occasion =
     p.occasion === 'Bridal'
       ? ['Wedding', 'Reception', 'Puja', 'Festive']
@@ -54,12 +44,8 @@ function accordionCopy(p: CatalogProduct) {
           : p.occasion === 'Puja'
             ? ['Puja', 'Festive', 'Ceremonial']
             : ['Wedding Guest', 'Reception', 'Festive']
-  const dimensions = isSaree
-    ? ['6.5 m saree length', '0.8 m blouse piece', '110 cm width']
-    : ['Chain length 45 cm', 'Width 3 cm', 'Drop 8 cm']
-  const care = isSaree
-    ? ['Dry clean only', 'Store wrapped in muslin cloth', 'Avoid direct sunlight', 'Do not iron directly on zari']
-    : ['Wipe with a soft cloth', 'Keep away from water and perfume', 'Store in the original pouch']
+  const dimensions = ['6.5 m saree length', '0.8 m blouse piece', '110 cm width']
+  const care = ['Dry clean only', 'Store wrapped in muslin cloth', 'Avoid direct sunlight', 'Do not iron directly on zari']
   const shipping = ['Free shipping above ₹10,000', 'Delivers within 5–7 business days', 'International shipping available', '7–day return window', 'One-of-one items: returns subject to inspection']
   return { fabric, occasion, dimensions, care, shipping }
 }
@@ -69,9 +55,9 @@ function Breadcrumb({ p }: { p: CatalogProduct }) {
   return (
     <div className={cn(PAD, 'flex items-center gap-0 py-[20px] md:py-4')}>
       {[
-        { label: p.type === 'jewel' ? 'Jewellery' : 'Sarees', href: p.type === 'jewel' ? '/jewellery' : '/sarees', link: true },
+        { label: 'Sarees', href: '/sarees', link: true },
         { label: '/', sep: true },
-        { label: p.weave, href: p.type === 'jewel' ? '/jewellery' : `/sarees?weave=${p.weave}`, link: true },
+        { label: p.weave, href: p.categorySlug ? `/sarees/${p.categorySlug}` : '/sarees', link: true },
         { label: '/', sep: true },
         { label: p.name, current: true },
       ].map((item, i) =>
@@ -111,7 +97,7 @@ function Gallery({ p, variantId }: { p: CatalogProduct; variantId: string | null
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden" style={{ background: p.gradient }}>
             <span className="border border-dashed border-[rgba(245,239,230,0.25)] px-3 py-1.5 text-center font-sans text-[9px] tracking-[0.18em] text-[rgba(245,239,230,0.5)] uppercase">
-              {p.type === 'jewel' ? 'JEWELLERY PHOTOGRAPHY' : 'SAREE PHOTOGRAPHY'}
+              SAREE PHOTOGRAPHY
             </span>
           </div>
         ))}
@@ -231,16 +217,17 @@ function BulletList({ items }: { items: string[] }) {
 // ── 3. Info panel ──
 function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; variantId: string | null; setVariantId: (id: string | null) => void }) {
   const mounted = useMounted()
-  const { add } = useCart()
+  const cart = useCart()
   const { has, toggle } = useWishlist()
 
   const wished = mounted ? has(p.slug) : false
-  const sub = p.type === 'jewel' ? p.tag : p.sub
+  const inCart = mounted && cart.has(p.id)
+  const sub = p.sub
   const copy = accordionCopy(p)
   // 2+ variants → tappable design picker; a lone variant isn't a choice.
   const choices = p.variants && p.variants.length > 1 ? p.variants : undefined
   const chosen = choices?.find((v) => v.id === variantId)
-  const addItem = () => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: chosen?.images[0] ?? p.images?.[0] })
+  const addItem = () => (inCart ? cart.open() : cart.add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: chosen?.images[0] ?? p.images?.[0] }))
 
   // Concierge button, admin-toggleable in Store Settings (60s server cache — mirrors WhatsAppFab).
   const [waHref, setWaHref] = useState<string>()
@@ -250,7 +237,7 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
         if (s.pdpWhatsapp === false) return
         const digits = s.whatsapp && !s.whatsapp.startsWith('http') ? s.whatsapp.replace(/\D/g, '') : ''
         setWaHref(
-          `https://wa.me/${digits}?text=${encodeURIComponent(`Hi Sumam, I'm interested in the ${p.name} (${p.price}). Could you share more details?`)}`
+          `https://wa.me/${digits}?text=${encodeURIComponent(`Hi Nita, I'm interested in the ${p.name} (${p.price}). Could you share more details?`)}`
         )
       })
       .catch(() => {})
@@ -261,18 +248,23 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
       {/* A — Identity */}
       <div>
         <div className="mb-4 font-sans text-[10px] uppercase tracking-[0.24em] text-copper">
-          {p.type === 'jewel' ? p.tag : `${p.weave} · Bengali Heritage Weave`}
+          {`${p.weave} · Bengali Heritage Weave`}
         </div>
         <h1 className="mb-2 font-display text-[28px] font-light leading-[1.15] tracking-[-0.01em] text-dark md:text-4xl">{p.name}</h1>
         <div className="font-sans text-xs uppercase tracking-[0.18em] text-muted">
-          {p.type === 'jewel' ? p.sub || p.name : `${p.weave} · Handwoven · Bengal`}
+          {`${p.weave} · Handwoven · Bengal`}
         </div>
       </div>
 
       {/* B — Price + stock */}
       <div>
         <div className="mb-2 flex items-baseline justify-between">
-          <span className="font-display text-2xl font-medium tracking-[-0.005em] text-copper md:text-3xl">{p.price}</span>
+          <span className="flex items-baseline gap-3">
+            <span className="font-display text-2xl font-medium tracking-[-0.005em] text-copper md:text-3xl">{p.price}</span>
+            {p.compareAtPrice && (
+              <span className="font-ui text-base text-muted line-through">{p.compareAtPrice}</span>
+            )}
+          </span>
           {p.sold ? (
             <span className="bg-black text-white px-3 py-1 font-ui text-[10px] font-bold tracking-[0.2em] uppercase shadow-sm">
               SOLD OUT
@@ -299,11 +291,11 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
         </div>
         <div>
           <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Type</div>
-          <div className="font-ui text-xs font-semibold text-dark mt-0.5">{p.type === 'saree' ? 'Handloom Saree' : 'Fine Jewellery'}</div>
+          <div className="font-ui text-xs font-semibold text-dark mt-0.5">Handloom Saree</div>
         </div>
         <div className="col-span-2 sm:col-span-1">
           <div className="font-ui text-[9px] uppercase tracking-wider text-muted">Craft Guarantee</div>
-          <div className="font-ui text-xs font-semibold text-copper mt-0.5">Sumam Hand-Verified</div>
+          <div className="font-ui text-xs font-semibold text-copper mt-0.5">Nita Hand-Verified</div>
         </div>
       </div>
 
@@ -344,7 +336,7 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
                 : 'bg-dark text-ivory hover:bg-copper hover:tracking-[0.22em]'
             )}
           >
-            {p.sold ? 'Sold Out' : 'Add to Bag'}
+            {p.sold ? 'Sold Out' : inCart ? 'Proceed to Checkout' : 'Add to Bag'}
           </button>
           <button
             onClick={() => toggle(p.slug)}
@@ -379,13 +371,11 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
       {/* E — Description */}
       <div>
         <div className="mb-3 font-display text-lg text-dark">
-          About This {p.type === 'jewel' ? 'Piece' : 'Saree'}
+          About This Saree
         </div>
         <div className="mb-3 h-px w-6 bg-copper" />
         <p className="font-ui text-[13px] font-light leading-[1.8] text-[rgba(28,10,6,0.85)]">
-          {p.type === 'jewel'
-            ? `${p.name} is crafted from hand-finished materials, each piece personally checked by Sumam before it reaches you. A one-of-one piece drawn from Bengal's temple and heirloom traditions.`
-            : `A ${p.weave.replace(/ Sarees$/, '')} saree handwoven in the traditional technique, where each motif is woven separately into the fabric — never stitched on. The ${p.occasion.toLowerCase()} palette is hand-dyed, with intricate zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Bengal.`}
+          {`A ${p.weave.replace(/ Sarees$/, '')} saree handwoven in the traditional technique, where each motif is woven separately into the fabric — never stitched on. The ${p.occasion.toLowerCase()} palette is hand-dyed, with intricate zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Bengal.`}
         </p>
       </div>
 
@@ -463,7 +453,7 @@ function TrustIcon({ n }: { n: number }) {
 }
 
 const TRUST_ITEMS = [
-  { n: 0, title: 'Authenticity Certified', sub: 'Each piece, hand-verified by Sumam' },
+  { n: 0, title: 'Authenticity Certified', sub: 'Each piece, hand-verified by Nita' },
   { n: 1, title: 'Free Shipping', sub: 'On orders above ₹10,000' },
   { n: 2, title: '7-Day Returns', sub: 'Easy returns, subject to inspection' },
   { n: 3, title: 'Atelier Concierge', sub: 'Personal guidance from our boutique' },
@@ -485,69 +475,35 @@ function TrustStrip() {
   )
 }
 
-// ── Section heading ──
-function StripHeading({ eyebrow, em, rest, sub }: { eyebrow: string; em: string; rest: string; sub?: string }) {
-  return (
-    <div className="mb-6">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="h-px w-7 bg-copper" />
-        <span className="font-sans text-[10px] uppercase tracking-[0.28em] text-copper">{eyebrow}</span>
-      </div>
-      <h2 className="font-display text-[34px] font-light leading-[1.15] text-dark md:text-[38px]">
-        <em className="text-copper italic">{em}</em> {rest}
-      </h2>
-      {sub && <p className="mt-3 max-w-[480px] font-sans text-sm font-light leading-[1.7] text-muted">{sub}</p>}
-    </div>
-  )
-}
-
-// ── 5. Style This With (grid) ──
-function StyleThisWith({ p }: { p: CatalogProduct }) {
-  const styled = JEWELLERY.slice(0, 3)
-  return (
-    <section className={cn(PAD, 'py-12 lg:py-24')}>
-      <StripHeading eyebrow="Hand-Curated Pairings" em="Style" rest="This With" sub={`Jewellery pieces personally chosen by Sumam to complement this ${p.type}.`} />
-      <AlponaDivider />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-        {styled.map((j) => (
-          <Link key={j.id} href={`/products/${j.slug}`}>
-            <PdpCard tag={j.tag} gradient={j.gradient} label={j.label} name={j.name} price={j.price} images={j.images} sold={j.sold} />
-          </Link>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-// ── 6. More From ──
-function MoreFrom({ p }: { p: CatalogProduct }) {
-  const sameType = p.type === 'jewel' ? JEWELLERY : CATALOG.filter((x) => x.type === 'saree')
-  const others = sameType.filter((x) => x.id !== p.id)
-  const byWeave = others.filter((x) => x.weave === p.weave)
-  const pool = byWeave.length >= 4 ? byWeave : others
+// ── 5. More From — real products from the same category, then the wider range ──
+function MoreFrom({ p, related }: { p: CatalogProduct; related: CatalogProduct[] }) {
+  const sameCategory = p.categorySlug ? related.filter((x) => x.categorySlug === p.categorySlug) : []
+  const pool = sameCategory.length ? sameCategory : related
   const items = pool.slice(0, 4)
+  const viewAllHref = p.categorySlug ? `/sarees/${p.categorySlug}` : '/sarees'
+  const viewAllLabel = p.weave.endsWith('Sarees') ? p.weave : `${p.weave} Sarees`
   return (
     <section className={cn(PAD, 'border-t border-[rgba(212,136,10,0.12)] bg-cream py-12 lg:py-24')}>
-      <div className="mb-12 flex items-end justify-between">
-        <div>
+      <div className="mb-12 flex flex-col items-start gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+        <div className="min-w-0">
           <div className="mb-4 flex items-center gap-3">
             <div className="h-px w-7 bg-copper" />
             <span className="font-sans text-[10px] uppercase tracking-[0.28em] text-copper">
-              {p.type === 'jewel' ? 'Related Jewellery' : 'Related Sarees'}
+              Related Sarees
             </span>
           </div>
           <h2 className="font-display text-[34px] font-light leading-[1.15] text-dark md:text-[38px]">
             More from <em className="text-copper italic">{p.weave}</em>
           </h2>
         </div>
-        <Link href={p.type === 'jewel' ? '/jewellery' : `/sarees?weave=${p.weave}`} className="mb-1.5 whitespace-nowrap border-b border-copper pb-0.5 font-sans text-[10px] uppercase tracking-[0.2em] text-copper">
-          View All {p.type === 'jewel' ? 'Jewellery' : p.weave.endsWith('Sarees') ? p.weave : `${p.weave} Sarees`} →
+        <Link href={viewAllHref} className="mb-1.5 border-b border-copper pb-0.5 font-sans text-[10px] uppercase tracking-[0.2em] text-copper sm:whitespace-nowrap">
+          View All {viewAllLabel} →
         </Link>
       </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
         {items.map((r) => (
           <Link key={r.id} href={`/products/${r.slug}`}>
-            <PdpCard badge={r.badge} badgeColor={r.badge === 'New Arrival' || r.badge === 'Featured' ? '#BF5E18' : '#D4880A'} gradient={r.gradient} label={r.label} name={r.name} sub={r.sub} price={r.price} images={r.images} sold={r.sold} />
+            <PdpCard badge={r.badge} badgeColor={r.badge === 'New Arrival' || r.badge === 'Featured' ? '#BF5E18' : '#D4880A'} gradient={r.gradient} label={r.label} name={r.name} sub={r.sub} price={r.price} compareAtPrice={r.compareAtPrice} images={r.images} sold={r.sold} />
           </Link>
         ))}
       </div>
@@ -557,7 +513,9 @@ function MoreFrom({ p }: { p: CatalogProduct }) {
 
 // ── Sticky mobile bottom bar ──
 function StickyBar({ p }: { p: CatalogProduct }) {
-  const { add } = useCart()
+  const cart = useCart()
+  const mounted = useMounted()
+  const inCart = mounted && cart.has(p.id)
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center gap-3 border-t border-[rgba(212,136,10,0.12)] bg-dark px-[clamp(20px,6vw,85px)] py-2 md:hidden">
       <div className="min-w-0 flex-1">
@@ -565,30 +523,29 @@ function StickyBar({ p }: { p: CatalogProduct }) {
         <div className="truncate font-display text-sm text-ivory">{p.name}</div>
       </div>
       <button
-        onClick={() => add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] })}
+        onClick={() => (inCart ? cart.open() : cart.add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] }))}
         disabled={p.sold}
         className={cn(
           'h-12 shrink-0 px-6 font-ui text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors',
           p.sold ? 'bg-black text-white cursor-not-allowed border border-white/20' : 'bg-copper text-ivory hover:bg-[#A04A18]'
         )}
       >
-        {p.sold ? 'Sold Out' : 'Add to Bag'}
+        {p.sold ? 'Sold Out' : inCart ? 'Checkout' : 'Add to Bag'}
       </button>
     </div>
   )
 }
 
-export default function Pdp({ product }: { product: CatalogProduct }) {
+export default function Pdp({ product, related = [] }: { product: CatalogProduct; related?: CatalogProduct[] }) {
+  const others = related.filter((r) => r.slug !== product.slug)
   return (
     <div className="bg-ivory">
       <Breadcrumb p={product} />
       <ProductHero p={product} />
       <SareeBorderDivider />
       <TrustStrip />
-      <StyleThisWith p={product} />
-      <SareeBorderDivider />
-      <MoreFrom p={product} />
-      <Reviews productId={product.id} />
+      <MoreFrom p={product} related={others} />
+      <Reviews productId={product.id} productName={product.name} />
       <StickyBar p={product} />
     </div>
   )
