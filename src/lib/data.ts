@@ -71,6 +71,8 @@ function toProduct(row: Row, parentOf: Map<string, string>): CatalogProduct {
     tag: type === 'jewel' ? (row.short_description ?? '') : '',
     price: fmt(row.price),
     priceNum,
+    compareAtPrice:
+      row.compare_at_price && Number(row.compare_at_price) > priceNum ? fmt(row.compare_at_price) : null,
     badge: row.badge_text ?? null,
     gradient: GRADIENTS[weave] ?? GRADIENTS.Benarasi,
     label: row.name,

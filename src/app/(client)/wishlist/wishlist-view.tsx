@@ -34,8 +34,8 @@ export function WishlistView({ products }: { products: CatalogProduct[] }) {
           <Link href="/sarees" className="bg-dark px-8 py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] text-ivory uppercase">
             Browse Sarees
           </Link>
-          <Link href="/jewellery" className="border-b border-[rgba(191,94,24,0.4)] pb-0.5 font-ui text-[11px] tracking-[0.18em] text-copper uppercase transition-colors hover:border-dark hover:text-dark">
-            Explore Jewellery
+          <Link href="/collections" className="border-b border-[rgba(191,94,24,0.4)] pb-0.5 font-ui text-[11px] tracking-[0.18em] text-copper uppercase transition-colors hover:border-dark hover:text-dark">
+            Explore Collections
           </Link>
         </div>
       </div>

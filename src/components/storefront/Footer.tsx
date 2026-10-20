@@ -9,19 +9,11 @@ import { cn } from '@/lib/cn'
 import type { FooterContent } from '@/lib/data'
 
 const FOOTER_SAREES = [
-  { label: 'Benarasi / বেনারসি', href: '/sarees?weave=Benarasi' },
-  { label: 'Tant / তাঁত', href: '/sarees?weave=Tant' },
-  { label: 'Muslin / মসলিন', href: '/sarees?weave=Muslin' },
-  { label: 'Kantha / কাঁথা', href: '/sarees?weave=Kantha' },
-  { label: 'Silk / সিল্ক', href: '/sarees?weave=Silk' },
-  { label: 'Jamdani / জামদানি', href: '/sarees?weave=Jamdani' },
-  { label: 'Garad / গরদ', href: '/sarees?weave=Garad' },
-]
-const FOOTER_JEWELLERY = [
-  { label: 'Temple Jewellery / মন্দির গহনা', href: '/jewellery?weave=Temple' },
-  { label: 'Contemporary / সমসাময়িক', href: '/jewellery?weave=Contemporary' },
-  { label: 'Gold-Plated / সোনার মোড়ক', href: '/jewellery?weave=Gold-Plated' },
-  { label: 'Bridal Sets', href: '/jewellery' },
+  { label: 'Silk Sarees / সিল্ক শাড়ি', href: '/sarees/silk-sarees' },
+  { label: 'Tussar & Ghicha / তসর ও ঘিচা', href: '/sarees/tussar-ghicha-sarees' },
+  { label: 'Cotton & Blended / সুতি ও মিশ্র', href: '/sarees/cotton-blended-sarees' },
+  { label: 'Printed & Artistic / প্রিন্টেড ও শৈল্পিক', href: '/sarees/printed-artistic-sarees' },
+  { label: 'Traditional Weaves / ঐতিহ্যবাহী বুনন', href: '/sarees/traditional-weaves-special-designs' },
 ]
 const FOOTER_HELP = [
   { label: 'Our Story', href: '/story' },
@@ -36,8 +28,8 @@ const PAYMENT_METHODS = ['RAZORPAY', 'VISA', 'MASTERCARD', 'UPI']
 const DEFAULT_FOOTER: FooterContent = {
   brand: {
     title: "SUMAM'S BOUTIQUE",
-    taglineBn: 'বাংলার ঐতিহ্যের শাড়ি ও গহনা',
-    tagline: 'Heritage sarees & jewellery, curated with love from Bengal.',
+    taglineBn: 'বাংলার ঐতিহ্যের শাড়ি',
+    tagline: 'Heritage sarees, curated with love from Bengal.',
   },
   newsletter: {
     title: 'Stay in the Weave',
@@ -45,7 +37,7 @@ const DEFAULT_FOOTER: FooterContent = {
     noteBn: 'নতুন সংগ্রহের খবর সবার আগে',
   },
   paymentMethods: PAYMENT_METHODS,
-  copyright: '© 2025 Sumam’s Boutique. All rights reserved.',
+  copyright: '© 2026 Sumam’s Boutique · Nagpur, India · Ships Pan-India',
   madeIn: 'Made in Bengal',
   madeInBn: 'বাংলায় তৈরি',
 }
@@ -166,7 +158,6 @@ function MobileAccordion() {
   const [open, setOpen] = useState<string>('SAREES')
   const rows: { title: string; items: { label: string; href?: string }[] }[] = [
     { title: 'SAREES', items: FOOTER_SAREES },
-    { title: 'JEWELLERY', items: FOOTER_JEWELLERY },
     { title: 'HELP', items: FOOTER_HELP },
   ]
   return (
@@ -255,15 +246,11 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
         </div>
       </div>
 
-      <div className="relative z-10 hidden md:grid mx-auto w-full max-w-[1100px]" style={{ gridTemplateColumns: '1.6fr 1fr 1fr 1fr 1.4fr', gap: 40 }}>
+      <div className="relative z-10 hidden md:grid mx-auto w-full max-w-[1100px]" style={{ gridTemplateColumns: '1.6fr 1fr 1fr 1.4fr', gap: 40 }}>
         <BrandBlock footer={footer} socials={socials} />
         <div>
           <FooterColTitle>Sarees</FooterColTitle>
           {FOOTER_SAREES.map((l) => <FooterLink key={l.label} item={l} />)}
-        </div>
-        <div>
-          <FooterColTitle>Jewellery</FooterColTitle>
-          {FOOTER_JEWELLERY.map((l) => <FooterLink key={l.label} item={l} />)}
         </div>
         <div>
           <FooterColTitle>Help</FooterColTitle>

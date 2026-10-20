@@ -15,7 +15,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Are sarees one size?',
-    a: 'All sarees are free-size: 6.5 m length with an 0.8 m blouse piece. Jewellery dimensions are indicative per piece.',
+    a: 'All sarees are free-size: 6.5 m length with an 0.8 m blouse piece, ready to be tailored to your measurements.',
   },
   {
     q: 'How should I store a handloom saree?',

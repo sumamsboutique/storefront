@@ -9,7 +9,7 @@ export default function CareInstructionsPage() {
     <main className="min-h-screen bg-ivory">
       <Navbar />
       <PageHeader eyebrow="Help & Care" title="Care" em="Instructions" />
-      <section className={cn(PAD, 'grid gap-10 pb-16 md:grid-cols-2')}>
+      <section className={cn(PAD, 'pb-16')}>
         <Bullets
           title="Sarees"
           items={[
@@ -18,10 +18,6 @@ export default function CareInstructionsPage() {
             'Avoid direct sunlight',
             'Do not iron directly on zari',
           ]}
-        />
-        <Bullets
-          title="Jewellery"
-          items={['Wipe with a soft cloth', 'Keep away from water and perfume', 'Store in the original pouch']}
         />
       </section>
       <SareeBorderDivider />

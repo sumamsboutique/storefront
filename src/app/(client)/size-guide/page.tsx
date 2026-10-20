@@ -9,16 +9,11 @@ export default function SizeGuidePage() {
     <main className="min-h-screen bg-ivory">
       <Navbar />
       <PageHeader eyebrow="Help & Guides" title="Size" em="Guide" />
-      <section className={cn(PAD, 'grid gap-10 pb-16 md:grid-cols-2')}>
+      <section className={cn(PAD, 'pb-16')}>
         <Bullets
           title="Sarees"
           items={['6.5 m saree length', '0.8 m blouse piece', '110 cm width']}
-          note="Sarees are free-size. The included blouse piece is ready to be tailored — share your measurements and we will advise."
-        />
-        <Bullets
-          title="Jewellery"
-          items={['Chain length 45 cm', 'Width 3 cm', 'Drop 8 cm']}
-          note="Dimensions are representative of each piece; confirm exact sizing on the product page."
+          note="Sarees are free-size. The included blouse piece is ready to be tailored - share your measurements and we will advise."
         />
       </section>
       <SareeBorderDivider />

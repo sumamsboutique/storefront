@@ -10,7 +10,6 @@ import { useMounted } from '@/lib/useMounted'
 
 const NAV: { label: string; href: string }[] = [
   { label: 'SAREES', href: '/sarees' },
-  { label: 'JEWELLERY', href: '/jewellery' },
   { label: 'COLLECTIONS', href: '/collections' },
   { label: 'STORY', href: '/story' },
 ]

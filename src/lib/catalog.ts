@@ -11,6 +11,7 @@ export interface CatalogProduct {
   tag: string // jewel eyebrow ("TEMPLE COLLECTION")
   price: string // display ("₹24,500")
   priceNum: number // for sorting
+  compareAtPrice?: string | null // display strike-through ("₹32,000"), when discounted
   badge: string | null
   gradient: string
   label: string // photo caption tail
@@ -78,5 +79,3 @@ export const CATALOG: CatalogProduct[] = [
   { id: 'j2', slug: 'heirloom-maangtikka', type: 'jewel', name: 'Heirloom Maangtikka', sub: '', tag: 'Gold-Plated', price: '₹1,950', priceNum: n('1950'), badge: null, gradient: G.maangtikkaJ, label: 'golden maangtikka · forehead ornament', sold: false, weave: 'Gold-Plated', occasion: 'Festive', images: ['/Products/jewellery/heirloom-maangtikka.png'] },
   { id: 'j3', slug: 'drop-temple-earrings', type: 'jewel', name: 'Drop Temple Earrings', sub: '', tag: 'Temple Collection', price: '₹2,400', priceNum: n('2400'), badge: null, gradient: G.templeJ, label: 'temple earrings · drop style', sold: false, weave: 'Temple', occasion: 'Bridal', images: ['/Products/jewellery/drop-temple-earrings.png'] },
 ]
-
-export const JEWELLERY = CATALOG.filter((p) => p.type === 'jewel')

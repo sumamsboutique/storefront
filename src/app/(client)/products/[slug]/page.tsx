@@ -36,6 +36,12 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const product = await getProductBySlug(slug)
   if (!product) notFound()
 
+  // Same category first, then anything else — so the strip always has real pieces to show.
+  const all = await getAllProducts()
+  const related = all.filter((p) => p.slug !== product.slug)
+  const sameCategory = related.filter((p) => p.categorySlug && p.categorySlug === product.categorySlug)
+  const relatedSorted = [...sameCategory, ...related.filter((p) => !sameCategory.includes(p))]
+
   const jsonLd = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
@@ -53,9 +59,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   return (
     <main className="min-h-screen bg-ivory">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <Navbar />
-      <Pdp product={product} />
+      <Pdp product={product} related={relatedSorted} />
       <Footer /> 
     </main>
   )

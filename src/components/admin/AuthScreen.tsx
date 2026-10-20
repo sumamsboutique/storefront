@@ -679,7 +679,7 @@ export default function AuthScreen({
               <div className="mx-auto mb-5 h-px w-12 bg-copper/50" />
               <p className="font-sans text-[15px] font-medium tracking-wide text-dark/85">
                 {isAdmin
-                  ? 'Bengal-heritage sarees & fine jewellery'
+                  ? 'Bengal-heritage handloom sarees'
                   : 'Your patron orders & saved wishlist'}
               </p>
               <p className="mt-2 font-sans text-sm leading-relaxed text-muted">

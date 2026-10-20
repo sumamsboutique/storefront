@@ -32,10 +32,10 @@ export const metadata: Metadata = {
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
   ),
   title: "Sumam's Boutique",
-  description: 'Bengal-heritage sarees and fine jewellery.',
+  description: 'Bengal-heritage handloom sarees, curated with love from Bengal.',
   openGraph: {
     title: "Sumam's Boutique",
-    description: 'Bengal-heritage sarees and fine jewellery.',
+    description: 'Bengal-heritage handloom sarees, curated with love from Bengal.',
     siteName: "Sumam's Boutique",
     type: 'website',
   },

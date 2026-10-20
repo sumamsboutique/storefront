@@ -48,7 +48,7 @@ export default function SearchResults({ products }: { products: CatalogProduct[]
             autoFocus
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search sarees, weaves, jewellery…"
+            placeholder="Search sarees, weaves, motifs…"
             className="flex-1 bg-transparent font-ui text-base text-dark outline-none placeholder:text-[rgba(140,106,85,0.5)]"
             aria-label="Search products"
           />
@@ -56,7 +56,7 @@ export default function SearchResults({ products }: { products: CatalogProduct[]
         <div className="mt-6">
           {term.trim() === '' ? (
             <p className="font-ui text-sm font-light text-muted">
-              Try “Benarasi”, “tant”, “temple”, “gold”.
+              Try “tussar”, “silk”, “kalamkari”, “jamdani”.
             </p>
           ) : results.length === 0 ? (
             <p className="font-display text-xl text-dark">No matches for “{term}”.</p>
@@ -74,7 +74,7 @@ export default function SearchResults({ products }: { products: CatalogProduct[]
                 <Image fill src={p.images[0]} alt={p.name} sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
               )}
                 <span className="absolute left-3 top-3 bg-copper px-2 py-0.5 font-ui text-[8px] tracking-[0.14em] text-ivory uppercase">
-                  {p.type === 'jewel' ? 'JEWELLERY' : 'SAREE'}
+                  SAREE
                 </span>
               </div>
               <div className="bg-cream p-3">

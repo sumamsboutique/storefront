@@ -1,20 +1,6 @@
-import { Suspense } from 'react'
-import Navbar from '@/components/storefront/Navbar'
-import Footer from '@/components/storefront/Footer'
-import Plp from '@/components/storefront/Plp'
-import { SareeBorderDivider } from '@/components/shared/primitives'
-import { getProductsByType } from '@/lib/data'
+import { redirect } from 'next/navigation'
 
-export default async function Jewellery() {
-  const products = await getProductsByType('jewel')
-  return (
-    <main className="min-h-screen bg-ivory">
-      <Navbar />
-      <Suspense>
-        <Plp products={products} keyword="JEWELLERY" title="Our Jewellery Collection" types={['jewel']} />
-      </Suspense>
-      <SareeBorderDivider />
-      <Footer />
-    </main>
-  )
+// Jewellery range is deferred; old links land on the saree collection instead of a 404.
+export default function Jewellery() {
+  redirect('/sarees')
 }

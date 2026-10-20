@@ -5,7 +5,6 @@ import FeaturedCollection from '@/components/storefront/home/FeaturedCollection'
 import BrowseByCategory from '@/components/storefront/home/BrowseByCategory'
 import { SareeBorderDivider } from '@/components/shared/primitives'
 import OurHeritage from '@/components/storefront/home/OurHeritage'
-import JewellerySpotlight from '@/components/storefront/home/JewellerySpotlight'
 import ReviewsAndInstagram from '@/components/storefront/home/ReviewsAndInstagram'
 import Footer from '@/components/storefront/Footer'
 import { getHomeContent, getAllProducts } from '@/lib/data'
@@ -35,6 +34,7 @@ export default async function Home() {
         sub: p.sub || p.weave,
         price: p.price,
         priceNum: p.priceNum,
+        compareAtPrice: p.compareAtPrice,
         label: p.label,
         aspect: f.aspect,
         images: p.images,
@@ -52,7 +52,7 @@ export default async function Home() {
       {shown('browse_by_category') && <BrowseByCategory data={content.browse_by_category} />}
       <SareeBorderDivider />
       {shown('our_heritage') && <OurHeritage data={content.our_heritage} />}
-      {shown('jewellery_spotlight') && <JewellerySpotlight data={content.jewellery_spotlight} />}
+      {/* jewellery_spotlight hidden until the jewellery range launches */}
       {/* sections 7 + 8 render as one combined block, so both must be live */}
       {shown('testimonials') && shown('instagram_strip') && (
         <ReviewsAndInstagram testimonials={content.testimonials} instagram={content.instagram_strip} />

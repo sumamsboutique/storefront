@@ -8,17 +8,16 @@ Send this to the client. Each item says **where it lands** so nothing sits in an
 Everything below ships as fake data if the client doesn't answer. The defaults live in
 `src/lib/admin/queries.ts` and are entered via **Admin → Settings → General**:
 
-| Item | Current placeholder | Notes |
+| Item | Current value | Notes |
 |---|---|---|
 | Store legal name | Sumam's Boutique | Confirm exact registered name |
-| Phone / WhatsApp number | **+91 98300 12345** (fake) | Drives footer, WhatsApp FAB, PDP "Chat on WhatsApp" button |
-| Support email | concierge@sumamsboutique.com (fake) | Shown in footer |
-| Store address | 42 Southern Avenue, Kolkata 700029 (fake) | Needed for invoices + footer |
+| Phone / WhatsApp number | ✅ +91 70205 52557 | Drives footer, WhatsApp FAB, PDP "Chat on WhatsApp" button |
+| Support email | ✅ hello@sumamsboutique.com | Shown in footer and contact page |
+| Store address | Nagpur, India (city confirmed, street missing) | Needed for invoices + footer |
 | Tagline (EN + Bengali) | "Bengal-heritage sarees…" | Confirm wording |
 
-⚠️ Two spots are **hardcoded**, not in Settings — client answers must update these too:
-`src/app/(client)/contact/page.tsx` (email) and `src/components/storefront/Footer.tsx`
-(copyright line says "© 2025" — needs the real entity name and year).
+✅ Footer line is now `© 2026 Sumam's Boutique · Nagpur, India · Ships Pan-India`
+and the "Made in Bengal · বাংলায় তৈরি" credit is in place.
 
 ## 2. Legal (🚫 nothing exists yet — needs a build decision)
 
@@ -56,14 +55,14 @@ The checkout flow is fully built; it just has no live keys. Client must provide:
 - [ ] "Our Story" copy approval — `/story` has 305 lines written by us
 - [ ] FAQ list — 5 Q&As are drafted; client approves or supplies the real ones
 - [ ] Instagram / Facebook / YouTube handles (Admin → Settings → Social; placeholders point at @sumamsboutique)
-- [ ] Founder/owner name + photo for the story page (currently no owner details anywhere on the site)
+- [x] Founder name + photo — supplied (`public/founder_portrait.webp`, now on `/story` and the homepage heritage section)
 
 ## 6. Domain & email
 
 - [ ] Domain name confirmed and accessible in their registrar
 - [ ] DNS pointed to Vercel (or approval for us to do it)
 - [ ] `NEXT_PUBLIC_SITE_URL` set to the final domain (**env var**)
-- [ ] Real support email mailbox — does hello@/concierge@ exist, or should mail forward to the owner's Gmail? (Resend API key optional for the newsletter)
+- [ ] Confirm `hello@sumamsboutique.com` is a real, monitored mailbox (or where it should forward). Resend API key is optional for the newsletter.
 
 ## 7. Analytics & marketing (optional, but ask)
 
@@ -76,8 +75,8 @@ The checkout flow is fully built; it just has no live keys. Client must provide:
 - [ ] Who receives new-order notification emails? (Admin → Settings → Notifications, defaults to orders@sumamsboutique.com)
 - [ ] Who will run the admin panel? Create their login (`supabase/create_admin_user.sql` / Admin → Customers)
 - [ ] Support hours (contact page says "one business day" — confirm)
-- [ ] Business name + year for the footer copyright
+- [x] Business name + year for the footer copyright — set to 2026
 
 ---
 
-**Minimum to launch today:** §1 (real contact details), §3 (Razorpay live keys), §4 shipping/return rules, §6 domain. Everything else can be filled in post-launch via the admin panel — except the privacy/terms pages, which we have to build.
+**Minimum to launch today:** §3 (Razorpay live keys), §4 shipping/return rules, §6 domain. Contact details are in. Everything else can be filled in post-launch via the admin panel — except the privacy/terms pages, which we have to build.
