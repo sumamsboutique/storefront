@@ -55,7 +55,7 @@ The checkout flow is fully built; it just has no live keys. Client must provide:
 - [ ] "Our Story" copy approval — `/story` has 305 lines written by us
 - [ ] FAQ list — 5 Q&As are drafted; client approves or supplies the real ones
 - [ ] Instagram / Facebook / YouTube handles (Admin → Settings → Social; placeholders point at @sumamsboutique)
-- [x] Founder name + photo — supplied (`public/founder_portrait.webp`, now on `/story` and the homepage heritage section)
+- [x] Founder name + photo — supplied (served from the `avatars` bucket, on `/story`)
 
 ## 6. Domain & email
 

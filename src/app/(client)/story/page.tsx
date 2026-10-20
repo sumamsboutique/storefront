@@ -122,7 +122,7 @@ export default function Story() {
           {/* Left: Atelier Vignette Box */}
           <div className="relative aspect-[4/5] overflow-hidden bg-[linear-gradient(155deg,#2A0D06,#6B2410_35%,#A04514_70%,#BF5E18)] flex flex-col justify-between p-8 md:p-10 shadow-xl">
             <Image
-              src="/founder_portrait.webp"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/founder_portrait.webp`}
               alt="Nita, founder of Sumam's Boutique"
               fill
               sizes="(max-width: 768px) 100vw, 40vw"
