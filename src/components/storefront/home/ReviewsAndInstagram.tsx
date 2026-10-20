@@ -31,35 +31,35 @@ const REVIEW_GRADIENTS = [
 const FALLBACK_TESTIMONIALS: TestimonialContent = [
   {
     id: 1,
-    quote: 'The Benarasi arrived wrapped like a bridal gift and draped even better than I dreamed. The gold zari work has genuine heirloom weight.',
+    quote: 'The Bangalore silk arrived wrapped like a gift and draped even better than I dreamed. The zari work has genuine heirloom weight.',
     name: 'Ananya Sen',
-    detail: 'Bride, Kolkata · Chandrakala Benarasi',
+    detail: 'Bride, Kolkata · Bangalore Silk Katha',
     rating: 5,
-    image: '/Products/Banarasi/chandrakala-benarasi-silk.png',
+    image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/bangalore-silk-katha/02_Saree_On_Model.png`,
   },
   {
     id: 2,
-    quote: 'Sumam personally helped me choose a Tant for my mother-in-law. You can truly feel the rhythm of the wooden loom in every fine cotton thread.',
+    quote: 'Nita personally helped me choose a tussar for my mother-in-law. You can truly feel the rhythm of the wooden loom in every fine thread.',
     name: 'Ishita Roy',
-    detail: 'Patron, Bengaluru · Shantiniketan Tant',
+    detail: 'Patron, Bengaluru · Madhubani Ghicha',
     rating: 5,
-    image: '/Products/Handlooms/nilima-tant-cotton.png',
+    image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/madhubani-ghicha/03_fabric_detail_closeup.png`,
   },
   {
     id: 3,
-    quote: 'The temple jewellery is even more breathtaking in person. Hand-chased brass with antique gold finish, heirloom weight and museum quality.',
+    quote: 'The Kardana Jamdani pallu is even more breathtaking in person. Hand-woven, heirloom quality.',
     name: 'Priya Chatterjee',
-    detail: 'Festive Patron, Mumbai · Durga Temple Set',
+    detail: 'Festive Patron, Mumbai · Kardana Jamdani',
     rating: 5,
-    image: '/Products/jewellery/durga-temple-necklace-set.png',
+    image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/kardana-jamdani/04_Pallu_Border.jpg`,
   },
 ]
 
 const FALLBACK_INSTA_POSTS: InstaPost[] = [
-  { user: '@sumams.boutique', capt: 'Benarasi in the morning light — pure mulberry silk bathed in Shantiniketan dawn #handloom', gradient: 'linear-gradient(145deg,#2A1008,#8B3A14 55%,#BF5E18)', image: '/Banners/banarasi-saree.png' },
-  { user: '@sumams.boutique', capt: 'Founder Sumam supervising the cutting of a fine Shantiniketan Tant drape #craft', gradient: 'linear-gradient(145deg,#F5EFE6,#D4B896 55%,#8C6A55)', image: '/Banners/spring-edit.jpeg' },
-  { user: '@sumams.boutique', capt: 'The Shantiniketan pit loom at work — two weeks for a single Jamdani pallu #heritage', gradient: 'linear-gradient(145deg,#EDE3D6,#C4A87A 55%,#6B5238)', image: '/Banners/tant-saree.jpeg' },
-  { user: '@sumams.boutique', capt: 'Brass temple jewellery fresh from the artisan forge — chased and finished by hand #finejewels', gradient: 'linear-gradient(145deg,#4A2010,#D4880A 55%,#5A2A14)', image: '/Banners/temple-jewellery.jpeg' },
+  { user: '@sumams.boutique', capt: 'Tussar in the morning light — golden handloom silk bathed in Shantiniketan dawn #handloom', gradient: 'linear-gradient(145deg,#2A1008,#8B3A14 55%,#BF5E18)', image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/tusser-katha/02_Saree_On_Model.png` },
+  { user: '@sumams.boutique', capt: 'Founder Nita supervising the cutting of a fine Bangalore silk drape #craft', gradient: 'linear-gradient(145deg,#F5EFE6,#D4B896 55%,#8C6A55)', image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/bangalore-silk-katha/02_Saree_On_Model.png` },
+  { user: '@sumams.boutique', capt: 'The Shantiniketan pit loom at work — two weeks for a single Jamdani pallu #heritage', gradient: 'linear-gradient(145deg,#EDE3D6,#C4A87A 55%,#6B5238)', image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/kardana-jamdani/02_Saree_On_Model.png` },
+  { user: '@sumams.boutique', capt: 'Kalamkari panels drying in the courtyard — every motif drawn and dyed by hand #blockprint', gradient: 'linear-gradient(145deg,#4A2010,#D4880A 55%,#5A2A14)', image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/sarees/kalamkari/02_Saree_On_Model.png` },
 ]
 
 // CMS images may be absolute URLs or site-relative; normalize bare paths to root.

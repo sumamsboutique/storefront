@@ -1,4 +1,5 @@
 import React from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/storefront/Navbar'
 import Footer from '@/components/storefront/Footer'
@@ -41,20 +42,13 @@ const WEAVING_CLUSTERS = [
     desc: 'Pure Katan silk woven with authentic gold zari kadwa motifs, individually hand-locked into the warp so no loose threads remain on the reverse.',
     tag: 'Bridal Heirloom',
   },
-  {
-    name: 'Temple Atelier',
-    bn: 'মন্দির গহনা',
-    craft: 'Hand-Finished Temple Jewellery',
-    desc: 'Brass and alloy bases adorned with motifs of deities, lotus petals, and peacocks, finished with 24-carat micro-plating and antique patina.',
-    tag: 'Heirloom Jewels',
-  },
 ]
 
 const MILESTONES = [
   {
     year: '2021',
     title: 'The First Loom in Birbhum',
-    desc: 'Sumam embarked on solo journeys across rural West Bengal, sitting alongside fourth-generation weavers to understand how authentic handloom was losing ground to powerloom copies.',
+    desc: 'Nita embarked on solo journeys across rural West Bengal, sitting alongside fourth-generation weavers to understand how authentic handloom was losing ground to powerloom copies.',
   },
   {
     year: '2023',
@@ -63,8 +57,8 @@ const MILESTONES = [
   },
   {
     year: '2025',
-    title: 'The Heirloom Jewellery Atelier',
-    desc: 'Expanded the curation to temple jewellery and antique-finished ornaments, pairing classical Bengal sarees with authentic South Indian and regional metal craft.',
+    title: 'The Fair-Weave Atelier',
+    desc: 'Expanded the curation across Bengal\'s weaving clusters, pairing classical handloom sarees with strict single-piece provenance from master weaver families.',
   },
   {
     year: '2026',
@@ -104,7 +98,7 @@ export default function Story() {
           </h1>
 
           <p className="mt-8 font-ui text-[16px] md:text-[18px] font-light leading-[1.8] text-dark/85 max-w-2xl">
-            Sumam&apos;s Boutique is born from an uncompromising pursuit: finding sarees and jewellery that carry
+            Sumam&apos;s Boutique is born from an uncompromising pursuit: finding handloom sarees that carry
             the fragrance of Bengali earth, the rhythm of wooden shuttles, and the quiet dignity of generational craft.
           </p>
 
@@ -127,23 +121,32 @@ export default function Story() {
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.25fr] gap-10 md:gap-16 items-center">
           {/* Left: Atelier Vignette Box */}
           <div className="relative aspect-[4/5] overflow-hidden bg-[linear-gradient(155deg,#2A0D06,#6B2410_35%,#A04514_70%,#BF5E18)] flex flex-col justify-between p-8 md:p-10 shadow-xl">
-            <div className="flex justify-between items-start">
+            <Image
+              src="/founder_portrait.webp"
+              alt="Nita, founder of Sumam's Boutique"
+              fill
+              sizes="(max-width: 768px) 100vw, 40vw"
+              className="object-cover object-top"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(42,13,6,0.55),rgba(42,13,6,0.05)_35%,rgba(42,13,6,0.78))]" />
+
+            <div className="relative z-10 flex justify-between items-start">
               <div className="border border-dashed border-ivory/30 px-3.5 py-1 font-ui text-[9px] tracking-[0.2em] text-ivory/70 uppercase">
                 FOUNDER ARCHIVE
               </div>
               <AlponaMotif size={56} opacity={0.25} />
             </div>
 
-            <div className="text-center my-auto">
-              <span className="font-bengali text-[54px] md:text-[68px] font-light text-ivory/35 select-none block leading-none">
-                সুমাম
+            <div className="relative z-10 text-center my-auto">
+              <span className="font-ui text-[11px] tracking-[0.24em] text-ivory/90 uppercase block">
+                Nita · Founder &amp; Atelier Director
               </span>
-              <span className="font-ui text-[11px] tracking-[0.24em] text-ivory/80 uppercase mt-4 block">
-                Sumam&apos;s Boutique · Shantiniketan
+              <span className="font-bengali text-[13px] tracking-[0.24em] text-ivory/70 uppercase mt-2 block">
+                নিতা
               </span>
             </div>
 
-            <div className="border-t border-ivory/20 pt-4 text-center">
+            <div className="relative z-10 border-t border-ivory/20 pt-4 text-center">
               <p className="font-display italic text-ivory/90 text-sm md:text-base">
                 &quot;When you wrap a handloom drape, you wear four hundred hours of human patience.&quot;
               </p>
@@ -164,7 +167,7 @@ export default function Story() {
                 our Benarasi is woven by hand on wooden pit-looms.
               </p>
               <p>
-                Sumam travels personally across rural Bengal each season. We sit inside the mud-plastered homes of
+                Nita travels personally across rural Bengal each season. We sit inside the mud-plastered homes of
                 weavers in Birbhum, the riverside ateliers of Nadia, and the old quarters of Murshidabad. We inspect yarn
                 density, verify hand-dyed natural palettes, and select only pieces that meet our standards of drape and durability.
               </p>
@@ -180,7 +183,7 @@ export default function Story() {
                 through centuries.&quot;
               </p>
               <div className="font-ui text-xs font-semibold uppercase tracking-wider text-copper mt-2">
-                — Sumam, Founder & Atelier Director
+                — Nita, Founder & Atelier Director
               </div>
             </div>
           </div>
@@ -287,12 +290,6 @@ export default function Story() {
               className="px-6 py-3.5 bg-copper hover:bg-[#A04A18] text-ivory font-ui text-[11px] font-medium tracking-[0.2em] uppercase transition-colors"
             >
               Explore Sarees Collection
-            </Link>
-            <Link
-              href="/jewellery"
-              className="px-6 py-3.5 bg-transparent border border-ivory/40 hover:border-ivory text-ivory font-ui text-[11px] font-medium tracking-[0.2em] uppercase transition-colors"
-            >
-              View Temple Jewellery
             </Link>
           </div>
         </div>

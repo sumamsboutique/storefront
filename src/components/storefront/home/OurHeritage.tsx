@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Eyebrow } from '@/components/shared/primitives'
 import { Reveal } from '@/lib/reveal'
 import type { OurHeritageContent, HeroPart } from '@/lib/data'
@@ -5,19 +6,20 @@ import type { OurHeritageContent, HeroPart } from '@/lib/data'
 const DEFAULT: OurHeritageContent = {
   eyebrow: 'OUR HERITAGE',
   headlineParts: [
-    'A Boutique Born from ',
-    { italic: true, copper: true, text: 'Love' },
-    ' of Weave',
+    'A Father’s Legacy. A Daughter’s ',
+    { italic: true, copper: true, text: 'Name' },
+    '.',
   ],
   blockquote:
-    'Each saree we curate carries a piece of Shantiniketan — the same red soil where Tagore once walked, the same looms that have hummed for generations.',
+    'A Bengali handloom is the one thing that never needs to prove itself — in any room, in any country, in any season.',
   paragraphs: [
-    "Sumam's Boutique began not as a business, but as a search — for sarees that still held the warmth of Bengali earth, the patience of handloom weavers, and the quiet grace of traditions passed down through generations.",
-    'We travel each season to artisan families in Shantiniketan, Murshidabad, Bishnupur, and Shantipur — sourcing weaves that carry not just thread, but memory. Every piece is one-of-one. Once gone, never woven again.',
+    "Nita grew up in her father's saree business. From the time she was young, she watched him handle every piece with complete knowledge and care — Benarasi, Tant, Jamdani — each one chosen for a reason, each one sold with its full story.",
+    'She has lived across different countries for over 25 years. She has seen every kind of fashion, every kind of trend. And through all of it, a Bengali handloom is the one thing that has never needed to prove itself.',
+    "Sumam's is named after her daughter. It is built on her father's knowledge. And it is opened for every woman in the world who deserves to own something truly handcrafted — not mass made, not repeated, not forgotten.",
   ],
   image: '',
-  founder: { en: 'Sumam', bn: 'সুমাম' },
-  photoLabel: 'FOUNDER SUMAM AT THE SHANTINIKETAN LOOM',
+  founder: { en: 'Nita', bn: 'নিতা' },
+  photoLabel: 'FOUNDER NITA AT THE SHANTINIKETAN LOOM',
 }
 
 function renderParts(parts: HeroPart[]) {
@@ -64,12 +66,22 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
           <div className="mx-auto w-full max-w-[560px] md:max-w-[520px] lg:max-w-[560px] flex justify-center">
             <div className="relative w-full aspect-[5/6] overflow-hidden max-h-[min(85vh,680px)]">
               <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, #2A1008, #BF5E18)' }} />
+              {d.image ? (
+                <Image
+                  src={d.image}
+                  alt={d.photoLabel}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 46vw"
+                  className="object-cover object-top"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <span className="font-bengali text-[64px] font-light text-ivory opacity-30 tracking-[0.04em] select-none">
+                    {d.founder.bn}
+                  </span>
+                </div>
+              )}
               <div className="absolute inset-3 border border-[rgba(212,136,10,0.4)] z-20 pointer-events-none" />
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <span className="font-bengali text-[64px] font-light text-ivory opacity-30 tracking-[0.04em] select-none">
-                  {d.founder.bn}
-                </span>
-              </div>
               {/* Desktop photo label — dashed box */}
               <div className="hidden md:block absolute bottom-6 left-0 right-0 flex justify-center z-30 pointer-events-none">
                 <div className="border border-dashed border-[rgba(245,239,230,0.15)] px-3.5 py-1.5">
