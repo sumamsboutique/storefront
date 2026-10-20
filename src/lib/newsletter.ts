@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { supabase } from './supabase'
+import { renderNewsletterWelcome, sendEmail } from './email'
 
 export type SubscribeResult = { ok: true } | { error: string }
 
@@ -14,13 +15,18 @@ export async function subscribeNewsletter(input: unknown): Promise<SubscribeResu
   }
 
   if (!supabase) return { error: 'Could not subscribe right now. Please try again.' }
-  const { error } = await supabase.from('newsletter_subscribers')
-    .insert({ email: parsed.data.toLowerCase() })
+  const email = parsed.data.toLowerCase()
+  const { error } = await supabase.from('newsletter_subscribers').insert({ email })
 
   if (error) {
     // 23505 = unique_violation → already subscribed
     if (error.code === '23505') return { error: 'You are already subscribed.' }
     return { error: 'Could not subscribe right now. Please try again.' }
   }
+
+  // Best-effort confirmation; a mail outage must not report the signup failed.
+  const { subject, html } = renderNewsletterWelcome()
+  await sendEmail({ to: email, subject, html, replyTo: process.env.EMAIL_FROM })
+
   return { ok: true }
 }

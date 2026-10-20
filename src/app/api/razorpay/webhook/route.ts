@@ -1,6 +1,11 @@
 import { createServiceClient } from '@/lib/supabase'
 import { verifyRazorpaySignature } from '@/lib/razorpay-signature'
-import { sendOrderConfirmation } from '@/lib/email'
+import {
+  renderOrderAlert,
+  renderOrderConfirmation,
+  sendOrderAlert,
+  sendOrderConfirmation,
+} from '@/lib/email'
 
 // Mirrors the client-side verify path: confirms a Razorpay success event reached
 // the server even when the customer's tab is closed mid-payment.
@@ -43,7 +48,7 @@ export async function POST(request: Request) {
 
   const { data: order } = await supabase
     .from('orders')
-    .select('id, status, total, shipping_address')
+    .select('id, status, subtotal, shipping_fee, discount, coupon_code, total, shipping_address')
     .eq('payment_reference', rzpOrderId)
     .single()
 
@@ -59,12 +64,54 @@ export async function POST(request: Request) {
     // never sends, or customers would get duplicates).
     const addr = order.shipping_address as { email?: string; name?: string } | null
     if (addr?.email) {
-      await sendOrderConfirmation({
+      const { data: lines } = await supabase
+        .from('order_items')
+        .select('product_name_snapshot, quantity, unit_price')
+        .eq('order_id', order.id)
+
+      const mail = {
         to: addr.email,
         name: addr.name || 'friend',
         orderId: order.id,
+        subtotal: Number(order.subtotal),
+        shippingFee: Number(order.shipping_fee),
+        discount: Number(order.discount),
+        couponCode: order.coupon_code,
         total: Number(order.total),
+        items: (lines ?? []).map((l) => ({
+          name: l.product_name_snapshot,
+          quantity: l.quantity,
+          unit_price: Number(l.unit_price),
+        })),
+        placedAt: new Date().toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'Asia/Kolkata',
+        }),
+      }
+
+      await sendOrderConfirmation({
+        to: mail.to,
+        name: mail.name,
+        orderId: mail.orderId,
+        markup: renderOrderConfirmation(mail),
       })
+
+      // The boutique's own heads-up, from store settings so it stays editable.
+      const { data: notif } = await supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'notifications')
+        .maybeSingle()
+      const alertTo = (notif?.value as { order_alert_email?: string } | null)?.order_alert_email
+      if (alertTo) {
+        await sendOrderAlert({
+          to: alertTo,
+          orderId: mail.orderId,
+          markup: renderOrderAlert(mail),
+        })
+      }
     }
   }
   return Response.json({ ok: true })

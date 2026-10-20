@@ -25,6 +25,7 @@ import {
 } from './schemas'
 import { logAudit } from './audit'
 import { clearStoreSettingsCache } from '../settings'
+import { renderOrderStatus, renderWelcome, sendEmail } from '../email'
 
 // ponytail: in-memory login throttle, per-instance only. Fine until we run
 // multiple server instances; swap for a shared store (Redis/DB) if that happens.
@@ -186,6 +187,13 @@ export async function adminSignupAction(
       )
     } catch {
       // ignore
+    }
+
+    // Welcome email, customers only — staff accounts are created deliberately
+    // and do not need one. Best-effort: never fails the signup.
+    if (!email.endsWith('@sumamsboutique.com')) {
+      const { subject, html } = renderWelcome({ name: fullName })
+      await sendEmail({ to: email, subject, html, replyTo: process.env.EMAIL_FROM })
     }
 
     return {
@@ -797,7 +805,7 @@ export async function updateOrderStatus(rawPayload: unknown): Promise<ActionResu
   try {
     const { data: currentOrder, error: fetchErr } = await supabase
       .from('orders')
-      .select('status, staff_notes')
+      .select('status, staff_notes, total, shipping_address')
       .eq('id', order_id)
       .single()
 
@@ -836,6 +844,19 @@ export async function updateOrderStatus(rawPayload: unknown): Promise<ActionResu
       userId: session.user.id,
       diff: { from: currentStatus, to: status, staff_notes },
     })
+
+    // Best-effort customer notice; never blocks the status change itself.
+    const notifiable = ['processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
+    const addr = currentOrder.shipping_address as { email?: string; name?: string } | null
+    if (addr?.email && (notifiable as readonly string[]).includes(status)) {
+      const { subject, html } = renderOrderStatus({
+        name: addr.name || 'friend',
+        orderId: order_id,
+        status: status as (typeof notifiable)[number],
+        total: Number(currentOrder.total),
+      })
+      await sendEmail({ to: addr.email, subject, html, replyTo: process.env.EMAIL_FROM })
+    }
 
     revalidatePath('/admin/orders')
     revalidatePath(`/admin/orders/${order_id}`)

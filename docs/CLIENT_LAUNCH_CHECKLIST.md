@@ -62,7 +62,28 @@ The checkout flow is fully built; it just has no live keys. Client must provide:
 - [ ] Domain name confirmed and accessible in their registrar
 - [ ] DNS pointed to Vercel (or approval for us to do it)
 - [ ] `NEXT_PUBLIC_SITE_URL` set to the final domain (**env var**)
-- [ ] Confirm `hello@sumamsboutique.com` is a real, monitored mailbox (or where it should forward). Resend API key is optional for the newsletter.
+- [ ] Confirm `hello@sumamsboutique.com` is a real, monitored mailbox (or where it should forward).
+
+### Resend (transactional email) — code complete, **credentials required**
+
+All templates are built and wired; email is simply **disabled until the two env vars below are set**. Everything degrades quietly while they are empty.
+
+- [ ] Create a Resend account and add `sumamsboutique.com`
+- [ ] Add the DNS records Resend gives you (SPF + DKIM), then verify the domain
+- [ ] Set `RESEND_API_KEY` (**env var**, server-only — never `NEXT_PUBLIC_`)
+- [ ] Set `EMAIL_FROM`, e.g. `Sumam's Boutique <orders@sumamsboutique.com>` (**env var**)
+
+Emails already implemented:
+
+| Email | Trigger | Sends from |
+|---|---|---|
+| Order confirmation + itemised invoice | Payment captured (Razorpay webhook) | `orders@…` |
+| New-order alert to the boutique | Payment captured | Notification address in Admin → Settings |
+| Order status update | Admin changes status to processing / shipped / delivered / cancelled / refunded | `orders@…` |
+| Welcome | New customer account created | `orders@…` |
+| Newsletter thank-you | Footer subscribe form | `orders@…` |
+
+- [ ] Send one real test order end-to-end once the key is set (nothing has been emailed in production yet)
 
 ## 7. Analytics & marketing (optional, but ask)
 
