@@ -5,6 +5,7 @@ import {
   renderOrderConfirmation,
   sendOrderAlert,
   sendOrderConfirmation,
+  sendPaidOrderEmails,
 } from '@/lib/email'
 
 // Mirrors the client-side verify path: confirms a Razorpay success event reached
@@ -53,66 +54,23 @@ export async function POST(request: Request) {
     .single()
 
   if (order && order.status === 'pending') {
-    await supabase
-      .from('orders')
-      .update({ status: 'paid', payment_reference: paymentId, updated_at: new Date().toISOString() })
-      .eq('id', order.id)
-
-    await supabase.rpc('fulfill_order_stock', { p_order_id: order.id })
-
-    // Confirmation email (only from the webhook — the client verify path
-    // never sends, or customers would get duplicates).
-    const addr = order.shipping_address as { email?: string; name?: string } | null
-    if (addr?.email) {
-      const { data: lines } = await supabase
-        .from('order_items')
-        .select('product_name_snapshot, quantity, unit_price')
-        .eq('order_id', order.id)
-
-      const mail = {
-        to: addr.email,
-        name: addr.name || 'friend',
-        orderId: order.id,
-        subtotal: Number(order.subtotal),
-        shippingFee: Number(order.shipping_fee),
-        discount: Number(order.discount),
-        couponCode: order.coupon_code,
-        total: Number(order.total),
-        items: (lines ?? []).map((l) => ({
-          name: l.product_name_snapshot,
-          quantity: l.quantity,
-          unit_price: Number(l.unit_price),
-        })),
-        placedAt: new Date().toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          timeZone: 'Asia/Kolkata',
-        }),
-      }
-
-      await sendOrderConfirmation({
-        to: mail.to,
-        name: mail.name,
-        orderId: mail.orderId,
-        markup: renderOrderConfirmation(mail),
-      })
-
-      // The boutique's own heads-up, from store settings so it stays editable.
-      const { data: notif } = await supabase
-        .from('store_settings')
-        .select('value')
-        .eq('key', 'notifications')
-        .maybeSingle()
-      const alertTo = (notif?.value as { order_alert_email?: string } | null)?.order_alert_email
-      if (alertTo) {
-        await sendOrderAlert({
-          to: alertTo,
-          orderId: mail.orderId,
-          markup: renderOrderAlert(mail),
-        })
-      }
+    // Single atomic transition: flips to paid, decrements stock and consumes
+    // the coupon exactly once. A concurrent client-verify call is idempotent.
+    const { data: marked, error: markErr } = await supabase.rpc('mark_order_paid', {
+      p_order_id: order.id,
+      p_payment_id: paymentId,
+    })
+    if (markErr) {
+      console.error('[razorpay webhook] mark_order_paid failed', markErr.message)
+      return Response.json({ error: 'Could not record payment' }, { status: 500 })
     }
+    // Another caller already applied it: emails were sent by that path.
+    if (!marked?.applied) return Response.json({ ok: true })
+
+    // Send emails via shared helper — exactly once regardless of which path finished first.
+    await sendPaidOrderEmails(order.id)
+
+    return Response.json({ ok: true })
   }
   return Response.json({ ok: true })
 }

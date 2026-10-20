@@ -227,7 +227,7 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
   // 2+ variants → tappable design picker; a lone variant isn't a choice.
   const choices = p.variants && p.variants.length > 1 ? p.variants : undefined
   const chosen = choices?.find((v) => v.id === variantId)
-  const addItem = () => (inCart ? cart.open() : cart.add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: chosen?.images[0] ?? p.images?.[0] }))
+  const addItem = () => (inCart ? cart.open() : cart.add({ id: `${p.id}:${variantId ?? ''}`, productId: p.id, variantId: variantId ?? null, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: chosen?.images[0] ?? p.images?.[0] }))
 
   // Concierge button, admin-toggleable in Store Settings (60s server cache — mirrors WhatsAppFab).
   const [waHref, setWaHref] = useState<string>()

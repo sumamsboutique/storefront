@@ -7,6 +7,7 @@ import { AddressSchema } from './schemas'
 
 const ItemSchema = z.object({
   product_id: z.string().uuid(),
+  variant_id: z.string().uuid().optional(),
   quantity: z.number().int().min(1).max(99),
 })
 

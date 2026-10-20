@@ -220,7 +220,6 @@ export type OurHeritageContent = {
   paragraphs: string[]
   image: string
   founder: { en: string; bn: string }
-  photoLabel: string
 }
 export type InstaPost = { img?: number; user: string; capt: string; gradient: string; image?: string }
 export type InstaContent = { handle: string; url: string; posts: InstaPost[] }

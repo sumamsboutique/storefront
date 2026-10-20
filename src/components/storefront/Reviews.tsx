@@ -100,7 +100,7 @@ export default function Reviews({ productId, productName = 'saree' }: { productI
       .then(({ data }) => {
         if (data) setRows(data as ReviewRow[])
       })
-    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session))
+    setSignedIn(true)
   }, [productId])
 
   const submit = async () => {

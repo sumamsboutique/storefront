@@ -5,8 +5,9 @@ import { persist } from 'zustand/middleware'
 import { CATALOG } from './catalog'
 
 export interface CartLine {
-  id: string // productId + option discriminator
+  id: string // productId + variantId discriminator (format: "<productId>:<variantId|null>")
   productId: string
+  variantId?: string | null // null = shared/no-variant product; optional for backward compat
   slug: string
   name: string
   price: string
@@ -20,7 +21,10 @@ export interface CartLine {
 const CART_IMG = new Map(CATALOG.map((p) => [p.id, p.images?.[0]]))
 
 // Image for a cart line — falls back to the catalog so older persisted carts still show photos.
-export const cartImage = (line: CartLine) => line.image ?? CART_IMG.get(line.productId)
+export const cartImage = (line: CartLine) => {
+  if (line.image) return line.image
+  return CART_IMG.get(line.productId)
+}
 
 interface CartStore {
   items: CartLine[]
@@ -69,7 +73,7 @@ export const useCart = create<CartStore>()(
       clear: () => set({ items: [] }),
       count: () => get().items.reduce((a, i) => a + i.qty, 0),
       subtotal: () => get().items.reduce((a, i) => a + i.priceNum * i.qty, 0),
-      has: (id: string) => get().items.some((i) => i.id === id || i.productId === id),
+      has: (id: string) => get().items.some((i) => i.id === id || i.productId === id || i.id.startsWith(id + ':') || i.id.endsWith(':' + id)),
     }),
     { name: 'sumams-cart' },
   ),

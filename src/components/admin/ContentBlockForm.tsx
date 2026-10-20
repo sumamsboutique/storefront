@@ -110,7 +110,6 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
       { kind: 'image', p: 'image', l: 'Atelier photo' },
       { kind: 'text', p: 'founder.en', l: 'Founder name (EN)' },
       { kind: 'text', p: 'founder.bn', l: 'Founder name (BN)' },
-      { kind: 'text', p: 'photoLabel', l: 'Photo caption' },
     ],
   },
   testimonials: {

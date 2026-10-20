@@ -89,7 +89,7 @@ export default function Checkout() {
     startTransition(async () => {
       const res = await placeOrder({
         address: form,
-        items: items.map((i) => ({ product_id: i.productId, quantity: i.qty })),
+        items: items.map((i) => ({ product_id: i.productId, variant_id: i.variantId, quantity: i.qty })),
         coupon: coupon?.code ?? null,
       })
       if (!('orderId' in res)) {

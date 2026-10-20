@@ -5,6 +5,7 @@
 // order write or a signup. Failures are logged and reported as { ok: false }.
 
 import { siteUrl } from './site'
+import { createServiceClient } from './supabase'
 
 type SendParams = {
   to: string
@@ -270,4 +271,87 @@ export function renderNewsletterWelcome(): { subject: string; html: string } {
     <p style="color:${MUTED};font-size:14px;margin:0 0 18px;">Thank you for subscribing. We send word when a new weave arrives, and nothing else — no more than a few times a season.</p>
     ${button(`${siteUrl()}/collections`, 'See what is new')}`),
   }
+}
+
+/* ── Paid-order emails (shared by webhook + client verify) ─────────────────── */
+
+export async function sendPaidOrderEmails(orderId: string): Promise<{ ok: boolean }> {
+  const supabase = createServiceClient()
+  if (!supabase) return { ok: false }
+
+  // Fetch order + items
+  const { data: order, error: orderErr } = await supabase
+    .from('orders')
+    .select('id, status, subtotal, shipping_fee, discount, coupon_code, total, shipping_address, created_at')
+    .eq('id', orderId)
+    .single()
+  if (orderErr || !order) {
+    console.error('[sendPaidOrderEmails] order fetch error:', orderErr?.message)
+    return { ok: false }
+  }
+
+  // Fetch order items with product names
+  const { data: items, error: itemsErr } = await supabase
+    .from('order_items')
+    .select('product_name_snapshot, quantity, unit_price')
+    .eq('order_id', orderId)
+  if (itemsErr) {
+    console.error('[sendPaidOrderEmails] items fetch error:', itemsErr.message)
+    return { ok: false }
+  }
+
+  // Get alert address from store_settings
+  const { data: notif } = await supabase
+    .from('store_settings')
+    .select('value')
+    .eq('key', 'notifications')
+    .maybeSingle()
+  const alertTo = (notif?.value as { order_alert_email?: string } | null)?.order_alert_email
+
+  const mail = {
+    to: order.shipping_address?.email ?? '',
+    name: order.shipping_address?.name ?? 'friend',
+    orderId,
+    subtotal: Number(order.subtotal),
+    shippingFee: Number(order.shipping_fee),
+    discount: Number(order.discount),
+    couponCode: order.coupon_code,
+    total: Number(order.total),
+    items: (items ?? []).map((l) => ({
+      name: l.product_name_snapshot,
+      quantity: l.quantity,
+      unit_price: Number(l.unit_price),
+    })),
+    placedAt: order.created_at ? new Date(order.created_at).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Kolkata',
+    }) : new Date().toLocaleDateString('en-IN'),
+    shippingAddress: order.shipping_address?.address,
+  }
+
+  if (!mail.to) {
+    console.error('[sendPaidOrderEmails] no recipient email')
+    return { ok: false }
+  }
+
+  // Send confirmation
+  await sendOrderConfirmation({
+    to: mail.to,
+    name: mail.name,
+    orderId: mail.orderId,
+    markup: renderOrderConfirmation(mail),
+  })
+
+  // Send boutique alert
+  if (alertTo) {
+    await sendOrderAlert({
+      to: alertTo,
+      orderId: mail.orderId,
+      markup: renderOrderAlert(mail),
+    })
+  }
+
+  return { ok: true }
 }

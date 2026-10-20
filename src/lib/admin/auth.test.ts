@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { DEMO_COOKIE_VALUE } from './auth'
 
 const cookieJar = new Map<string, string>()
 
@@ -30,7 +29,7 @@ vi.mock('@supabase/ssr', () => ({
 
 crypto.randomUUID = crypto.randomUUID ?? (() => 'crypto-random-uuid')
 
-describe('Admin auth demo-cookie gate', () => {
+describe('Admin session resolution', () => {
   beforeEach(() => {
     cookieJar.clear()
   })
@@ -39,27 +38,26 @@ describe('Admin auth demo-cookie gate', () => {
     vi.unstubAllEnvs()
   })
 
-  it('rejects a planted admin session cookie in production', async () => {
+  // The demo login was removed entirely: no cookie value, real or guessed,
+  // may mint an admin session in any environment.
+  it('rejects the retired demo cookie in production', async () => {
     vi.stubEnv('NODE_ENV', 'production')
-    cookieJar.set('sumams_admin_session', DEMO_COOKIE_VALUE)
+    cookieJar.set('sumams_admin_session', 'sumams-demo-admin')
     const { getAdminSession } = await import('./auth')
-    const session = await getAdminSession()
-    expect(session).toBeNull()
+    expect(await getAdminSession()).toBeNull()
   })
 
-  it('accepts the demo session cookie outside production', async () => {
+  it('rejects the retired demo cookie outside production too', async () => {
     vi.stubEnv('NODE_ENV', 'development')
-    cookieJar.set('sumams_admin_session', DEMO_COOKIE_VALUE)
+    cookieJar.set('sumams_admin_session', 'sumams-demo-admin')
     const { getAdminSession } = await import('./auth')
-    const session = await getAdminSession()
-    expect(session?.profile.role).toBe('admin')
+    expect(await getAdminSession()).toBeNull()
   })
 
   it('rejects a self-chosen cookie value where an admin session is claimed', async () => {
     vi.stubEnv('NODE_ENV', 'development')
     cookieJar.set('sumams_admin_session', JSON.stringify({ role: 'admin' }))
     const { getAdminSession } = await import('./auth')
-    const session = await getAdminSession()
-    expect(session).toBeNull()
+    expect(await getAdminSession()).toBeNull()
   })
 })

@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { createServiceClient } from './supabase'
 import { verifyRazorpaySignature } from './razorpay-signature'
+import { sendPaidOrderEmails } from './email'
 
 const keyId = process.env.RAZORPAY_KEY_ID
 const keySecret = process.env.RAZORPAY_KEY_SECRET
@@ -110,13 +111,16 @@ export async function verifyRazorpayPayment(input: unknown): Promise<VerifyRazor
   if (error || !order) return { error: 'Could not find your order.' }
   if (order.status !== 'pending') return { ok: true, orderId: order.id }
 
-  const { error: updateError } = await supabase
-    .from('orders')
-    .update({ status: 'paid', payment_reference: razorpay_payment_id, updated_at: new Date().toISOString() })
-    .eq('id', order.id)
-  if (updateError) return { error: updateError.message }
+  // Single atomic transition; idempotent if the webhook got there first.
+  const { data: marked, error: markErr } = await supabase.rpc('mark_order_paid', {
+    p_order_id: order.id,
+    p_payment_id: razorpay_payment_id,
+  })
+  if (markErr) return { error: markErr.message }
 
-  await supabase.rpc('fulfill_order_stock', { p_order_id: order.id })
+  if (marked?.applied) {
+    await sendPaidOrderEmails(order.id)
+  }
 
   return { ok: true, orderId: order.id }
 }

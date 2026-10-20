@@ -19,7 +19,6 @@ const DEFAULT: OurHeritageContent = {
   ],
   image: '',
   founder: { en: 'Nita', bn: 'নিতা' },
-  photoLabel: 'FOUNDER NITA AT THE SHANTINIKETAN LOOM',
 }
 
 function renderParts(parts: HeroPart[]) {
@@ -69,7 +68,7 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
               {d.image ? (
                 <Image
                   src={d.image}
-                  alt={d.photoLabel}
+                  alt="Nita, founder of Sumam's Boutique"
                   fill
                   sizes="(max-width: 768px) 100vw, 46vw"
                   className="object-cover object-top"
@@ -82,20 +81,6 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
                 </div>
               )}
               <div className="absolute inset-3 border border-[rgba(212,136,10,0.4)] z-20 pointer-events-none" />
-              {/* Desktop photo label — dashed box */}
-              <div className="hidden md:block absolute bottom-6 left-0 right-0 flex justify-center z-30 pointer-events-none">
-                <div className="border border-dashed border-[rgba(245,239,230,0.15)] px-3.5 py-1.5">
-                  <div className="font-sans text-[9px] tracking-[0.12em] uppercase text-[rgba(245,239,230,0.3)] text-center">
-                    {d.photoLabel.split('/')[0]}
-                    <br />
-                    {d.photoLabel.split('/')[1]?.trim()}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Mobile photo label */}
-            <div className="md:hidden text-center font-sans text-[10px] tracking-[0.2em] uppercase text-[rgba(245,239,230,0.35)] mt-5 mb-10">
-              {d.photoLabel.toUpperCase()}
             </div>
           </div>
           </Reveal>

@@ -4,12 +4,7 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers, cookies } from 'next/headers'
-import {
-  requireAdminOrStaff,
-  requireAdmin,
-  createAdminServerClient,
-  DEMO_COOKIE_VALUE,
-} from './auth'
+import { requireAdminOrStaff, requireAdmin, createAdminServerClient } from './auth'
 import {
   ProductFormSchema,
   CategoryFormSchema,
@@ -56,13 +51,6 @@ export type ActionResult<T = unknown> = {
 }
 
 // ── Auth Actions ─────────────────────────────────────────────────────────────
-// Demo admin login. Hardcoded credentials are a full-auth bypass, so this is
-// dev-only: in production the Supabase password path below is the sole gate.
-// A user can plant this cookie by hand, so it must never be trusted in prod.
-const DEMO_EMAIL = 'admin@sumamsboutique.com'
-const DEMO_PASSWORDS = ['admin', 'admin123', 'sumams2026', 'sumams']
-// Read at call time, not module load — see the note in auth.ts.
-const demoEnabled = () => process.env.NODE_ENV !== 'production'
 
 export async function adminLoginAction(
   prevState: { error?: string } | null,
@@ -81,18 +69,6 @@ export async function adminLoginAction(
   const emailKey = emailClean
   if (loginThrottled(ip) || loginThrottled(emailKey)) {
     return { error: 'Too many attempts. Please try again in 15 minutes.' }
-  }
-
-  if (demoEnabled() && emailClean === DEMO_EMAIL && DEMO_PASSWORDS.includes(password)) {
-    const cookieStore = await cookies()
-    cookieStore.set('sumams_admin_session', DEMO_COOKIE_VALUE, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-    })
-    redirect('/admin')
   }
 
   try {
@@ -207,8 +183,6 @@ export async function adminSignupAction(
 }
 
 export async function adminLogoutAction() {
-  const cookieStore = await cookies()
-  cookieStore.delete('sumams_admin_session')
   try {
     const supabase = await createAdminServerClient()
     await supabase.auth.signOut()
