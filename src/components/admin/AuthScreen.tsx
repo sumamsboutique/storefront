@@ -17,18 +17,6 @@ const inputBase =
   'w-full rounded-full border border-[rgba(140,106,85,0.32)] bg-white/80 px-5 py-3.5 text-[15px] text-dark shadow-[inset_0_1px_2px_rgba(28,10,6,0.04)] outline-none transition-all duration-200 placeholder:text-muted/50 focus:border-copper focus:ring-4 focus:ring-copper/15'
 const inputDanger = ' border-red-400/70 focus:border-red-600 focus:ring-red-200/60'
 
-// ponytail: shared demo accounts — deliberately public, so safe to show. They
-// only self-read / self-write via RLS (admin role gates the CRM). The fill box
-// is an autofill convenience; in prod auth still goes through real Supabase.
-const DEMO_ADMIN_EMAIL =
-  process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL ?? 'admin@sumamsboutique.com'
-const DEMO_ADMIN_PASSWORD =
-  process.env.NEXT_PUBLIC_DEMO_ADMIN_PASSWORD ?? 'admin123'
-const DEMO_CUSTOMER_EMAIL =
-  process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL ?? 'warot83435@ncleap.com'
-const DEMO_CUSTOMER_PASSWORD =
-  process.env.NEXT_PUBLIC_DEMO_CUSTOMER_PASSWORD ?? 'customer123'
-
 function FieldShell({
   id,
   label,
@@ -218,14 +206,6 @@ export default function AuthScreen({
         setNotice(res.message)
       }
     })
-  }
-
-  const isProd = process.env.NODE_ENV === 'production'
-
-  const fillDemo = () => {
-    setLoginEmail(isAdmin ? DEMO_ADMIN_EMAIL : DEMO_CUSTOMER_EMAIL)
-    setLoginPassword(isAdmin ? DEMO_ADMIN_PASSWORD : DEMO_CUSTOMER_PASSWORD)
-    setError(null)
   }
 
   const handleGoogle = () => {
@@ -446,28 +426,6 @@ export default function AuthScreen({
                       Create account
                     </button>
                   </p>
-                )}
-
-                {!isProd && (
-                  <div className="mt-6 rounded-xl border border-[#DCC9A8]/70 bg-cream/50 px-4 py-3 text-center">
-                    <p className="font-sans text-[11px] text-muted">
-                      {isAdmin ? 'Demo admin access' : 'Demo customer account'} —{' '}
-                      <span className="select-all font-medium text-dark">
-                        {isAdmin ? DEMO_ADMIN_EMAIL : DEMO_CUSTOMER_EMAIL}
-                      </span>{' '}
-                      /{' '}
-                      <span className="select-all font-medium text-dark">
-                        {isAdmin ? DEMO_ADMIN_PASSWORD : DEMO_CUSTOMER_PASSWORD}
-                      </span>
-                    </p>
-                    <button
-                      type="button"
-                      onClick={fillDemo}
-                      className="mt-1 text-[11px] font-medium text-copper hover:underline focus-visible:outline-2 focus-visible:outline-copper"
-                    >
-                      Fill demo credentials
-                    </button>
-                  </div>
                 )}
               </div>
             ) : (
