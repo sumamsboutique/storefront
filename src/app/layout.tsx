@@ -38,6 +38,13 @@ export const metadata: Metadata = {
     description: 'Bengal-heritage handloom sarees, curated with love from Bengal.',
     siteName: "Sumam's Boutique",
     type: 'website',
+    images: ['/open_graph.png'],
+  },
+  twitter: {
+    card: 'summary',
+    title: "Sumam's Boutique",
+    description: 'Bengal-heritage handloom sarees, curated with love from Bengal.',
+    images: ['/open_graph.png'],
   },
 }
 

@@ -11,7 +11,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'What is your return window?',
-    a: 'Standard orders can be returned within 7–day window; one-of-one pieces are subject to inspection. See Shipping & Returns.',
+    a: 'Standard orders can be returned within a 3–day window; one-of-one pieces are subject to inspection. See Shipping & Returns.',
   },
   {
     q: 'Are sarees one size?',

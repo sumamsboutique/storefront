@@ -46,7 +46,7 @@ function accordionCopy(p: CatalogProduct) {
             : ['Wedding Guest', 'Reception', 'Festive']
   const dimensions = ['6.5 m saree length', '0.8 m blouse piece', '110 cm width']
   const care = ['Dry clean only', 'Store wrapped in muslin cloth', 'Avoid direct sunlight', 'Do not iron directly on zari']
-  const shipping = ['Free shipping above ₹10,000', 'Delivers within 5–7 business days', 'International shipping available', '7–day return window', 'One-of-one items: returns subject to inspection']
+  const shipping = ['Free shipping above ₹10,000', 'Delivers within 5–7 business days', 'International shipping available', '3–day return window', 'One-of-one items: returns subject to inspection']
   return { fabric, occasion, dimensions, care, shipping }
 }
 
@@ -455,7 +455,7 @@ function TrustIcon({ n }: { n: number }) {
 const TRUST_ITEMS = [
   { n: 0, title: 'Authenticity Certified', sub: 'Each piece, hand-verified by Nita' },
   { n: 1, title: 'Free Shipping', sub: 'On orders above ₹10,000' },
-  { n: 2, title: '7-Day Returns', sub: 'Easy returns, subject to inspection' },
+  { n: 2, title: '3-Day Returns', sub: 'Easy returns, subject to inspection' },
   { n: 3, title: 'Atelier Concierge', sub: 'Personal guidance from our boutique' },
 ] as const
 

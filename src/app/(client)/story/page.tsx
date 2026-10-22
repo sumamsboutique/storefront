@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/storefront/Navbar'
 import Footer from '@/components/storefront/Footer'
-import { SareeBorderDivider, AlponaDivider, AlponaMotif, PAD, Eyebrow } from '@/components/shared/primitives'
+import { SareeBorderDivider, AlponaDivider, PAD, Eyebrow } from '@/components/shared/primitives'
 import { cn } from '@/lib/cn'
 
 const WEAVING_CLUSTERS = [
@@ -119,8 +119,8 @@ export default function Story() {
       {/* ── 2. Founder's Philosophy & Visual Anchor ── */}
       <section className={cn(PAD, 'py-16 md:py-24')}>
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.25fr] gap-10 md:gap-16 items-center">
-          {/* Left: Atelier Vignette Box */}
-          <div className="relative aspect-[4/5] overflow-hidden bg-[linear-gradient(155deg,#2A0D06,#6B2410_35%,#A04514_70%,#BF5E18)] flex flex-col justify-between p-8 md:p-10 shadow-xl">
+          {/* Left: Founder Portrait */}
+          <div className="relative aspect-[4/5] overflow-hidden shadow-xl">
             <Image
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/founder_portrait.webp`}
               alt="Nita, founder of Sumam's Boutique"
@@ -128,29 +128,6 @@ export default function Story() {
               sizes="(max-width: 768px) 100vw, 40vw"
               className="object-cover object-top"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(42,13,6,0.55),rgba(42,13,6,0.05)_35%,rgba(42,13,6,0.78))]" />
-
-            <div className="relative z-10 flex justify-between items-start">
-              <div className="border border-dashed border-ivory/30 px-3.5 py-1 font-ui text-[9px] tracking-[0.2em] text-ivory/70 uppercase">
-                FOUNDER ARCHIVE
-              </div>
-              <AlponaMotif size={56} opacity={0.25} />
-            </div>
-
-            <div className="relative z-10 text-center my-auto">
-              <span className="font-ui text-[11px] tracking-[0.24em] text-ivory/90 uppercase block">
-                Nita · Founder &amp; Atelier Director
-              </span>
-              <span className="font-bengali text-[13px] tracking-[0.24em] text-ivory/70 uppercase mt-2 block">
-                নিতা
-              </span>
-            </div>
-
-            <div className="relative z-10 border-t border-ivory/20 pt-4 text-center">
-              <p className="font-display italic text-ivory/90 text-sm md:text-base">
-                &quot;When you wrap a handloom drape, you wear four hundred hours of human patience.&quot;
-              </p>
-            </div>
           </div>
 
           {/* Right: Detailed Brand Narrative */}

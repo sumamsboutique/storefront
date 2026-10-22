@@ -21,7 +21,7 @@ export default function ShippingReturnsPage() {
         />
         <Bullets
           title="Returns"
-          items={['7–day return window', 'Returns subject to inspection', 'One-of-one items: inspection applies']}
+          items={['3–day return window', 'Returns subject to inspection', 'One-of-one items: inspection applies']}
           note="Begin a return within the window; handloom pieces are inspected before acceptance."
         />
       </section>
