@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useRef, useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AlponaMotif } from '@/components/shared/primitives'
@@ -112,7 +113,7 @@ export default function AuthScreen({
 }) {
   const isAdmin = variant === 'admin'
   const [mode, setMode] = useState<Mode>('login')
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   // login fields
   const [loginEmail, setLoginEmail] = useState('')

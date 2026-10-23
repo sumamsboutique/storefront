@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { AdminContentBlock } from '@/lib/admin/queries'
@@ -28,7 +29,7 @@ export function ContentManagerClient({
 }) {
   const router = useRouter()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   // Selected section tab
   const [activeTab, setActiveTab] = useState('hero')

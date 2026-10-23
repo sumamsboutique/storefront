@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/components/admin/AdminToast'
@@ -38,7 +39,7 @@ export function ProductForm({
 }) {
   const router = useRouter()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   // Form State
   const [name, setName] = useState(initialData?.name || '')

@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AdminCard } from '@/components/admin/AdminCard'
@@ -40,7 +41,7 @@ export type OrderDetailProps = {
 export function OrderDetailClient({ order }: OrderDetailProps) {
   const router = useRouter()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   const [notes, setNotes] = useState(order.staff_notes || '')
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null)

@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -29,7 +30,7 @@ export function ProductListClient({
   const router = useRouter()
   const searchParams = useSearchParams()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   // State
   const [selectedIds, setSelectedIds] = useState<string[]>([])

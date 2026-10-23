@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -13,6 +13,8 @@ import { openRazorpayCheckout } from '@/lib/razorpay-client'
 import { trackEvent } from '@/components/storefront/GoogleAnalytics'
 import { PAD, Eyebrow } from '@/components/shared/primitives'
 import { Dropdown } from '@/components/shared/Dropdown'
+import Spinner from '@/components/shared/Spinner'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { cn } from '@/lib/cn'
 import { useMounted } from '@/lib/useMounted'
 
@@ -48,8 +50,12 @@ export default function Checkout() {
   const [orderId, setOrderId] = useState('')
   // Set once the order exists in the DB, so a dismissed payment can be retried.
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null)
+  // The Razorpay sheet reports success in the browser; the order flips to paid
+  // only after the server verifies the signature.
+  const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState('')
-  const [pending, startTransition] = useTransition()
+  // Stays true until the Razorpay sheet opens, so the button never looks idle.
+  const [placing, runSubmit] = useAsyncTransition()
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', pin: '' })
   const [savedAddressId, setSavedAddressId] = useState('')
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -88,7 +94,7 @@ export default function Checkout() {
 
   const submit = () => {
     setError('')
-    startTransition(async () => {
+    runSubmit(async () => {
       const res = await placeOrder({
         address: form,
         items: items.map((i) => ({ product_id: i.productId, variant_id: i.variantId, quantity: i.qty })),
@@ -109,23 +115,28 @@ export default function Checkout() {
           name: "Sumam's Boutique",
           prefill: { name: form.name, email: form.email, contact: form.phone },
           onSuccess: async (paymentId, signature) => {
-            const v = await verifyRazorpayPayment({
-              razorpay_payment_id: paymentId,
-              razorpay_order_id: rzp.razorpayOrderId,
-              razorpay_signature: signature,
-            })
-            if ('ok' in v) {
-              trackEvent('purchase', {
-                transaction_id: dbOrderId,
-                value: rzp.amountPaise / 100,
-                currency: 'INR',
-                items: items.map((i) => ({ item_id: i.productId, item_name: i.name, quantity: i.qty })),
+            setVerifying(true)
+            try {
+              const v = await verifyRazorpayPayment({
+                razorpay_payment_id: paymentId,
+                razorpay_order_id: rzp.razorpayOrderId,
+                razorpay_signature: signature,
               })
-              clear()
-              setOrderId(dbOrderId)
-              setPlaced(true)
-            } else {
-              setError(v.error)
+              if ('ok' in v) {
+                trackEvent('purchase', {
+                  transaction_id: dbOrderId,
+                  value: rzp.amountPaise / 100,
+                  currency: 'INR',
+                  items: items.map((i) => ({ item_id: i.productId, item_name: i.name, quantity: i.qty })),
+                })
+                clear()
+                setOrderId(dbOrderId)
+                setPlaced(true)
+              } else {
+                setError(v.error)
+              }
+            } finally {
+              setVerifying(false)
             }
           },
           onFail: (msg) => setError(msg),
@@ -243,11 +254,23 @@ export default function Checkout() {
             </div>
             <button
               onClick={submit}
-              disabled={items.length === 0 || pending}
-              aria-busy={pending}
-              className={cn('mt-6 w-full py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] uppercase', items.length === 0 || pending ? 'bg-[rgba(140,106,85,0.3)] text-[rgba(28,10,6,0.4)]' : 'bg-copper text-ivory')}
+              disabled={items.length === 0 || placing || verifying}
+              aria-busy={placing || verifying}
+              className={cn('mt-6 flex w-full items-center justify-center gap-2 py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] uppercase', items.length === 0 || placing || verifying ? 'bg-[rgba(140,106,85,0.3)] text-[rgba(28,10,6,0.4)]' : 'bg-copper text-ivory')}
             >
-              {pending ? 'Placing Order…' : pendingOrderId ? `Pay again · ${fmt(total)}` : `Place Order · ${fmt(total)}`}
+              {verifying ? (
+                <>
+                  <Spinner /> Confirming payment…
+                </>
+              ) : placing ? (
+                <>
+                  <Spinner /> Placing Order…
+                </>
+              ) : pendingOrderId ? (
+                `Pay again · ${fmt(total)}`
+              ) : (
+                `Place Order · ${fmt(total)}`
+              )}
             </button>
             {error && <p className="mt-2 text-center font-ui text-xs text-[#B00020]">{error}</p>}
             <p className="mt-3 text-center font-ui text-[10px] font-light text-muted">

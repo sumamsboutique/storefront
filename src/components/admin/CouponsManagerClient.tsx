@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { useRouter } from 'next/navigation'
 import type { AdminCouponRow } from '@/lib/admin/queries'
 import { AdminBadge } from '@/components/admin/AdminBadge'
@@ -32,7 +33,7 @@ const emptyForm: FormState = {
 export function CouponsManagerClient({ coupons }: { coupons: AdminCouponRow[] }) {
   const router = useRouter()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
   const [form, setForm] = useState<FormState>(emptyForm)
   const [deleteTarget, setDeleteTarget] = useState<AdminCouponRow | null>(null)
   const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>

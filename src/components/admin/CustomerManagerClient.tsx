@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { AdminCustomerRow } from '@/lib/admin/queries'
 import { RoleBadge } from '@/components/admin/AdminBadge'
@@ -21,7 +22,7 @@ export function CustomerManagerClient({
   const router = useRouter()
   const searchParams = useSearchParams()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
   const [roleTarget, setRoleTarget] = useState<{

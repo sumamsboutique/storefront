@@ -7,6 +7,7 @@ import { OrderStatusBadge } from '@/components/admin/AdminBadge'
 import { useDialog } from '@/lib/dialog'
 import { createRazorpayOrder, verifyRazorpayPayment } from '@/lib/payments'
 import { openRazorpayCheckout } from '@/lib/razorpay-client'
+import Spinner from '@/components/shared/Spinner'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 const ref = (id: string) => id.slice(0, 8).toUpperCase()
@@ -27,12 +28,14 @@ function OrderCard({
   onView,
   onPay,
   paying,
+  verifying,
   payError,
 }: {
   order: CustomerOrder
   onView: () => void
   onPay: () => void
   paying: boolean
+  verifying: boolean
   payError: string
 }) {
   const count = order.items.reduce((a, i) => a + i.quantity, 0)
@@ -82,9 +85,15 @@ function OrderCard({
               onClick={onPay}
               disabled={paying}
               aria-busy={paying}
-              className="border border-copper bg-copper px-6 py-2.5 font-sans text-[10px] uppercase tracking-[0.18em] text-ivory transition-colors hover:border-dark hover:bg-dark disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 border border-copper bg-copper px-6 py-2.5 font-sans text-[10px] uppercase tracking-[0.18em] text-ivory transition-colors hover:border-dark hover:bg-dark disabled:opacity-60"
             >
-              {paying ? 'Opening…' : 'Pay again'}
+              {paying ? (
+                <>
+                  <Spinner /> {verifying ? 'Confirming…' : 'Opening…'}
+                </>
+              ) : (
+                'Pay again'
+              )}
             </button>
           )}
           <button
@@ -242,6 +251,7 @@ export default function OrdersList({
   const [active, setActive] = useState<CustomerOrder | null>(null)
   const [open, setOpen] = useState(false)
   const [payingId, setPayingId] = useState<string | null>(null)
+  const [verifyingId, setVerifyingId] = useState<string | null>(null)
   const [payError, setPayError] = useState<{ id: string; message: string } | null>(null)
 
   // Retry an order whose payment was dismissed: the Razorpay order is rebuilt
@@ -269,17 +279,22 @@ export default function OrdersList({
         name: "Sumam's Boutique",
         prefill: { name: a.name, email: a.email, contact: a.phone },
         onSuccess: async (paymentId, signature) => {
-          const v = await verifyRazorpayPayment({
-            razorpay_payment_id: paymentId,
-            razorpay_order_id: rzp.razorpayOrderId,
-            razorpay_signature: signature,
-          })
-          if ('ok' in v) {
-            setActive(null)
-            setOpen(false)
-            onPaid()
-          } else {
-            setPayError({ id: order.id, message: v.error })
+          setVerifyingId(order.id)
+          try {
+            const v = await verifyRazorpayPayment({
+              razorpay_payment_id: paymentId,
+              razorpay_order_id: rzp.razorpayOrderId,
+              razorpay_signature: signature,
+            })
+            if ('ok' in v) {
+              setActive(null)
+              setOpen(false)
+              onPaid()
+            } else {
+              setPayError({ id: order.id, message: v.error })
+            }
+          } finally {
+            setVerifyingId(null)
           }
         },
         onFail: (message) => setPayError({ id: order.id, message }),
@@ -299,7 +314,11 @@ export default function OrdersList({
   if (error) return <p className="font-sans text-sm text-[#B00020]">{error}</p>
 
   if (orders === null) {
-    return <p className="font-sans text-sm font-light text-muted">Loading your orders…</p>
+    return (
+      <p className="flex items-center gap-2 font-sans text-sm font-light text-muted">
+        <Spinner /> Loading your orders…
+      </p>
+    )
   }
 
   if (orders.length === 0) {
@@ -326,7 +345,8 @@ export default function OrdersList({
             <OrderCard
               order={o}
               onPay={() => payNow(o)}
-              paying={payingId === o.id}
+              paying={payingId === o.id || verifyingId === o.id}
+              verifying={verifyingId === o.id}
               payError={payError?.id === o.id ? payError.message : ''}
               onView={() => {
                 setActive(o)

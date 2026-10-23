@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { useRouter } from 'next/navigation'
 import { AdminCard } from '@/components/admin/AdminCard'
 import { useToast } from '@/components/admin/AdminToast'
@@ -14,7 +15,7 @@ export function StoreSettingsForm({
 }) {
   const router = useRouter()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   const [general, setGeneral] = useState(initialSettings.general)
   const [commerce, setCommerce] = useState(initialSettings.commerce)

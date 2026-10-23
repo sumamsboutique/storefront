@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState } from 'react'
+import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { useRouter } from 'next/navigation'
 import type { AdminCategoryItem } from '@/lib/admin/queries'
 import { AdminCard } from '@/components/admin/AdminCard'
@@ -18,7 +19,7 @@ export function CategoryManagerClient({
 }) {
   const router = useRouter()
   const { success, error } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useAsyncTransition()
 
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false)
