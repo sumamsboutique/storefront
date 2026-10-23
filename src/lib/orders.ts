@@ -30,9 +30,15 @@ export async function getStoreCommerce(): Promise<{
     .eq('key', 'commerce')
     .maybeSingle()
   const commerce = data?.value as { free_shipping_threshold?: number; flat_shipping_rate?: number } | undefined
+  // `||` treated an admin-configured 0 as "unset" and fell back to ₹199/₹10,000.
+  const rate = (value: unknown, fallback: number) => {
+    if (value === null || value === undefined || value === '') return fallback
+    const n = Number(value)
+    return Number.isFinite(n) && n >= 0 ? n : fallback
+  }
   return {
-    freeShippingThreshold: Number(commerce?.free_shipping_threshold) || 10000,
-    flatShippingRate: Number(commerce?.flat_shipping_rate) || 199,
+    freeShippingThreshold: rate(commerce?.free_shipping_threshold, 10000),
+    flatShippingRate: rate(commerce?.flat_shipping_rate, 199),
   }
 }
 

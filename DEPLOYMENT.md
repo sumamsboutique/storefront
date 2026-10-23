@@ -41,6 +41,10 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 
 # ── Canonical Application URL ──────────────────────────────────────────────
 NEXT_PUBLIC_SITE_URL=https://sumamsboutique.com
+
+# ── Admin Panel Host (Optional) ────────────────────────────────────────────
+# Hostname only, no protocol/port. Empty keeps /admin on the main host.
+ADMIN_HOST=admin.sumamsboutique.com
 ```
 
 ---
@@ -64,7 +68,11 @@ Vercel provides zero-configuration deployment with automatic edge asset distribu
    - **Install Command**: `pnpm install`
 4. **Environment Variables**:
    Add all environment variables from Section 2 in **Project Settings → Environment Variables**.
-5. **Deploy**:
+5. **Admin subdomain** (when `ADMIN_HOST` is set):
+   - **Settings → Domains** → add `admin.sumamsboutique.com` to the same project (one deployment, not a second project).
+   - Point its DNS record (CNAME) as Vercel instructs.
+   - `/admin/*` on the public host then 308-redirects to the admin host; the admin host serves both `/admin/*` and clean paths (`/products`, `/orders`, …).
+6. **Deploy**:
    Click **Deploy**. Vercel will automatically build and serve the application globally.
 
 ---

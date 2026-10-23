@@ -25,8 +25,8 @@ export async function POST(request: Request) {
   let event: {
     event?: string
     payload?: {
-      payment?: { entity?: { id?: string; order_id?: string } }
-      order?: { entity?: { id?: string } }
+      payment?: { entity?: { id?: string; order_id?: string; amount?: number } }
+      order?: { entity?: { id?: string; amount?: number; amount_paid?: number } }
     }
   }
   try {
@@ -54,6 +54,18 @@ export async function POST(request: Request) {
     .single()
 
   if (order && order.status === 'pending') {
+    // Defence in depth: the paid amount must match what the order says. The
+    // Razorpay order was created from this total, so a mismatch means tampering
+    // or a stale order — never mark it paid.
+    const paidPaise = payment?.amount ?? orderEntity?.amount_paid ?? orderEntity?.amount
+    const expectedPaise = Math.round(Number(order.total) * 100)
+    if (typeof paidPaise === 'number' && paidPaise !== expectedPaise) {
+      console.error(
+        `[razorpay webhook] amount mismatch for ${order.id}: paid ${paidPaise}, expected ${expectedPaise}`
+      )
+      return Response.json({ error: 'Amount mismatch' }, { status: 400 })
+    }
+
     // Single atomic transition: flips to paid, decrements stock and consumes
     // the coupon exactly once. A concurrent client-verify call is idempotent.
     const { data: marked, error: markErr } = await supabase.rpc('mark_order_paid', {
