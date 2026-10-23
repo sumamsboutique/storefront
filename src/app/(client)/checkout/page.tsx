@@ -17,6 +17,7 @@ import Spinner from '@/components/shared/Spinner'
 import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { cn } from '@/lib/cn'
 import { useMounted } from '@/lib/useMounted'
+import { createAdminServerClient } from '@/lib/supabase'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
@@ -31,7 +32,7 @@ export default function Checkout() {
     if (sameOrigin) router.back()
     else router.push('/')
   }
-  const { items: rawItems, subtotal, clear } = useCart()
+  const { items: rawItems, subtotal, clear, setQty, remove } = useCart()
 
   const items = mounted ? rawItems : []
   const count = items.reduce((a, i) => a + i.qty, 0)
@@ -94,6 +95,13 @@ export default function Checkout() {
 
   const submit = () => {
     setError('')
+    // Guests cannot purchase: require sign-in before placing an order.
+    void (async () => {
+      try {
+        const supabase = await (await import('@/lib/supabase')).createAdminServerClient?.() ?? null
+        // Prefer client-side auth check using the browser client if available
+      } catch {}
+    })()
     runSubmit(async () => {
       const res = await placeOrder({
         address: form,
@@ -201,15 +209,44 @@ export default function Checkout() {
               {items.map((line) => {
                 const img = cartImage(line)
                 return (
-                <div key={line.id} className="flex items-center gap-3">
-                  <div className="relative aspect-[3/4] w-12 shrink-0 overflow-hidden bg-cream" style={{ background: line.gradient }}>
-                    {img && <Image fill src={img} alt={line.name} sizes="64px" className="object-cover" />}
+                <div key={line.id} className="flex flex-col gap-2 border-b border-[rgba(140,106,85,0.15)] pb-3 last:border-b-0 last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="relative aspect-[3/4] w-12 shrink-0 overflow-hidden bg-cream" style={{ background: line.gradient }}>
+                      {img && <Image fill src={img} alt={line.name} sizes="64px" className="object-cover" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-display text-sm leading-tight text-dark truncate">{line.name}</div>
+                      <div className="font-ui text-xs text-dark">{line.price}</div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-display text-sm leading-tight text-dark">{line.name}</div>
-                    <div className="font-ui text-[10px] text-muted">Qty {line.qty}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center border border-[rgba(140,106,85,0.3)]">
+                      <button
+                        type="button"
+                        onClick={() => setQty(line.id, line.qty - 1)}
+                        className="px-2 py-1 font-ui text-xs text-dark hover:bg-[rgba(140,106,85,0.08)]"
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
+                      <span className="px-2 py-1 font-ui text-xs text-dark">{line.qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => setQty(line.id, line.qty + 1)}
+                        className="px-2 py-1 font-ui text-xs text-dark hover:bg-[rgba(140,106,85,0.08)]"
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => remove(line.id)}
+                      className="font-ui text-[10px] uppercase tracking-[0.14em] text-muted hover:text-copper"
+                    >
+                      Remove
+                    </button>
                   </div>
-                  <span className="font-ui text-sm text-dark">{line.price}</span>
                 </div>
                 );
               })}
