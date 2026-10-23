@@ -17,7 +17,6 @@ import Spinner from '@/components/shared/Spinner'
 import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { cn } from '@/lib/cn'
 import { useMounted } from '@/lib/useMounted'
-import { createAdminServerClient } from '@/lib/supabase'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
@@ -95,13 +94,6 @@ export default function Checkout() {
 
   const submit = () => {
     setError('')
-    // Guests cannot purchase: require sign-in before placing an order.
-    void (async () => {
-      try {
-        const supabase = await (await import('@/lib/supabase')).createAdminServerClient?.() ?? null
-        // Prefer client-side auth check using the browser client if available
-      } catch {}
-    })()
     runSubmit(async () => {
       const res = await placeOrder({
         address: form,
