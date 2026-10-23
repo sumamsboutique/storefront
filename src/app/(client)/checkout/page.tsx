@@ -46,6 +46,8 @@ export default function Checkout() {
   const total = subtotal() + shipping - discount
   const [placed, setPlaced] = useState(false)
   const [orderId, setOrderId] = useState('')
+  // Set once the order exists in the DB, so a dismissed payment can be retried.
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [pending, startTransition] = useTransition()
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', pin: '' })
@@ -97,6 +99,7 @@ export default function Checkout() {
         return
       }
       const dbOrderId = res.orderId
+      setPendingOrderId(dbOrderId)
       const rzp = await createRazorpayOrder(dbOrderId)
       if ('razorpayOrderId' in rzp) {
         await openRazorpayCheckout({
@@ -244,7 +247,7 @@ export default function Checkout() {
               aria-busy={pending}
               className={cn('mt-6 w-full py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] uppercase', items.length === 0 || pending ? 'bg-[rgba(140,106,85,0.3)] text-[rgba(28,10,6,0.4)]' : 'bg-copper text-ivory')}
             >
-              {pending ? 'Placing Order…' : `Place Order · ${fmt(total)}`}
+              {pending ? 'Placing Order…' : pendingOrderId ? `Pay again · ${fmt(total)}` : `Place Order · ${fmt(total)}`}
             </button>
             {error && <p className="mt-2 text-center font-ui text-xs text-[#B00020]">{error}</p>}
             <p className="mt-3 text-center font-ui text-[10px] font-light text-muted">

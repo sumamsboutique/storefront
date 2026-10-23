@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { getMyOrders, uploadMyAvatar, removeMyAvatar, type CustomerOrder } from '@/lib/account'
 import { customerLogoutAction } from '@/lib/admin/actions'
 import { useWishlist } from '@/lib/store'
@@ -223,11 +223,13 @@ export default function AccountDashboard({
   const mounted = useMounted()
   const wishlistCount = useWishlist((s) => s.ids.length)
 
-  useEffect(() => {
+  const loadOrders = useCallback(() => {
     getMyOrders()
       .then((res) => {
-        if (res.ok) setOrders(res.data)
-        else {
+        if (res.ok) {
+          setOrders(res.data)
+          setOrderError('')
+        } else {
           setOrders([])
           setOrderError(res.error)
         }
@@ -237,6 +239,10 @@ export default function AccountDashboard({
         setOrderError('Could not load your orders.')
       })
   }, [])
+
+  useEffect(() => {
+    loadOrders()
+  }, [loadOrders])
 
   const paid = orders?.filter(isPaid) ?? []
   const activeSection = TABS.find((t) => t.key === tab) ?? TABS[0]
@@ -297,7 +303,7 @@ export default function AccountDashboard({
           />
           <div className="mt-8">
             {tab === 'profile' && <ProfileTab profile={profile} onSaved={setProfile} />}
-            {tab === 'orders' && <OrdersList orders={orders} error={orderError} email={profile.email} />}
+            {tab === 'orders' && <OrdersList orders={orders} error={orderError} email={profile.email} onPaid={loadOrders} />}
             {tab === 'addresses' && <AddressBook email={profile.email} />}
           </div>
         </section>

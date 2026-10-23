@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { type CustomerOrder } from '@/lib/account'
 import { OrderStatusBadge } from '@/components/admin/AdminBadge'
 import { useDialog } from '@/lib/dialog'
+import { createRazorpayOrder, verifyRazorpayPayment } from '@/lib/payments'
+import { openRazorpayCheckout } from '@/lib/razorpay-client'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 const ref = (id: string) => id.slice(0, 8).toUpperCase()
@@ -20,7 +22,19 @@ function paymentNote(status: string): string {
   }
 }
 
-function OrderCard({ order, onView }: { order: CustomerOrder; onView: () => void }) {
+function OrderCard({
+  order,
+  onView,
+  onPay,
+  paying,
+  payError,
+}: {
+  order: CustomerOrder
+  onView: () => void
+  onPay: () => void
+  paying: boolean
+  payError: string
+}) {
   const count = order.items.reduce((a, i) => a + i.quantity, 0)
   const shown = order.items.slice(0, 3)
 
@@ -61,14 +75,28 @@ function OrderCard({ order, onView }: { order: CustomerOrder; onView: () => void
         <p className="font-sans text-xs text-muted">
           {order.shipping_address.city} {order.shipping_address.pin}
         </p>
-        <button
-          type="button"
-          onClick={onView}
-          className="border border-dark bg-dark px-6 py-2.5 font-sans text-[10px] uppercase tracking-[0.18em] text-ivory transition-colors hover:border-copper hover:bg-copper"
-        >
-          View details
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {order.status === 'pending' && (
+            <button
+              type="button"
+              onClick={onPay}
+              disabled={paying}
+              aria-busy={paying}
+              className="border border-copper bg-copper px-6 py-2.5 font-sans text-[10px] uppercase tracking-[0.18em] text-ivory transition-colors hover:border-dark hover:bg-dark disabled:opacity-60"
+            >
+              {paying ? 'Opening…' : 'Pay again'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onView}
+            className="border border-dark bg-dark px-6 py-2.5 font-sans text-[10px] uppercase tracking-[0.18em] text-ivory transition-colors hover:border-copper hover:bg-copper"
+          >
+            View details
+          </button>
+        </div>
       </div>
+      {payError && <p className="font-sans text-xs text-[#B00020]">{payError}</p>}
     </article>
   )
 }
@@ -204,13 +232,69 @@ export default function OrdersList({
   orders,
   error,
   email,
+  onPaid,
 }: {
   orders: CustomerOrder[] | null
   error: string
   email: string
+  onPaid: () => void
 }) {
   const [active, setActive] = useState<CustomerOrder | null>(null)
   const [open, setOpen] = useState(false)
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const [payError, setPayError] = useState<{ id: string; message: string } | null>(null)
+
+  // Retry an order whose payment was dismissed: the Razorpay order is rebuilt
+  // from the DB total, never from anything the browser holds.
+  const payNow = async (order: CustomerOrder) => {
+    setPayError(null)
+    setPayingId(order.id)
+    try {
+      const rzp = await createRazorpayOrder(order.id)
+      if (!('razorpayOrderId' in rzp)) {
+        setPayError({
+          id: order.id,
+          message:
+            rzp.error === 'razorpay_not_configured'
+              ? 'Online payments are unavailable right now.'
+              : rzp.error,
+        })
+        return
+      }
+      const a = order.shipping_address
+      await openRazorpayCheckout({
+        keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? '',
+        orderId: rzp.razorpayOrderId,
+        amountPaise: rzp.amountPaise,
+        name: "Sumam's Boutique",
+        prefill: { name: a.name, email: a.email, contact: a.phone },
+        onSuccess: async (paymentId, signature) => {
+          const v = await verifyRazorpayPayment({
+            razorpay_payment_id: paymentId,
+            razorpay_order_id: rzp.razorpayOrderId,
+            razorpay_signature: signature,
+          })
+          if ('ok' in v) {
+            setActive(null)
+            setOpen(false)
+            onPaid()
+          } else {
+            setPayError({ id: order.id, message: v.error })
+          }
+        },
+        onFail: (message) => setPayError({ id: order.id, message }),
+        onDismiss: () =>
+          setPayError({ id: order.id, message: 'Payment cancelled. You can try again.' }),
+      })
+    } catch (err) {
+      setPayError({
+        id: order.id,
+        message: err instanceof Error ? err.message : 'Could not open the payment gateway.',
+      })
+    } finally {
+      setPayingId(null)
+    }
+  }
 
   if (error) return <p className="font-sans text-sm text-[#B00020]">{error}</p>
 
@@ -241,6 +325,9 @@ export default function OrdersList({
           <li key={o.id}>
             <OrderCard
               order={o}
+              onPay={() => payNow(o)}
+              paying={payingId === o.id}
+              payError={payError?.id === o.id ? payError.message : ''}
               onView={() => {
                 setActive(o)
                 setOpen(true)
