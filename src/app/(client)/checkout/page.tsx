@@ -75,20 +75,29 @@ export default function Checkout() {
         if (cancelled) return
         const serverAuthed = res.status === 'fulfilled' && res.value.ok ? res.value.data.authed : false
         const clientAuthed = userRes.status === 'fulfilled' && (userRes.value as any)?.data?.user ? true : false
-        setIsAuthed(serverAuthed || clientAuthed)
+        const authed = serverAuthed || clientAuthed
+        setIsAuthed(authed)
         setAuthChecked(true)
+        if (!authed) {
+          router.replace('/account?next=/checkout')
+        }
       } catch {
         if (!cancelled) {
           setIsAuthed(false)
           setAuthChecked(true)
+          router.replace('/account?next=/checkout')
         }
       }
     }
     check()
     const sub = supabase?.auth.onAuthStateChange((_event, session) => {
       if (cancelled) return
-      setIsAuthed(!!session?.user)
+      const authed = !!session?.user
+      setIsAuthed(authed)
       setAuthChecked(true)
+      if (!authed) {
+        router.replace('/account?next=/checkout')
+      }
     })
     getStoreCommerce()
       .then(setCommerce)
@@ -105,7 +114,7 @@ export default function Checkout() {
       cancelled = true
       sub?.data.subscription.unsubscribe()
     }
-  }, [])
+  }, [router])
 
   const applyCoupon = async () => {
     if (!couponInput.trim() || couponPending) return
