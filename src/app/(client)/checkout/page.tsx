@@ -78,7 +78,7 @@ export default function Checkout() {
         const authed = serverAuthed || clientAuthed
         setIsAuthed(authed)
         setAuthChecked(true)
-        if (!authed) {
+        if (!authed && !serverAuthed) {
           router.replace('/account?next=/checkout')
         }
       } catch {
@@ -95,9 +95,6 @@ export default function Checkout() {
       const authed = !!session?.user
       setIsAuthed(authed)
       setAuthChecked(true)
-      if (!authed) {
-        router.replace('/account?next=/checkout')
-      }
     })
     getStoreCommerce()
       .then(setCommerce)
