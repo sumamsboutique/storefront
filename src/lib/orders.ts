@@ -55,8 +55,7 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
   if (!user) {
     return { error: 'Please sign in or create an account to place your order.' }
   }
-  if (!supabase) return { error: 'Payments are unavailable right now.' }
-  const { data, error } = await supabase.rpc('create_pending_order', {
+  const { data, error } = await serverClient.rpc('create_pending_order', {
     p_address: {
       name: address.name,
       phone: address.phone,
