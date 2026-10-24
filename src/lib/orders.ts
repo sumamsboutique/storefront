@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { supabase } from './supabase'
+import { createAdminServerClient } from './admin/auth'
 import { couponErrorText } from './coupon-codes'
 import { AddressSchema } from './schemas'
 
@@ -49,6 +50,11 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
   }
 
   const { address, items, coupon } = parsed.data
+  const serverClient = await createAdminServerClient()
+  const { data: { user } } = await serverClient.auth.getUser()
+  if (!user) {
+    return { error: 'Please sign in or create an account to place your order.' }
+  }
   if (!supabase) return { error: 'Payments are unavailable right now.' }
   const { data, error } = await supabase.rpc('create_pending_order', {
     p_address: {
