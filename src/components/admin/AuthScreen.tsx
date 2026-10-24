@@ -106,10 +106,12 @@ function GoogleIcon() {
 export default function AuthScreen({
   variant = 'admin',
   initialError,
+  nextPath,
 }: {
   variant?: AuthVariant
   // Set when the OAuth callback hands the user back after a failed exchange.
   initialError?: string
+  nextPath?: string
 }) {
   const isAdmin = variant === 'admin'
   const [mode, setMode] = useState<Mode>('login')
@@ -213,7 +215,7 @@ export default function AuthScreen({
     setError(null)
     setNotice(null)
     startTransition(async () => {
-      const res = await oauthSignInAction('google', '/account')
+      const res = await oauthSignInAction('google', nextPath || '/account')
       if (res?.error) setError(res.error)
     })
   }
@@ -340,6 +342,7 @@ export default function AuthScreen({
                 </div>
 
                 <form ref={loginFormRef} onSubmit={handleLogin} className="space-y-4" noValidate>
+                  {nextPath && <input type="hidden" name="next" value={nextPath} />}
                   <FieldShell id="login-identifier" label="Email or phone number" error={fieldErrors.email}>
                     <input
                       id="login-identifier"

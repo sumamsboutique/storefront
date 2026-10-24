@@ -199,6 +199,7 @@ export async function customerLoginAction(
 ) {
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
+  const next = (formData.get('next') as string) || '/account'
 
   if (!email || !password) {
     return { error: 'Please enter both email and password.' }
@@ -244,7 +245,8 @@ export async function customerLoginAction(
       return { error: 'Your account is registered for staff access. Please use the staff CRM login.' }
     }
 
-    redirect('/account')
+    const redirectTo = next.startsWith('/') && !next.startsWith('//') ? next : '/account'
+    redirect(redirectTo)
   } catch (err) {
     if (err && typeof err === 'object' && 'digest' in err) {
       throw err // Next.js redirect

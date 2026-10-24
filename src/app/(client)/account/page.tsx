@@ -48,6 +48,7 @@ export default async function AccountPage({
           initialError={
             oauthError ? 'Google sign-in did not complete. Please try again.' : undefined
           }
+          nextPath={redirectTo}
         />
       )}
 
