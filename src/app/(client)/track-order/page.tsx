@@ -55,7 +55,7 @@ export default function TrackOrderPage() {
                 Track order
               </button>
               <p className="font-sans text-xs text-muted">
-                Public order lookup isn't enabled yet. Sign in to{' '}
+                Public order lookup isn&apos;t enabled yet. Sign in to{' '}
                 <a className="text-copper underline" href="/account?tab=orders">
                   My Orders
                 </a>{' '}

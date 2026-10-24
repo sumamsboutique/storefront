@@ -100,6 +100,7 @@ export default function Reviews({ productId, productName = 'saree' }: { productI
       .then(({ data }) => {
         if (data) setRows(data as ReviewRow[])
       })
+  }, [productId])
     // Use getUser (JWT-based) instead of getSession (HTTP cookie-based) so
     // this effect never calls setState in the effect body — the linter permits
     // the promise-only pattern without a setState call inside it.
