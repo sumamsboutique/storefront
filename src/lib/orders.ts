@@ -63,10 +63,20 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
     p_coupon: coupon || null,
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    const msg = error.message || ''
+    if (msg.includes('AUTH_REQUIRED')) {
+      return { error: 'Please sign in or create an account to place your order.' }
+    }
+    return { error: msg }
+  }
   // coupon failures surface as { ok:false, error } inside the RPC result
   if (data && typeof data === 'object' && 'ok' in data && (data as { ok: boolean }).ok === false) {
-    return { error: couponErrorText((data as { error?: string }).error) }
+    const err = (data as { error?: string }).error || ''
+    if (err === 'AUTH_REQUIRED') {
+      return { error: 'Please sign in or create an account to place your order.' }
+    }
+    return { error: couponErrorText(err) }
   }
   if (!data?.order_id) return { error: 'Could not create your order.' }
 

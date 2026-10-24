@@ -17,12 +17,15 @@ import Spinner from '@/components/shared/Spinner'
 import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { cn } from '@/lib/cn'
 import { useMounted } from '@/lib/useMounted'
+import { supabase } from '@/lib/supabase'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
 export default function Checkout() {
   const mounted = useMounted()
   const router = useRouter()
+  const [authChecked, setAuthChecked] = useState(false)
+  const [isAuthed, setIsAuthed] = useState(false)
   // Back to where the user came from if that was us, else home.
   const goBack = () => {
     const ref = document.referrer
@@ -62,6 +65,33 @@ export default function Checkout() {
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
   useEffect(() => {
+    let cancelled = false
+    const check = async () => {
+      if (!supabase) {
+        if (!cancelled) {
+          setIsAuthed(false)
+          setAuthChecked(true)
+        }
+        return
+      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!cancelled) {
+          setIsAuthed(!!user)
+          setAuthChecked(true)
+        }
+      } catch {
+        if (!cancelled) {
+          setIsAuthed(false)
+          setAuthChecked(true)
+        }
+      }
+    }
+    check()
+    const sub = supabase?.auth.onAuthStateChange((_event, session) => {
+      setIsAuthed(!!session?.user)
+      setAuthChecked(true)
+    })
     getStoreCommerce()
       .then(setCommerce)
       .catch(() => {})
@@ -73,6 +103,10 @@ export default function Checkout() {
         setForm({ name: first.name, phone: first.phone, email: first.email, address: first.address, city: first.city, pin: first.pin })
       })
       .catch(() => {})
+    return () => {
+      cancelled = true
+      sub?.data.subscription.unsubscribe()
+    }
   }, [])
 
   const applyCoupon = async () => {
@@ -94,6 +128,14 @@ export default function Checkout() {
 
   const submit = () => {
     setError('')
+    if (!authChecked) {
+      setError('Checking sign-in… please try again.')
+      return
+    }
+    if (!isAuthed) {
+      setError('Please sign in or create an account to place your order.')
+      return
+    }
     runSubmit(async () => {
       const res = await placeOrder({
         address: form,
@@ -281,11 +323,17 @@ export default function Checkout() {
                 <p className="mt-1.5 font-ui text-xs text-[#B00020]">{couponMsg}</p>
               )}
             </div>
+            {authChecked && !isAuthed && items.length > 0 && (
+              <div className="mt-6 rounded border border-[rgba(176,0,32,0.25)] bg-[rgba(176,0,32,0.05)] p-3 text-center">
+                <p className="font-ui text-xs text-[#B00020]">Please sign in or create an account to place your order.</p>
+                <Link href="/account?next=/checkout" className="mt-2 inline-block font-ui text-[10px] uppercase tracking-[0.16em] text-copper underline">Sign in / Sign up</Link>
+              </div>
+            )}
             <button
               onClick={submit}
-              disabled={items.length === 0 || placing || verifying}
+              disabled={items.length === 0 || placing || verifying || (authChecked && !isAuthed)}
               aria-busy={placing || verifying}
-              className={cn('mt-6 flex w-full items-center justify-center gap-2 py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] uppercase', items.length === 0 || placing || verifying ? 'bg-[rgba(140,106,85,0.3)] text-[rgba(28,10,6,0.4)]' : 'bg-copper text-ivory')}
+              className={cn('mt-6 flex w-full items-center justify-center gap-2 py-3.5 font-ui text-[11px] font-medium tracking-[0.18em] uppercase', items.length === 0 || placing || verifying || (authChecked && !isAuthed) ? 'bg-[rgba(140,106,85,0.3)] text-[rgba(28,10,6,0.4)]' : 'bg-copper text-ivory')}
             >
               {verifying ? (
                 <>

@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic'
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string | string[]; error?: string | string[] }>
+  searchParams: Promise<{ tab?: string | string[]; error?: string | string[]; next?: string | string[] }>
 }) {
   const session = await getCustomerSession()
-  const { tab, error } = await searchParams
+  const { tab, error, next } = await searchParams
 
   // Unknown or missing tab falls back to the first tab, so a stale link still lands.
   const key = Array.isArray(tab) ? tab[0] : tab
@@ -21,6 +21,8 @@ export default async function AccountPage({
 
   // A cancelled or failed Google round-trip comes back as ?error=oauth.
   const oauthError = (Array.isArray(error) ? error[0] : error) === 'oauth'
+  const nextParam = Array.isArray(next) ? next[0] : next
+  const redirectTo = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : undefined
 
   return (
     <main className="min-h-screen bg-ivory flex flex-col">
