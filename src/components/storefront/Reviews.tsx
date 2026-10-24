@@ -101,8 +101,11 @@ export default function Reviews({ productId, productName = 'saree' }: { productI
         if (data) setRows(data as ReviewRow[])
       })
   }, [productId])
+
+  useEffect(() => {
+    if (!supabase) return
     // Use getUser (JWT-based) instead of getSession (HTTP cookie-based) so
-    // this effect never calls setState in the effect body — the linter permits
+    // this effect never calls setState in the effect body - the linter permits
     // the promise-only pattern without a setState call inside it.
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setSignedIn(true)
