@@ -51,12 +51,7 @@ export async function isCustomerAuthed(): Promise<ActionResult<{ authed: boolean
     const supabase = await createAdminServerClient()
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error || !user) return { ok: true, data: { authed: false } }
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
-    return { ok: true, data: { authed: profile?.role === 'customer' } }
+    return { ok: true, data: { authed: true } }
   } catch {
     return { ok: true, data: { authed: false } }
   }

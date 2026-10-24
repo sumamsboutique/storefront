@@ -17,6 +17,7 @@ import Spinner from '@/components/shared/Spinner'
 import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { cn } from '@/lib/cn'
 import { useMounted } from '@/lib/useMounted'
+import { supabase } from '@/lib/supabase'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
@@ -67,11 +68,15 @@ export default function Checkout() {
     let cancelled = false
     const check = async () => {
       try {
-        const res = await isCustomerAuthed()
-        if (!cancelled) {
-          setIsAuthed(res.ok ? res.data.authed : false)
-          setAuthChecked(true)
-        }
+        const [res, userRes] = await Promise.allSettled([
+          isCustomerAuthed(),
+          supabase ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } }),
+        ])
+        if (cancelled) return
+        const serverAuthed = res.status === 'fulfilled' && res.value.ok ? res.value.data.authed : false
+        const clientAuthed = userRes.status === 'fulfilled' && (userRes.value as any)?.data?.user ? true : false
+        setIsAuthed(serverAuthed || clientAuthed)
+        setAuthChecked(true)
       } catch {
         if (!cancelled) {
           setIsAuthed(false)
@@ -80,6 +85,11 @@ export default function Checkout() {
       }
     }
     check()
+    const sub = supabase?.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return
+      setIsAuthed(!!session?.user)
+      setAuthChecked(true)
+    })
     getStoreCommerce()
       .then(setCommerce)
       .catch(() => {})
@@ -93,6 +103,7 @@ export default function Checkout() {
       .catch(() => {})
     return () => {
       cancelled = true
+      sub?.data.subscription.unsubscribe()
     }
   }, [])
 
