@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart, cartImage } from '@/lib/store'
 import { placeOrder, getStoreCommerce } from '@/lib/orders'
-import { getSavedAddresses, type SavedAddress, isCustomerAuthed } from '@/lib/account'
+import { getSavedAddresses, type SavedAddress } from '@/lib/account'
 import { validateCoupon, type CouponLookup } from '@/lib/coupons'
 import { createRazorpayOrder, verifyRazorpayPayment } from '@/lib/payments'
 import { openRazorpayCheckout } from '@/lib/razorpay-client'
@@ -67,20 +67,25 @@ export default function Checkout() {
   useEffect(() => {
     let cancelled = false
     const check = async () => {
-      try {
-        const [res, userRes] = await Promise.allSettled([
-          isCustomerAuthed(),
-          supabase ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } }),
-        ])
-        if (cancelled) return
-        const serverAuthed = res.status === 'fulfilled' && res.value.ok ? res.value.data.authed : false
-        const clientAuthed = userRes.status === 'fulfilled' && (userRes.value as any)?.data?.user ? true : false
-        const authed = serverAuthed || clientAuthed
-        setIsAuthed(authed)
-        setAuthChecked(true)
-        if (!authed && !serverAuthed) {
+      if (!supabase) {
+        if (!cancelled) {
+          setIsAuthed(false)
+          setAuthChecked(true)
           router.replace('/account?next=/checkout')
         }
+        return
+      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (cancelled) return
+        if (!user) {
+          setIsAuthed(false)
+          setAuthChecked(true)
+          router.replace('/account?next=/checkout')
+          return
+        }
+        setIsAuthed(true)
+        setAuthChecked(true)
       } catch {
         if (!cancelled) {
           setIsAuthed(false)
@@ -92,8 +97,13 @@ export default function Checkout() {
     check()
     const sub = supabase?.auth.onAuthStateChange((_event, session) => {
       if (cancelled) return
-      const authed = !!session?.user
-      setIsAuthed(authed)
+      if (!session?.user) {
+        setIsAuthed(false)
+        setAuthChecked(true)
+        router.replace('/account?next=/checkout')
+        return
+      }
+      setIsAuthed(true)
       setAuthChecked(true)
     })
     getStoreCommerce()
