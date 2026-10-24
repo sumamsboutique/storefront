@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart, cartImage } from '@/lib/store'
 import { placeOrder, getStoreCommerce } from '@/lib/orders'
-import { getSavedAddresses, type SavedAddress } from '@/lib/account'
+import { getSavedAddresses, type SavedAddress, isCustomerAuthed } from '@/lib/account'
 import { validateCoupon, type CouponLookup } from '@/lib/coupons'
 import { createRazorpayOrder, verifyRazorpayPayment } from '@/lib/payments'
 import { openRazorpayCheckout } from '@/lib/razorpay-client'
@@ -17,7 +17,6 @@ import Spinner from '@/components/shared/Spinner'
 import { useAsyncTransition } from '@/lib/useAsyncTransition'
 import { cn } from '@/lib/cn'
 import { useMounted } from '@/lib/useMounted'
-import { supabase } from '@/lib/supabase'
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN')
 
@@ -67,17 +66,10 @@ export default function Checkout() {
   useEffect(() => {
     let cancelled = false
     const check = async () => {
-      if (!supabase) {
-        if (!cancelled) {
-          setIsAuthed(false)
-          setAuthChecked(true)
-        }
-        return
-      }
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const res = await isCustomerAuthed()
         if (!cancelled) {
-          setIsAuthed(!!user)
+          setIsAuthed(res.ok ? res.data.authed : false)
           setAuthChecked(true)
         }
       } catch {
@@ -88,10 +80,6 @@ export default function Checkout() {
       }
     }
     check()
-    const sub = supabase?.auth.onAuthStateChange((_event, session) => {
-      setIsAuthed(!!session?.user)
-      setAuthChecked(true)
-    })
     getStoreCommerce()
       .then(setCommerce)
       .catch(() => {})
@@ -105,7 +93,6 @@ export default function Checkout() {
       .catch(() => {})
     return () => {
       cancelled = true
-      sub?.data.subscription.unsubscribe()
     }
   }, [])
 

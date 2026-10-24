@@ -46,6 +46,22 @@ export type ActionResult<T = unknown> =
   | { ok: true; data: T }
   | { ok: false; error: string }
 
+export async function isCustomerAuthed(): Promise<ActionResult<{ authed: boolean }>> {
+  try {
+    const supabase = await createAdminServerClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return { ok: true, data: { authed: false } }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+    return { ok: true, data: { authed: profile?.role === 'customer' } }
+  } catch {
+    return { ok: true, data: { authed: false } }
+  }
+}
+
 export async function getMyOrders(): Promise<ActionResult<CustomerOrder[]>> {
   const supabase = await createAdminServerClient()
   const { data, error } = await supabase.rpc('get_customer_orders')
