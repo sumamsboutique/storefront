@@ -51,11 +51,11 @@ export default function PrivacyPolicyPage() {
             <h2 className="font-display text-xl font-light text-dark">4. Sharing Your Information</h2>
             <p>We only share your information with trusted third parties necessary to operate our business:</p>
             <ul className="list-disc pl-5 space-y-2">
-              <li><strong>Supabase</strong> – Authentication, database, and secure storage</li>
-              <li><strong>Razorpay</strong> – Secure payment processing</li>
-              <li><strong>Google</strong> – OAuth sign-in (if used)</li>
-              <li><strong>Vercel</strong> – Hosting and infrastructure</li>
-              <li><strong>Shipping/Courier Partners</strong> – To deliver your orders (limited to delivery-related details)</li>
+              <li><strong>Supabase</strong> &ndash; Authentication, database, and secure storage</li>
+              <li><strong>Razorpay</strong> &ndash; Secure payment processing</li>
+              <li><strong>Google</strong> &ndash; OAuth sign-in (if used)</li>
+              <li><strong>Vercel</strong> &ndash; Hosting and infrastructure</li>
+              <li><strong>Shipping/Courier Partners</strong> &ndash; To deliver your orders (limited to delivery-related details)</li>
             </ul>
             <p>We do not sell, rent, or trade your personal information to third parties.</p>
           </section>
