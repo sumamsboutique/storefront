@@ -152,9 +152,25 @@ const SECTION_SPECS: Record<string, { l: string; hint: string; w: W[] }> = {
       },
     ],
   },
+  header: {
+    l: 'Header Navigation',
+    hint: 'Edit top navigation links. Add Jewellery when ready.',
+    w: [
+      {
+        kind: 'list',
+        p: '$',
+        l: 'Navigation Links',
+        item: 'Link',
+        w: [
+          { kind: 'text', p: '#.label', l: 'Label' },
+          { kind: 'text', p: '#.href', l: 'URL' },
+        ],
+      },
+    ],
+  },
   footer: {
     l: 'Footer & Brand Copy',
-    hint: 'Brand tagline, newsletter box, link columns, and legal line.',
+    hint: 'Brand tagline, newsletter box, link columns, jewellery, legal and copyright.',
     w: [
       { kind: 'group', l: 'Brand', w: [
         { kind: 'text', p: 'brand.title', l: 'Title' },

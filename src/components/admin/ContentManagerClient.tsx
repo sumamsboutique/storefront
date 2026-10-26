@@ -12,6 +12,7 @@ import { saveContentBlock, setContentBlockPublished } from '@/lib/admin/actions'
 import { ContentBlockForm } from '@/components/admin/ContentBlockForm'
 
 const SECTIONS = [
+  { key: 'header', label: '0. Header Navigation', desc: 'Main menu links shown in the site header.' },
   { key: 'hero', label: '1. Hero Banner Slides', desc: 'Main carousel slides, headline typography, and action links.' },
   { key: 'marquee', label: '2. Announcement Marquee', desc: 'Scrolling bilingual banner items below the hero.' },
   { key: 'browse_by_category', label: '3. Browse By Category', desc: 'Hero and grid tiles for the saree weaves.' },
@@ -19,7 +20,7 @@ const SECTIONS = [
   { key: 'our_heritage', label: '5. Our Heritage & Story', desc: 'Founder story, blockquote, and atelier archival photo.' },
   { key: 'testimonials', label: '6. Customer Testimonials', desc: 'Handpicked patron stories and reviews from the storefront.' },
   { key: 'instagram_strip', label: '7. Instagram Gallery', desc: 'Social handle and live lifestyle photo feed.' },
-  { key: 'footer', label: '8. Footer & Brand Copy', desc: 'Brand tagline, newsletter text, and copyright.' },
+  { key: 'footer', label: '8. Footer & Brand Copy', desc: 'Brand tagline, newsletter text, link columns, legal and copyright.' },
 ]
 
 export function ContentManagerClient({
