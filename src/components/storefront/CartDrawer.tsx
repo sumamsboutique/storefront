@@ -78,8 +78,23 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
+            {mounted && cartSubtotal < 10000 && (
+              <div className="px-6 pt-4">
+                <div className="mb-2 flex items-center justify-between font-ui text-[10px] uppercase tracking-[0.16em] text-muted">
+                  <span>
+                    {cartSubtotal >= 10000 ? 'Free shipping unlocked' : `Add ₹${(10000 - cartSubtotal).toLocaleString('en-IN')} for free shipping`}
+                  </span>
+                  <span>{Math.min(100, Math.round((cartSubtotal / 10000) * 100))}%</span>
+                </div>
+                <div className="h-1 w-full bg-[rgba(140,106,85,0.2)]">
+                  <div
+                    className="h-1 bg-copper transition-all duration-300"
+                    style={{ width: `${Math.min(100, (cartSubtotal / 10000) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
             <div className="flex-1 overflow-y-auto px-6">
-              {items.map((line) => {
                 const img = cartImage(line)
                 return (
                 <div key={line.id} className="flex gap-4 border-b border-[rgba(140,106,85,0.2)] py-5">

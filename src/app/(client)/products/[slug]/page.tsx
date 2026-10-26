@@ -52,23 +52,77 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     '@context': 'https://schema.org/',
     '@type': 'Product',
     name: product.name,
-    description: product.description?.trim() || product.sub || `${product.weave}`,
-    image: product.images?.[0] ? [product.images[0]] : undefined,
+    description:
+      product.description?.trim() ||
+      product.seoDescription?.trim() ||
+      product.sub ||
+      `${product.weave} handwoven saree from Sumam's Boutique.`,
+    image: product.images && product.images.length ? product.images : undefined,
+    brand: {
+      '@type': 'Brand',
+      name: "Sumam's Boutique",
+    },
+    category: product.weave,
     url: `${siteUrl()}/products/${product.slug}`,
     offers: {
       '@type': 'Offer',
       priceCurrency: 'INR',
       price: product.priceNum,
       availability: product.sold ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      url: `${siteUrl()}/products/${product.slug}`,
     },
+  }
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: siteUrl(),
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Sarees',
+        item: `${siteUrl()}/sarees`,
+      },
+      product.categorySlug
+        ? {
+            '@type': 'ListItem',
+            position: 3,
+            name: product.weave,
+            item: `${siteUrl()}/sarees/${product.categorySlug}`,
+          }
+        : null,
+      {
+        '@type': 'ListItem',
+        position: product.categorySlug ? 4 : 3,
+        name: product.name,
+        item: `${siteUrl()}/products/${product.slug}`,
+      },
+    ].filter(Boolean),
   }
 
   return (
     <main className="min-h-screen bg-ivory">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbLd).replace(/</g, '\\u003c'),
+        }}
+      />
       <Navbar />
       <Pdp product={product} related={relatedSorted} />
-      <Footer /> 
+      <Footer />
     </main>
   )
 }

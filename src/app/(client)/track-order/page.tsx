@@ -4,7 +4,7 @@ import { SareeBorderDivider } from '@/components/shared/primitives'
 
 export const metadata = {
   title: "Track Your Order | Sumam's Boutique",
-  description: "Track the status of your Sumam's Boutique order.",
+  description: "Track the status of your Sumam's Boutique order with your Order ID and email address.",
 }
 
 export default function TrackOrderPage() {
@@ -55,11 +55,15 @@ export default function TrackOrderPage() {
                 Track order
               </button>
               <p className="font-sans text-xs text-muted">
-                Public order lookup isn&apos;t enabled yet. Sign in to{' '}
+                For the fastest updates, sign in to{' '}
                 <a className="text-copper underline" href="/account?tab=orders">
                   My Orders
                 </a>{' '}
-                for the full status and to pay again if needed.
+                to view full status, shipping details, and tracking links. If you need help, email{' '}
+                <a className="text-copper underline" href="mailto:hello@sumamsboutique.com">
+                  hello@sumamsboutique.com
+                </a>{' '}
+                with your Order ID.
               </p>
             </form>
           </section>
