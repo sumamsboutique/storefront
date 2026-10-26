@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -10,7 +11,6 @@ export const supabase = url && anonKey ? createBrowserClient(url, anonKey) : nul
 // ponytail: service-role client for trusted server code only (payments, webhooks).
 // Bypasses RLS — never import this into client components or 'use client' code.
 export function createServiceClient() {
-  const { createClient } = require('@supabase/supabase-js')
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) return null
   return createClient(url, key, { auth: { persistSession: false } })

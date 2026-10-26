@@ -4,11 +4,12 @@ import { z } from 'zod'
 import { supabase } from './supabase'
 import { createAdminServerClient } from './admin/auth'
 import { couponErrorText } from './coupon-codes'
+import { orderErrorText } from './order-errors'
 import { AddressSchema } from './schemas'
 
 const ItemSchema = z.object({
   product_id: z.string().uuid(),
-  variant_id: z.string().uuid().optional(),
+  variant_id: z.string().uuid().nullable().optional(),
   quantity: z.number().int().min(1).max(99),
 })
 
@@ -69,11 +70,7 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
   })
 
   if (error) {
-    const msg = error.message || ''
-    if (msg.includes('AUTH_REQUIRED')) {
-      return { error: 'Please sign in or create an account to place your order.' }
-    }
-    return { error: msg }
+    return { error: orderErrorText(error.message) }
   }
   // coupon failures surface as { ok:false, error } inside the RPC result
   if (data && typeof data === 'object' && 'ok' in data && (data as { ok: boolean }).ok === false) {

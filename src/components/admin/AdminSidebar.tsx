@@ -89,6 +89,17 @@ export function AdminSidebar({
       ),
     },
     {
+      label: 'Payment Review',
+      href: '/admin/reconciliation',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+          <path d="M12 3v1M21 12h-1" />
+        </svg>
+      ),
+    },
+    {
       label: 'Customers & Staff',
       href: '/admin/customers',
       adminOnly: true,

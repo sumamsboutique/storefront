@@ -22,6 +22,14 @@ export interface CatalogProduct {
   variants?: { id: string; type: string; value: string; images: string[] }[] // own gallery per variant, when photo sets are variant-linked
   categorySlug?: string // products category slug (category page filtering); '' on the demo catalog
   createdAt?: string // products.created_at, ISO — used by the "Newest" sort
+  description?: string | null
+  fabricWeaveDetails?: string | null
+  dimensions?: string | null
+  careInstructions?: string | null
+  shippingReturnsNote?: string | null
+  occasionTags?: string[]
+  seoTitle?: string | null
+  seoDescription?: string | null
 }
 
 /** The five shop categories: drives the navbar category bar and the /sarees/[slug] routes.

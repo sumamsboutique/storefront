@@ -68,6 +68,7 @@ export function OrderListClient({
           {[
             { key: '', label: 'All Orders' },
             { key: 'pending', label: 'Pending' },
+            { key: 'payment_review', label: 'Payment Review' },
             { key: 'paid', label: 'Paid' },
             { key: 'processing', label: 'Processing' },
             { key: 'shipped', label: 'Shipped' },

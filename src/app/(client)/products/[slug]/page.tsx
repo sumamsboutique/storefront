@@ -19,12 +19,18 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { slug } = await params
   const product = await getProductBySlug(slug)
   if (!product) return {}
+  const title = product.seoTitle?.trim() || `${product.name} — Sumam's Boutique`
+  const description =
+    product.seoDescription?.trim() ||
+    product.description?.trim() ||
+    product.sub ||
+    `${product.weave} saree from Sumam's Boutique.`
   return {
-    title: `${product.name} — Sumam's Boutique`,
-    description: product.sub || `${product.weave} saree from Sumam's Boutique.`,
+    title,
+    description,
     openGraph: {
-      title: `${product.name} — Sumam's Boutique`,
-      description: product.sub || `${product.weave} saree from Sumam's Boutique.`,
+      title,
+      description,
       type: 'website',
       images: product.images?.[0] ? [{ url: product.images[0] }] : undefined,
     },
@@ -46,7 +52,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     '@context': 'https://schema.org/',
     '@type': 'Product',
     name: product.name,
-    description: product.sub || `${product.weave}`,
+    description: product.description?.trim() || product.sub || `${product.weave}`,
     image: product.images?.[0] ? [product.images[0]] : undefined,
     url: `${siteUrl()}/products/${product.slug}`,
     offers: {

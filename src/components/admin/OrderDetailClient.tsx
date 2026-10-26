@@ -22,6 +22,7 @@ export type OrderDetailProps = {
     total: number
     payment_provider?: string | null
     payment_reference?: string | null
+    payment_id?: string | null
     shipping_address?: Record<string, string> | null
     staff_notes?: string | null
     order_items?: {
@@ -203,12 +204,18 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
               <div className="mt-4 pt-4 border-t border-[#DCC9A8]/40 text-[11px] text-muted space-y-1">
                 <div>
                   <span className="font-medium text-dark">Payment Provider:</span>{' '}
-                  {order.payment_provider || 'Not yet recorded (Guest Checkout)'}
+                  {order.payment_provider || 'Not yet recorded'}
                 </div>
                 <div>
-                  <span className="font-medium text-dark">Transaction Ref:</span>{' '}
+                  <span className="font-medium text-dark">Provider Order Ref:</span>{' '}
                   <span className="font-mono">{order.payment_reference || 'Pending payment'}</span>
                 </div>
+                {order.payment_id && (
+                  <div>
+                    <span className="font-medium text-dark">Payment ID:</span>{' '}
+                    <span className="font-mono">{order.payment_id}</span>
+                  </div>
+                )}
               </div>
             </div>
           </AdminCard>

@@ -1,3 +1,18 @@
 -- Sumam's Boutique — Supabase schema migrations
--- Apply in order. Phase 5 (Data layer) wires real tables.
--- Placeholder for the first migration: 0000_initial.sql
+--
+-- These files are ordered, forward-only schema/data changes. The current
+-- repository set is numbered 001 through 033. Before applying to any database:
+--
+-- 1. Confirm the target project and environment (local/staging/production).
+--    The configured Supabase project is live; do not use it for migration tests.
+-- 2. Take/verify a recoverable backup and use a staging database first.
+-- 3. Compare the target's migration history/schema with these files; do not
+--    blindly replay already-applied SQL in the Supabase SQL editor.
+-- 4. Apply in numeric order using the linked Supabase CLI migration workflow
+--    only after `supabase/config.toml` and project linkage have been configured,
+--    or use a reviewed SQL-editor plan that explicitly tracks applied versions.
+-- 5. Run database/RLS/RPC integration checks before deployment.
+--
+-- This repository currently does not include supabase/config.toml or a checked-in
+-- migration-history snapshot. Therefore local files alone cannot establish which
+-- migrations have been applied to a live project. Do not infer deployment state.

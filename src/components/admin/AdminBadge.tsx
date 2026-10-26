@@ -47,6 +47,7 @@ export function AdminBadge({
 export function OrderStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; variant: BadgeVariant }> = {
     pending: { label: 'Pending', variant: 'warning' },
+    payment_review: { label: 'Payment Review', variant: 'danger' },
     paid: { label: 'Paid', variant: 'success' },
     processing: { label: 'Processing', variant: 'info' },
     shipped: { label: 'Shipped', variant: 'copper' },

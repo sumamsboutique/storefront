@@ -6,6 +6,7 @@ import { uploadProductImage } from '@/lib/admin/actions'
 
 export type ImageItem = {
   id?: string
+  variant_id?: string | null
   storage_path: string
   alt_text: string
   display_order: number

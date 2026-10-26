@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createAdminServerClient } from '@/lib/admin/auth'
+import { safeLocalRedirectPath } from '@/lib/safe-redirect'
 
 // Supabase bounces back here (PKCE) after the Google round-trip. createServerClient
 // runs the PKCE flow, so the code verifier is already in a cookie and this only
@@ -8,10 +9,9 @@ export async function GET(request: NextRequest) {
   const { origin, searchParams } = request.nextUrl
   const code = searchParams.get('code')
 
-  // Open-redirect guard: `next` arrives from the query string, so only a
-  // same-site path is honoured. A bare '//evil.com' is protocol-relative.
-  const raw = searchParams.get('next') ?? '/account'
-  const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/account'
+  // URL normalization treats backslashes like slashes in special URLs, so a
+  // simple startsWith('/') check is not enough to prevent external redirects.
+  const next = safeLocalRedirectPath(searchParams.get('next'))
 
   if (code) {
     const supabase = await createAdminServerClient()

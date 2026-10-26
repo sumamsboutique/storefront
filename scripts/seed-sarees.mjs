@@ -1,5 +1,5 @@
 // One-off: seed the new saree products + their photos into Supabase.
-// Run:  node --env-file=.env.local scripts/seed-sarees.mjs
+// Run after reviewing the target: node --env-file=.env.local scripts/seed-sarees.mjs --apply --confirm-project-ref <project-ref>
 // Idempotent: uploads use upsert, products upsert on slug, images are re-inserted.
 import { createClient } from '@supabase/supabase-js'
 import { readFile, readdir } from 'node:fs/promises'
@@ -7,11 +7,18 @@ import path from 'node:path'
 // shortcut: sharp is a transitive dep of Next (used for image optimisation). If
 // it ever disappears, add it as an explicit dependency.
 import sharp from 'sharp'
+import { requireExplicitSupabaseMutationTarget } from './require-explicit-supabase-target.mjs'
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 if (!URL_ || !KEY) {
   console.error('Missing env. Run: node --env-file=.env.local scripts/seed-sarees.mjs')
+  process.exit(1)
+}
+try {
+  requireExplicitSupabaseMutationTarget(URL_, process.argv.slice(2), 'seed-sarees.mjs --apply --confirm-project-ref <project-ref>')
+} catch (err) {
+  console.error(err.message)
   process.exit(1)
 }
 
@@ -124,11 +131,8 @@ async function main() {
     }
 
     const publicUrls = []
-    // Clear the slug prefix first so re-runs leave no orphaned objects.
-    const { data: existing } = await supabase.storage.from(BUCKET).list(slug)
-    if (existing?.length) {
-      await supabase.storage.from(BUCKET).remove(existing.map((o) => `${slug}/${o.name}`))
-    }
+    // Do not delete existing storage objects before replacement. Uploads are
+    // upserted by path; old/unreferenced images are left for reviewed cleanup.
     for (const abs of files) {
       const dest = `${slug}/${path.basename(abs).replace(/\.[^.]+$/, '.webp')}`
       const { error } = await supabase.storage

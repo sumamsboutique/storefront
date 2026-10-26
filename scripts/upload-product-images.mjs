@@ -1,17 +1,22 @@
-// One-off: refresh every object in the `sarees` bucket from public/products/,
-// rewrite product_images to point at the new files (one 4-photo set per
-// product), and turn semi-tusser-bulien-work's placeholder variant into two
-// design variants, each with its own gallery.
-// Run: node --env-file=.env.local scripts/upload-product-images.mjs
-// Idempotent: uploads use upsert, image/variant rows are rebuilt each run.
+// One-off: refresh mapped saree photos and their product image rows. The Bulien
+// product's two stock-bearing design variants must already exist in admin.
+// Run only after review: node --env-file=.env.local scripts/upload-product-images.mjs --apply --confirm-project-ref <project-ref>
+// Uploads use upsert. Variant IDs are preserved, and old bucket objects are not pruned.
 import { createClient } from '@supabase/supabase-js'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import path from 'node:path'
+import { requireExplicitSupabaseMutationTarget } from './require-explicit-supabase-target.mjs'
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 if (!URL_ || !KEY) {
-  console.error('Missing env. Run: node --env-file=.env.local scripts/upload-product-images.mjs')
+  console.error('Missing environment. Configure the Supabase URL and service-role key first.')
+  process.exit(1)
+}
+try {
+  requireExplicitSupabaseMutationTarget(URL_, process.argv.slice(2), 'upload-product-images.mjs --apply --confirm-project-ref <project-ref>')
+} catch (err) {
+  console.error(err.message)
   process.exit(1)
 }
 
@@ -42,12 +47,12 @@ const FOLDERS = {
   'Tusser Katha saree': [{ slug: 'tusser-katha' }],
 }
 
-// Only bulien gets real variants; it previously had one placeholder row
-// (Size/Standard, stock 10) — replaced with two designs keeping stock total 10.
+// The product must already have these variants configured. This script only
+// associates galleries; it never deletes/recreates stock-bearing variant rows.
 const BULIEN = 'semi-tusser-bulien-work'
 const BULIEN_VARIANTS = [
-  { value: 'Design 1', sub: 'v1', stock: 5 },
-  { value: 'Design 2', sub: 'v2', stock: 5 },
+  { value: 'Design 1', sub: 'v1' },
+  { value: 'Design 2', sub: 'v2' },
 ]
 
 const mime = (file) => (file.endsWith('.png') ? 'image/png' : 'image/jpeg')
@@ -64,7 +69,10 @@ async function main() {
     const targets = FOLDERS[entry.name]
     if (!targets) throw new Error(`unmapped folder in ${SRC}: ${entry.name}`)
     seenFolders.add(entry.name)
-    const files = (await readdir(path.join(SRC, entry.name))).sort()
+    const files = (await readdir(path.join(SRC, entry.name)))
+      .filter((file) => /\.(png|jpe?g)$/i.test(file))
+      .sort()
+    if (!files.length) throw new Error(`no supported image files in ${entry.name}`)
     for (const file of files) {
       const abs = path.join(SRC, entry.name, file)
       const { size } = await stat(abs)
@@ -77,8 +85,24 @@ async function main() {
   const missing = Object.keys(FOLDERS).filter((k) => !seenFolders.has(k))
   if (missing.length) throw new Error(`missing source folder(s): ${missing.join(', ')}`)
 
+  const { data: bulien, error: bErr } = await supabase
+    .from('products').select('id').eq('slug', BULIEN).single()
+  if (bErr || !bulien) throw new Error(`product ${BULIEN}: ${bErr?.message ?? 'not found'}`)
+  const { data: existingVariants, error: variantReadError } = await supabase
+    .from('product_variants')
+    .select('id, variant_type, variant_value')
+    .eq('product_id', bulien.id)
+  if (variantReadError || !existingVariants) throw new Error(`variants ${BULIEN}: ${variantReadError?.message ?? 'not found'}`)
+  const variantIds = {}
+  for (const variant of BULIEN_VARIANTS) {
+    const row = existingVariants.find((candidate) =>
+      candidate.variant_type === 'Design' && candidate.variant_value === variant.value
+    )
+    if (!row) throw new Error(`Configure the ${variant.value} variant for ${BULIEN} in admin before refreshing its images.`)
+    variantIds[variant.sub] = row.id
+  }
+
   // 2. Upload first, so no product ever points at a missing file.
-  const keep = new Set()
   for (const u of uploads) {
     const buf = await readFile(u.abs)
     const { error } = await supabase.storage.from(BUCKET).upload(u.dest, buf, {
@@ -86,24 +110,7 @@ async function main() {
       upsert: true,
     })
     if (error) throw new Error(`upload ${u.dest}: ${error.message}`)
-    keep.add(u.dest)
     console.log(`↑ ${u.dest} (${(buf.length / 1048576).toFixed(1)} MB)`)
-  }
-
-  // 3. Bulien: replace the placeholder variant with the two real designs.
-  const { data: bulien, error: bErr } = await supabase
-    .from('products').select('id').eq('slug', BULIEN).single()
-  if (bErr || !bulien) throw new Error(`product ${BULIEN}: ${bErr?.message ?? 'not found'}`)
-  const { error: vDelErr } = await supabase.from('product_variants').delete().eq('product_id', bulien.id)
-  if (vDelErr) throw new Error(`clear variants: ${vDelErr.message}`)
-  const variantIds = {}
-  for (const v of BULIEN_VARIANTS) {
-    const { data: row, error } = await supabase
-      .from('product_variants')
-      .insert({ product_id: bulien.id, variant_type: 'Design', variant_value: v.value, stock_quantity: v.stock })
-      .select('id').single()
-    if (error) throw new Error(`variant ${v.value}: ${error.message}`)
-    variantIds[v.sub] = row.id
   }
 
   // 4. Rewrite image rows: one set of 4 per product (bulien: 4 per variant).
@@ -111,8 +118,9 @@ async function main() {
     const { data: prod, error: pErr } = await supabase
       .from('products').select('id, name').eq('slug', slug).single()
     if (pErr || !prod) throw new Error(`product ${slug}: ${pErr?.message ?? 'not found'}`)
-    const { error: delErr } = await supabase.from('product_images').delete().eq('product_id', prod.id)
-    if (delErr) throw new Error(`clear images ${slug}: ${delErr.message}`)
+    const { data: oldImages, error: oldImagesError } = await supabase
+      .from('product_images').select('id').eq('product_id', prod.id)
+    if (oldImagesError || !oldImages) throw new Error(`read images ${slug}: ${oldImagesError?.message ?? 'failed'}`)
 
     const rows = uploads
       .filter((u) => u.slug === slug)
@@ -126,35 +134,29 @@ async function main() {
         aspect_ratio: '3/4',
         ...(variantIds[u.sub] ? { variant_id: variantIds[u.sub] } : {}),
       }))
-    const { error: insErr } = await supabase.from('product_images').insert(rows)
+    const { data: insertedImages, error: insErr } = await supabase.from('product_images').insert(rows).select('id')
     if (insErr) throw new Error(`insert images ${slug}: ${insErr.message}`)
+    if (!insertedImages || insertedImages.length !== rows.length) {
+      throw new Error(`image rows ${slug}: expected ${rows.length}, inserted ${insertedImages?.length ?? 0}`)
+    }
+    if (oldImages.length) {
+      const { error: delErr } = await supabase
+        .from('product_images')
+        .delete()
+        .eq('product_id', prod.id)
+        .in('id', oldImages.map((image) => image.id))
+      if (delErr) throw new Error(`remove previous image rows ${slug}: ${delErr.message}`)
+    }
     console.log(`✓ ${slug}: ${rows.length} images`)
   }
 
-  // 5. Everything else in the bucket is now dead — remove it.
-  const { data: root } = await supabase.storage.from(BUCKET).list('', { limit: 1000 })
-  let removed = 0
-  for (const entry of root ?? []) {
-    if (!entry.metadata) {
-      const { data: kids } = await supabase.storage.from(BUCKET).list(entry.name, { limit: 1000 })
-      const paths = (kids ?? []).map((k) => `${entry.name}/${k.name}`).filter((p) => !keep.has(p))
-      if (paths.length) {
-        const { error } = await supabase.storage.from(BUCKET).remove(paths)
-        if (error) throw new Error(`remove: ${error.message}`)
-        removed += paths.length
-      }
-    } else if (!keep.has(entry.name)) {
-      const { error } = await supabase.storage.from(BUCKET).remove([entry.name])
-      if (error) throw new Error(`remove: ${error.message}`)
-      removed++
-    }
-  }
-
   // Self-check: a public bucket serves the image without auth.
-  const res = await fetch(`${URL_}/storage/v1/object/public/${BUCKET}/${[...keep][0]}`, { method: 'HEAD' })
+  const firstDest = uploads[0]?.dest
+  if (!firstDest) throw new Error('No image uploads were prepared.')
+  const res = await fetch(`${URL_}/storage/v1/object/public/${BUCKET}/${firstDest}`, { method: 'HEAD' })
   if (!res.ok) console.warn(`! image fetch returned ${res.status} — the "${BUCKET}" bucket may be private`)
 
-  console.log(`\nDone: ${keep.size} objects across ${new Set(uploads.map((u) => u.slug)).size} products, ${removed} old objects removed.`)
+  console.log(`\nDone: ${new Set(uploads.map((u) => u.dest)).size} objects across ${new Set(uploads.map((u) => u.slug)).size} products. Previous unlinked bucket objects were preserved.`)
 }
 
 main().catch((err) => {

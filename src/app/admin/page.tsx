@@ -75,10 +75,10 @@ export default async function AdminDashboardPage() {
             Total Revenue
           </span>
           <div className="font-display text-2xl font-normal text-dark tracking-tight">
-            ₹{kpis.totalRevenue.toLocaleString('en-IN')}
+            {kpis.available ? `₹${kpis.totalRevenue.toLocaleString('en-IN')}` : 'Unavailable'}
           </div>
           <p className="font-sans text-[11px] text-muted mt-1">
-            Settled orders (paid & delivered)
+            Paid, processing, shipped, and delivered order totals
           </p>
         </div>
 
@@ -89,9 +89,9 @@ export default async function AdminDashboardPage() {
           </span>
           <div className="flex items-baseline gap-2">
             <span className="font-display text-2xl font-normal text-dark">
-              {kpis.totalOrders}
+              {kpis.available ? kpis.totalOrders : '—'}
             </span>
-            {kpis.pendingOrders > 0 && (
+              {kpis.available && kpis.pendingOrders > 0 && (
               <span className="font-sans text-xs text-copper font-medium">
                 ({kpis.pendingOrders} pending)
               </span>
@@ -109,14 +109,14 @@ export default async function AdminDashboardPage() {
           </span>
           <div className="flex items-baseline gap-2">
             <span className="font-display text-2xl font-normal text-dark">
-              {kpis.activeProducts}
+              {kpis.available ? kpis.activeProducts : '—'}
             </span>
             <span className="font-sans text-xs text-muted">
-              / {kpis.totalProducts} total
+              / {kpis.available ? kpis.totalProducts : '—'} total
             </span>
           </div>
           <p className="font-sans text-[11px] text-muted mt-1">
-            Active handloom sarees
+            Active catalog products
           </p>
         </div>
 
@@ -126,13 +126,18 @@ export default async function AdminDashboardPage() {
             Low Stock Alerts
           </span>
           <div className="font-display text-2xl font-normal text-[#A62719]">
-            {kpis.lowStockCount}
+            {kpis.available ? kpis.lowStockCount : '—'}
           </div>
           <p className="font-sans text-[11px] text-muted mt-1">
             Items at or below 3 units
           </p>
         </div>
       </div>
+      {!kpis.available && (
+        <p role="status" className="-mt-5 font-sans text-xs text-[#A62719]">
+          Live store metrics are unavailable. Check the database connection before relying on dashboard totals.
+        </p>
+      )}
 
       {/* Main Grid: Recent Orders & Inventory Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -140,7 +145,7 @@ export default async function AdminDashboardPage() {
         <div className="lg:col-span-2">
           <AdminCard
             title="Recent Orders"
-            subtitle="Latest orders placed via guest checkout and customer accounts."
+            subtitle="Latest orders placed by signed-in customers."
             action={
               <Link
                 href="/admin/orders"
@@ -150,7 +155,11 @@ export default async function AdminDashboardPage() {
               </Link>
             }
           >
-            {recentOrders.length === 0 ? (
+            {recentOrders === null ? (
+              <div role="status" className="text-center py-10 text-[#A62719] font-sans text-xs">
+                Recent orders could not be loaded. Check the database connection.
+              </div>
+            ) : recentOrders.length === 0 ? (
               <div className="text-center py-10 text-muted font-sans text-xs">
                 No orders recorded yet. As customers check out, they will appear here.
               </div>
@@ -213,7 +222,11 @@ export default async function AdminDashboardPage() {
               </Link>
             }
           >
-            {lowStockItems.length === 0 ? (
+            {lowStockItems === null ? (
+              <div role="status" className="text-center py-10 text-[#A62719] font-sans text-xs">
+                Inventory alerts could not be loaded. Check the database connection.
+              </div>
+            ) : lowStockItems.length === 0 ? (
               <div className="text-center py-10 text-muted font-sans text-xs">
                 All inventory levels are healthy.
               </div>
@@ -258,11 +271,16 @@ export default async function AdminDashboardPage() {
             href="/admin/products"
             className="text-xs font-sans text-copper hover:underline"
           >
-            Manage full inventory ({inventorySummary.totalUnits} total units) →
+            Manage full inventory ({inventorySummary.available ? inventorySummary.totalUnits : 'unavailable'} total units) →
           </Link>
         }
       >
         <div className="space-y-6">
+          {!inventorySummary.available && (
+            <p role="status" className="font-sans text-xs text-[#A62719]">
+              Live inventory data is unavailable. Check the database connection before making stock decisions.
+            </p>
+          )}
           {/* Quick Stock Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 -mt-2">
             <div className="p-3 bg-white border border-[#DCC9A8]/40 rounded">
@@ -270,7 +288,7 @@ export default async function AdminDashboardPage() {
                 Available In Stock
               </span>
               <div className="text-xl font-display font-medium text-[#1E6B2C] mt-0.5">
-                {inventorySummary.inStockCount}
+                {inventorySummary.available ? inventorySummary.inStockCount : '—'}
               </div>
               <span className="text-[10px] font-sans text-muted">Ready for immediate dispatch</span>
             </div>
@@ -280,7 +298,7 @@ export default async function AdminDashboardPage() {
                 Low Stock Watch
               </span>
               <div className="text-xl font-display font-medium text-[#9A6207] mt-0.5">
-                {inventorySummary.lowStockCount}
+                {inventorySummary.available ? inventorySummary.lowStockCount : '—'}
               </div>
               <span className="text-[10px] font-sans text-muted">≤ 3 units remaining</span>
             </div>
@@ -290,7 +308,7 @@ export default async function AdminDashboardPage() {
                 Out of Stock
               </span>
               <div className="text-xl font-display font-medium text-[#A62719] mt-0.5">
-                {inventorySummary.outOfStockCount}
+                {inventorySummary.available ? inventorySummary.outOfStockCount : '—'}
               </div>
               <span className="text-[10px] font-sans text-muted">Requires loom replenishment</span>
             </div>
@@ -300,7 +318,7 @@ export default async function AdminDashboardPage() {
                 Sold Out Pieces
               </span>
               <div className="text-xl font-display font-semibold text-black mt-0.5">
-                {inventorySummary.soldCount}
+                {inventorySummary.available ? inventorySummary.soldCount : '—'}
               </div>
               <span className="text-[10px] font-sans text-muted font-medium">Highlighted in solid black</span>
             </div>
@@ -321,7 +339,13 @@ export default async function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#DCC9A8]/30">
-                {inventorySummary.items.map((item) => (
+                {inventorySummary.available && inventorySummary.items.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-muted">
+                      No catalog products are available.
+                    </td>
+                  </tr>
+                ) : inventorySummary.items.map((item) => (
                   <tr key={item.id} className="hover:bg-ivory/20 transition-colors">
                     <td className="px-6 py-3 font-medium text-dark">
                       {item.name}
@@ -362,7 +386,11 @@ export default async function AdminDashboardPage() {
         title="Administrative Activity Log"
         subtitle="Recent team actions, product modifications, and content updates."
       >
-        {recentLogs.length === 0 ? (
+        {recentLogs === null ? (
+          <div role="status" className="text-center py-6 text-[#A62719] font-sans text-xs">
+            Activity log could not be loaded. Check database access and audit logging.
+          </div>
+        ) : recentLogs.length === 0 ? (
           <div className="text-center py-6 text-muted font-sans text-xs">
             No audit log entries recorded yet. System mutations will be logged automatically.
           </div>

@@ -13,25 +13,21 @@ Ensure `.env.local` contains your Supabase project credentials:
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
 
+# Server-only; needed for trusted payment processing and the admin bootstrap script
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
 # Optional Site URL (for metadata & link generation)
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 > [!IMPORTANT]
-> The admin panel leverages **Row Level Security (RLS)** with user role validation (`profiles.role in ('admin', 'staff')`). No service-role key is exposed to browser code.
+> The admin panel uses **Row Level Security (RLS)** with server-side role checks. The service-role key is server-only and must never be exposed to browser code.
 
 ---
 
 ## 2. Database Migrations
 
-Apply the migrations in order using either the Supabase CLI (`supabase db push`) or by pasting them sequentially into the **Supabase SQL Editor**:
-
-1. `supabase/migrations/001_initial_schema.sql` — Profiles, categories, products, images, variants, content blocks, orders, audit log.
-2. `supabase/migrations/002_seed_data.sql` — Initial catalog and categories seed.
-3. `supabase/migrations/003_fix_rls_admin_check.sql` — Role checking security definer functions and recursion-safe RLS policies.
-4. `supabase/migrations/004_full_fidelity_content_blocks.sql` — Full-fidelity homepage content blocks.
-5. `supabase/migrations/005_guest_checkout_orders.sql` — Secure guest order creation RPC.
-6. `supabase/migrations/006_store_settings_and_order_notes.sql` — Store settings table, order staff notes, and staff profile view permissions.
+The repository contains ordered migrations 001–033. Do **not** blindly run all files or paste them into the live SQL Editor. The configured Supabase database is live, and its applied migration history has not been verified in this checkout. Follow [the operations guide](docs/OPERATIONS.md) and test schema changes against a separate project first. Guest checkout in migration 005 is historical; current checkout requires sign-in.
 
 ---
 
@@ -39,28 +35,9 @@ Apply the migrations in order using either the Supabase CLI (`supabase db push`)
 
 Admin access is restricted to authenticated users with `role = 'admin'` or `role = 'staff'` in the `profiles` table.
 
-### Step 1: Create a User Account
-1. Open Supabase Dashboard → **Authentication** → **Users** → **Add User** (or sign up via the app).
-2. Enter the email (e.g. `admin@sumamsboutique.com`) and a secure password.
-3. Auto-confirm the user's email address.
-
-### Step 2: Promote User to Admin Role
-Execute the following query in the **Supabase SQL Editor**:
-
-```sql
--- Ensure profile exists and assign 'admin' role
-insert into public.profiles (id, role, full_name, email)
-select id, 'admin', 'Atelier Director', email
-from auth.users
-where email = 'admin@sumamsboutique.com'
-on conflict (id) do update
-set role = 'admin', full_name = 'Atelier Director';
-```
-
-Verify the role:
-```sql
-select id, email, role, full_name from public.profiles where role in ('admin', 'staff');
-```
+1. Create the Auth user in Supabase Dashboard → **Authentication** → **Users**, or use the app signup. Confirm the email according to the project’s Auth settings.
+2. After migration 030 is verified on the intended database, run `node --env-file=.env.local scripts/promote-admin.mjs <email>` from the repository. The script requires `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, prints no secret values, and promotes an existing profile.
+3. Do not run it against production unless an authorized operator intends that role change. `supabase/create_admin_user.sql` is read-only; direct SQL role promotion is blocked by the profile guard.
 
 ---
 
@@ -94,6 +71,7 @@ select id, email, role, full_name from public.profiles where role in ('admin', '
 | `/admin/content` | **Homepage CMS** | Structured editor for all 8 homepage content blocks (Hero, Marquee, Browse By Category, Featured Collection, Our Heritage, Jewellery Spotlight, Instagram Strip, Footer) with Draft vs. Published states. |
 | `/admin/orders` | **Orders CRM** | Filterable order queue with search by order ID, status badges, and transaction summary. |
 | `/admin/orders/[id]` | **Order Details** | Line item snapshots, customer address, financial breakdown, controlled status workflow, and staff notes. |
+| `/admin/reconciliation` | **Payment Review** | Captured-payment cases; staff may confirm available stock or record a refund already completed in Razorpay. This page does not issue refunds. |
 | `/admin/customers` | **Customers & Staff** | User directory with order count, total spend, and admin-only role promotions/demotions. |
 | `/admin/media` | **Media Library** | Brand asset browser with instant path copying, alt text tracking, and active usage detection. |
 | `/admin/settings` | **Store Settings** | Atelier details, free shipping threshold (₹), flat shipping fee (₹), social links, and alert emails. |

@@ -3,6 +3,7 @@ import { CATALOG } from '@/lib/catalog'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export type DashboardKPIs = {
+  available: boolean
   totalRevenue: number
   totalOrders: number
   pendingOrders: number
@@ -49,6 +50,7 @@ export type DashboardInventoryItem = {
 }
 
 export type DashboardInventorySummary = {
+  available: boolean
   inStockCount: number
   lowStockCount: number
   outOfStockCount: number
@@ -71,9 +73,9 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
     const supabase = await createAdminServerClient()
 
     const [
-      { data: orders },
-      { data: products },
-      { data: variants },
+      ordersResult,
+      productsResult,
+      variantsResult,
     ] = await withTimeout(
       Promise.all([
         supabase.from('orders').select('id, status, total'),
@@ -83,6 +85,14 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
       8000
     )
 
+    if (ordersResult.error || productsResult.error || variantsResult.error) {
+      throw new Error('Dashboard data query failed')
+    }
+
+    const orders = ordersResult.data
+    const products = productsResult.data
+    const variants = variantsResult.data
+
     const orderRows = orders ?? []
     const productRows = products ?? []
     const variantRows = variants ?? []
@@ -90,13 +100,11 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
     const totalOrders = orderRows.length
     const pendingOrders = orderRows.filter((o) => o.status === 'pending').length
     const totalRevenue = orderRows
-      .filter((o) => o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered')
+      .filter((o) => o.status === 'paid' || o.status === 'processing' || o.status === 'shipped' || o.status === 'delivered')
       .reduce((sum, o) => sum + Number(o.total || 0), 0)
 
-    const totalProducts = productRows.length || CATALOG.length
-    const activeProducts = productRows.length
-      ? productRows.filter((p) => p.is_active).length
-      : CATALOG.length
+    const totalProducts = productRows.length
+    const activeProducts = productRows.filter((p) => p.is_active).length
 
     // count low-stock products + variants
     const lowStockProducts = productRows.filter(
@@ -106,6 +114,7 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
     const lowStockCount = Math.max(lowStockProducts, lowStockVariants)
 
     return {
+      available: true,
       totalRevenue,
       totalOrders,
       pendingOrders,
@@ -116,17 +125,18 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
   } catch (err) {
     console.error('[admin/queries] getDashboardKPIs error:', err)
     return {
+      available: false,
       totalRevenue: 0,
       totalOrders: 0,
       pendingOrders: 0,
-      totalProducts: CATALOG.length,
-      activeProducts: CATALOG.length,
+      totalProducts: 0,
+      activeProducts: 0,
       lowStockCount: 0,
     }
   }
 }
 
-export async function getRecentOrders(limit = 5): Promise<RecentOrderRow[]> {
+export async function getRecentOrders(limit = 5): Promise<RecentOrderRow[] | null> {
   try {
     const supabase = await createAdminServerClient()
     const { data, error } = await withTimeout(
@@ -138,7 +148,7 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrderRow[]> {
       8000
     )
 
-    if (error || !data) return []
+    if (error || !data) return null
 
     return data.map((o) => {
       const addr = (o.shipping_address as Record<string, string>) || {}
@@ -154,14 +164,14 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrderRow[]> {
     })
   } catch (err) {
     console.error('[admin/queries] getRecentOrders error:', err)
-    return []
+    return null
   }
 }
 
-export async function getLowStockProducts(limit = 6): Promise<LowStockItem[]> {
+export async function getLowStockProducts(limit = 6): Promise<LowStockItem[] | null> {
   try {
     const supabase = await createAdminServerClient()
-    const { data } = await withTimeout(
+    const { data, error } = await withTimeout(
       supabase
         .from('products')
         .select('id, name, sku, stock_status, product_variants(stock_quantity)')
@@ -170,7 +180,8 @@ export async function getLowStockProducts(limit = 6): Promise<LowStockItem[]> {
       8000
     )
 
-    if (!data || data.length === 0) return []
+    if (error || !data) return null
+    if (data.length === 0) return []
 
     return data.map((p) => {
       const totalQty = (p.product_variants || []).reduce(
@@ -187,14 +198,14 @@ export async function getLowStockProducts(limit = 6): Promise<LowStockItem[]> {
     })
   } catch (err) {
     console.error('[admin/queries] getLowStockProducts error:', err)
-    return []
+    return null
   }
 }
 
-export async function getRecentAuditLogs(limit = 8): Promise<AuditLogRow[]> {
+export async function getRecentAuditLogs(limit = 8): Promise<AuditLogRow[] | null> {
   try {
     const supabase = await createAdminServerClient()
-    const { data } = await withTimeout(
+    const { data, error } = await withTimeout(
       supabase
         .from('audit_log')
         .select('id, table_name, record_id, action, created_at, diff, profiles(full_name, email)')
@@ -203,7 +214,7 @@ export async function getRecentAuditLogs(limit = 8): Promise<AuditLogRow[]> {
       8000
     )
 
-    if (!data) return []
+    if (error || !data) return null
 
     return data.map((l) => {
       const prof = l.profiles as unknown as { full_name?: string; email?: string } | null
@@ -219,7 +230,7 @@ export async function getRecentAuditLogs(limit = 8): Promise<AuditLogRow[]> {
     })
   } catch (err) {
     console.error('[admin/queries] getRecentAuditLogs error:', err)
-    return []
+    return null
   }
 }
 
@@ -234,25 +245,8 @@ export async function getDashboardInventorySummary(limit = 8): Promise<Dashboard
       8000
     )
 
-    if (error || !prods || prods.length === 0) {
-      const items: DashboardInventoryItem[] = CATALOG.map((c, i) => ({
-        id: c.id,
-        name: c.name,
-        sku: `SKU-${c.slug.toUpperCase().slice(0, 8)}`,
-        category_name: c.weave,
-        stock_status: c.sold ? 'sold' : (i === 1 ? 'low_stock' : 'in_stock'),
-        quantity: c.sold ? 0 : (i === 1 ? 2 : 6),
-        price: c.priceNum,
-      }))
-
-      return {
-        inStockCount: items.filter((i) => i.stock_status === 'in_stock').length,
-        lowStockCount: items.filter((i) => i.stock_status === 'low_stock').length,
-        outOfStockCount: items.filter((i) => i.stock_status === 'out_of_stock').length,
-        soldCount: items.filter((i) => i.stock_status === 'sold').length,
-        totalUnits: items.reduce((acc, i) => acc + i.quantity, 0),
-        items: items.slice(0, limit),
-      }
+    if (error || !prods) {
+      throw new Error('Inventory summary query failed')
     }
 
     let inStockCount = 0
@@ -286,6 +280,7 @@ export async function getDashboardInventorySummary(limit = 8): Promise<Dashboard
     })
 
     return {
+      available: true,
       inStockCount,
       lowStockCount,
       outOfStockCount,
@@ -295,23 +290,14 @@ export async function getDashboardInventorySummary(limit = 8): Promise<Dashboard
     }
   } catch (err) {
     console.error('[admin/queries] getDashboardInventorySummary error:', err)
-    const items: DashboardInventoryItem[] = CATALOG.map((c, i) => ({
-      id: c.id,
-      name: c.name,
-      sku: `SKU-${c.slug.toUpperCase().slice(0, 8)}`,
-      category_name: c.weave,
-      stock_status: c.sold ? 'sold' : (i === 1 ? 'low_stock' : 'in_stock'),
-      quantity: c.sold ? 0 : (i === 1 ? 2 : 6),
-      price: c.priceNum,
-    }))
-
     return {
-      inStockCount: items.filter((i) => i.stock_status === 'in_stock').length,
-      lowStockCount: items.filter((i) => i.stock_status === 'low_stock').length,
+      available: false,
+      inStockCount: 0,
+      lowStockCount: 0,
       outOfStockCount: 0,
-      soldCount: items.filter((i) => i.stock_status === 'sold').length,
-      totalUnits: items.reduce((acc, i) => acc + i.quantity, 0),
-      items: items.slice(0, limit),
+      soldCount: 0,
+      totalUnits: 0,
+      items: [],
     }
   }
 }
@@ -741,6 +727,71 @@ export async function getAdminOrderById(id: string) {
   }
 }
 
+export type AdminPaymentReconciliation = {
+  id: string
+  order_id: string
+  provider_order_id: string
+  payment_id: string | null
+  reason_code: 'inventory_unavailable' | 'coupon_limit_reached' | 'additional_capture'
+  expected_amount_paise: number
+  created_at: string
+  order_status: string
+  order_total: number
+  customer_name: string
+  customer_email: string
+}
+
+export async function getOpenPaymentReconciliations(): Promise<{
+  cases: AdminPaymentReconciliation[]
+  error: string | null
+}> {
+  try {
+    const supabase = await createAdminServerClient()
+    const { data, error } = await supabase
+      .from('payment_reconciliations')
+      .select('id, order_id, provider_order_id, payment_id, reason_code, expected_amount_paise, created_at')
+      .eq('status', 'open')
+      .order('created_at', { ascending: true })
+
+    if (error || !data) {
+      console.error('[admin/queries] payment reconciliation query failed:', error?.message)
+      return { cases: [], error: 'Could not load payment review cases. Confirm migration 029 is applied.' }
+    }
+
+    const rows = data as unknown as Omit<AdminPaymentReconciliation, 'order_status' | 'order_total' | 'customer_name' | 'customer_email'>[]
+    if (!rows.length) return { cases: [], error: null }
+
+    const orderIds = [...new Set(rows.map((row) => row.order_id))]
+    const { data: orderRows, error: orderError } = await supabase
+      .from('orders')
+      .select('id, status, total, shipping_address')
+      .in('id', orderIds)
+
+    if (orderError || !orderRows) {
+      console.error('[admin/queries] reconciliation order lookup failed:', orderError?.message)
+      return { cases: [], error: 'Could not load the related orders for payment review.' }
+    }
+
+    const ordersById = new Map(orderRows.map((order) => [order.id, order]))
+    const cases = rows.flatMap((row) => {
+      const order = ordersById.get(row.order_id)
+      if (!order) return []
+      const address = (order.shipping_address as Record<string, string> | null) ?? {}
+      return [{
+        ...row,
+        order_status: order.status,
+        order_total: Number(order.total),
+        customer_name: address.name || 'Customer',
+        customer_email: address.email || '—',
+      }]
+    })
+    return { cases, error: null }
+  } catch (err) {
+    console.error('[admin/queries] getOpenPaymentReconciliations error:', err)
+    return { cases: [], error: 'Could not load payment review cases.' }
+  }
+}
+
 // ── Newsletter Subscribers ──────────────────────────────────────────────────
 export type SubscriberRow = {
   id: string
@@ -847,7 +898,7 @@ export async function getAdminCustomers({
     const customers: AdminCustomerRow[] = data.map((c) => {
       const orders = (c.orders as { id: string; total: number; status: string }[]) || []
       const spent = orders
-        .filter((o) => o.status === 'paid' || o.status === 'delivered')
+        .filter((o) => o.status === 'paid' || o.status === 'processing' || o.status === 'shipped' || o.status === 'delivered')
         .reduce((sum, o) => sum + Number(o.total || 0), 0)
 
       return {

@@ -3,6 +3,7 @@ import { z } from 'zod'
 // ── Images & Variants ────────────────────────────────────────────────────────
 export const ProductImageSchema = z.object({
   id: z.string().uuid().optional(),
+  variant_id: z.string().uuid().nullable().optional(),
   storage_path: z.string().trim().min(1, 'Image path or URL is required'),
   alt_text: z.string().trim().min(1, 'Alt text is required for accessibility'),
   display_order: z.coerce.number().int().default(0),
@@ -121,6 +122,7 @@ export type CouponFormValues = z.infer<typeof CouponFormSchema>
 // ── Orders ───────────────────────────────────────────────────────────────────
 export const OrderStatusEnum = z.enum([
   'pending',
+  'payment_review',
   'paid',
   'processing',
   'shipped',
@@ -133,11 +135,14 @@ export const OrderStatusEnum = z.enum([
 export type OrderStatus = z.infer<typeof OrderStatusEnum>
 
 export const VALID_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ['paid', 'cancelled', 'expired'],
-  paid: ['processing', 'cancelled', 'refunded'],
-  processing: ['shipped', 'cancelled', 'refunded'],
-  shipped: ['delivered', 'cancelled', 'refunded'],
-  delivered: ['refunded'],
+  // Payment and refund states are provider-owned. Admins only advance the
+  // fulfillment lifecycle after a verified payment has moved the order to paid.
+  pending: ['cancelled', 'expired'],
+  payment_review: [],
+  paid: ['processing'],
+  processing: ['shipped'],
+  shipped: ['delivered'],
+  delivered: [],
   cancelled: [],
   refunded: [],
   expired: [],
@@ -153,6 +158,17 @@ export const UpdateOrderStatusSchema = z.object({
   order_id: z.string().uuid(),
   status: OrderStatusEnum,
   staff_notes: z.string().trim().max(1000).optional(),
+})
+
+export const ResolvePaymentReconciliationSchema = z.object({
+  case_id: z.string().uuid(),
+  resolution: z.enum(['fulfilled', 'refund_recorded']),
+  note: z.string().trim().min(5).max(1000),
+  refund_reference: z.string().trim().min(3).max(120).optional(),
+}).superRefine((value, ctx) => {
+  if (value.resolution === 'refund_recorded' && !value.refund_reference) {
+    ctx.addIssue({ code: 'custom', path: ['refund_reference'], message: 'Enter the Razorpay refund reference.' })
+  }
 })
 
 // ── Customer / User Role ─────────────────────────────────────────────────────

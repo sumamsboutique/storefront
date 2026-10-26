@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { createAdminServerClient, type AdminProfile } from './admin/auth'
 import { AddressSchema, AvatarSchema, EmailChangeSchema, PasswordSchema, ProfileSchema } from './schemas'
+import { hasMatchingImageSignature } from './image-files'
 
 export type OrderLine = {
   product_id: string
@@ -181,6 +182,9 @@ export async function uploadMyAvatar(input: unknown): Promise<ActionResult<{ ava
   const ext = AVATAR_MIME[file.type]
   if (!ext) return { ok: false, error: 'Use a JPG, PNG or WebP image.' }
   if (file.size > AVATAR_MAX_BYTES) return { ok: false, error: 'Image must be under 2 MB.' }
+  if (!(await hasMatchingImageSignature(file))) {
+    return { ok: false, error: 'The file content does not match its image type.' }
+  }
 
   const supabase = await createAdminServerClient()
   const { data: { user } } = await supabase.auth.getUser()

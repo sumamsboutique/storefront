@@ -18,6 +18,9 @@ export type AuditLogParams = {
   diff?: Record<string, unknown> | null
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const NIL_UUID = '00000000-0000-0000-0000-000000000000'
+
 export async function logAudit({
   tableName,
   recordId,
@@ -28,14 +31,20 @@ export async function logAudit({
   try {
     const supabase = await createAdminServerClient()
     
+    const isUuid = UUID_RE.test(recordId)
+    const isUserUuid = Boolean(userId && UUID_RE.test(userId))
+
     // Clean sensitive keys if any
-    const safeDiff = diff ? sanitizeDiff(diff) : null
+    const baseDiff = diff ? sanitizeDiff(diff) : null
+    const safeDiff = isUuid
+      ? baseDiff
+      : { ...(baseDiff ?? {}), record_key: recordId }
 
     await supabase.from('audit_log').insert({
       table_name: tableName,
-      record_id: recordId,
+      record_id: isUuid ? recordId : NIL_UUID,
       action,
-      changed_by: userId || null,
+      changed_by: isUserUuid ? userId : null,
       diff: safeDiff,
     })
   } catch (err) {

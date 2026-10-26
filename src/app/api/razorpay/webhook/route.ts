@@ -1,11 +1,8 @@
 import { createServiceClient } from '@/lib/supabase'
 import { verifyRazorpaySignature } from '@/lib/razorpay-signature'
 import {
-  renderOrderAlert,
-  renderOrderConfirmation,
-  sendOrderAlert,
-  sendOrderConfirmation,
   sendPaidOrderEmails,
+  sendPaymentReviewEmails,
 } from '@/lib/email'
 
 // Mirrors the client-side verify path: confirms a Razorpay success event reached
@@ -25,8 +22,8 @@ export async function POST(request: Request) {
   let event: {
     event?: string
     payload?: {
-      payment?: { entity?: { id?: string; order_id?: string; amount?: number } }
-      order?: { entity?: { id?: string; amount?: number; amount_paid?: number } }
+      payment?: { entity?: { id?: string; order_id?: string; amount?: number; currency?: string } }
+      order?: { entity?: { id?: string; amount?: number; amount_paid?: number; currency?: string } }
     }
   }
   try {
@@ -41,8 +38,15 @@ export async function POST(request: Request) {
   const payment = event.payload?.payment?.entity
   const orderEntity = event.payload?.order?.entity
   const rzpOrderId = payment?.order_id ?? orderEntity?.id
-  const paymentId = payment?.id ?? orderEntity?.id
+  // `orderEntity.id` is the Razorpay order ID, not a payment ID. Keep the two
+  // identifiers separate; order.paid may not include a payment entity.
+  const paymentId = payment?.id ?? null
   if (!rzpOrderId) return Response.json({ ok: true })
+  // The database uses the provider payment ID as its settlement idempotency
+  // key. An order.paid payload without payment.entity cannot safely distinguish
+  // a later delivery of this capture from a second captured payment, so wait
+  // for the payment.captured event that carries the concrete payment ID.
+  if (!paymentId) return Response.json({ ok: true, ignored: 'payment_id_missing' })
 
   const supabase = createServiceClient()
   if (!supabase) return Response.json({ error: 'Service not configured' }, { status: 500 })
@@ -53,17 +57,18 @@ export async function POST(request: Request) {
     .eq('payment_reference', rzpOrderId)
     .single()
 
-  if (order && order.status === 'pending') {
+  if (order && ['pending', 'payment_review', 'paid'].includes(order.status)) {
     // Defence in depth: the paid amount must match what the order says. The
     // Razorpay order was created from this total, so a mismatch means tampering
     // or a stale order — never mark it paid.
     const paidPaise = payment?.amount ?? orderEntity?.amount_paid ?? orderEntity?.amount
     const expectedPaise = Math.round(Number(order.total) * 100)
-    if (typeof paidPaise === 'number' && paidPaise !== expectedPaise) {
+    const currency = payment?.currency ?? orderEntity?.currency
+    if (typeof paidPaise !== 'number' || paidPaise !== expectedPaise || currency !== 'INR') {
       console.error(
-        `[razorpay webhook] amount mismatch for ${order.id}: paid ${paidPaise}, expected ${expectedPaise}`
+        `[razorpay webhook] payment mismatch for ${order.id}: amount ${paidPaise}, currency ${currency ?? 'missing'}, expected ${expectedPaise} INR`
       )
-      return Response.json({ error: 'Amount mismatch' }, { status: 400 })
+      return Response.json({ error: 'Payment amount or currency mismatch' }, { status: 400 })
     }
 
     // Single atomic transition: flips to paid, decrements stock and consumes
@@ -78,6 +83,12 @@ export async function POST(request: Request) {
     }
     // Another caller already applied it: emails were sent by that path.
     if (!marked?.applied) return Response.json({ ok: true })
+
+    if (marked?.review_required) {
+      console.warn(`[razorpay webhook] payment requires manual reconciliation for order ${order.id}`)
+      await sendPaymentReviewEmails(order.id)
+      return Response.json({ ok: true })
+    }
 
     // Send emails via shared helper — exactly once regardless of which path finished first.
     await sendPaidOrderEmails(order.id)

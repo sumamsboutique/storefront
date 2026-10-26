@@ -16,9 +16,18 @@ function fmt(n: number) {
   return '₹' + n.toLocaleString('en-IN')
 }
 
-/* ── Per-section PDP copy, faithful to the prototype's Royal Crimson example ── */
+function splitBullets(raw?: string | null): string[] | null {
+  if (!raw || !raw.trim()) return null
+  const items = raw
+    .split(/\r?\n|;|•|\.(?=\s+[A-Z0-9])/g)
+    .map((s) => s.replace(/^\s*[-•*]\s*/, '').trim())
+    .filter(Boolean)
+  return items.length > 0 ? items : null
+}
+
+/* ── Per-section PDP copy, using DB fields first and weave defaults as fallback ── */
 function accordionCopy(p: CatalogProduct) {
-  const fabric =
+  const defaultFabric =
     p.weave === 'Benarasi'
       ? ['Pure Mulberry Silk', 'Banarasi Kadwa Jangla weave', '24-carat gold zari work']
       : p.weave === 'Tant'
@@ -34,7 +43,7 @@ function accordionCopy(p: CatalogProduct) {
                 : p.weave === 'Silk'
                   ? ['Pure mulberry silk', 'Handwoven body', 'Subtle zari accents']
                   : ['Handcrafted materials', 'Traditional technique', 'Finished by hand']
-  const occasion =
+  const defaultOccasion =
     p.occasion === 'Bridal'
       ? ['Wedding', 'Reception', 'Puja', 'Festive']
       : p.occasion === 'Festive'
@@ -44,10 +53,17 @@ function accordionCopy(p: CatalogProduct) {
           : p.occasion === 'Puja'
             ? ['Puja', 'Festive', 'Ceremonial']
             : ['Wedding Guest', 'Reception', 'Festive']
-  const dimensions = ['6.5 m saree length', '0.8 m blouse piece', '110 cm width']
-  const care = ['Dry clean only', 'Store wrapped in muslin cloth', 'Avoid direct sunlight', 'Do not iron directly on zari']
-  const shipping = ['Free shipping above ₹10,000', 'Delivers within 5–7 business days', 'International shipping available', '3–day return window', 'One-of-one items: returns subject to inspection']
-  return { fabric, occasion, dimensions, care, shipping }
+  const defaultDimensions = ['6.5 m saree length', '0.8 m blouse piece', '110 cm width']
+  const defaultCare = ['Dry clean only', 'Store wrapped in muslin cloth', 'Avoid direct sunlight', 'Do not iron directly on zari']
+  const defaultShipping = ['Free shipping above ₹10,000', 'Delivers within 5–7 business days', 'International shipping available', '3–day return window', 'One-of-one items: returns subject to inspection']
+
+  return {
+    fabric: splitBullets(p.fabricWeaveDetails) ?? defaultFabric,
+    occasion: p.occasionTags && p.occasionTags.length > 0 ? p.occasionTags : defaultOccasion,
+    dimensions: splitBullets(p.dimensions) ?? defaultDimensions,
+    care: splitBullets(p.careInstructions) ?? defaultCare,
+    shipping: splitBullets(p.shippingReturnsNote) ?? defaultShipping,
+  }
 }
 
 // ── 1. Breadcrumb ──
@@ -221,13 +237,31 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
   const { has, toggle } = useWishlist()
 
   const wished = mounted ? has(p.slug) : false
-  const inCart = mounted && cart.has(p.id)
-  const sub = p.sub
-  const copy = accordionCopy(p)
   // 2+ variants → tappable design picker; a lone variant isn't a choice.
   const choices = p.variants && p.variants.length > 1 ? p.variants : undefined
   const chosen = choices?.find((v) => v.id === variantId)
-  const addItem = () => (inCart ? cart.open() : cart.add({ id: `${p.id}:${variantId ?? ''}`, productId: p.id, variantId: variantId ?? null, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: chosen?.images[0] ?? p.images?.[0] }))
+  const lineId = `${p.id}:${variantId ?? ''}`
+  const inCart =
+    mounted &&
+    (choices
+      ? cart.items.some((i) => i.id === lineId || i.variantId === variantId)
+      : cart.has(p.id))
+  const copy = accordionCopy(p)
+  const addItem = () =>
+    inCart
+      ? cart.open()
+      : cart.add({
+          id: lineId,
+          productId: p.id,
+          variantId: variantId ?? null,
+          slug: p.slug,
+          name: p.name,
+          price: p.price,
+          priceNum: p.priceNum,
+          gradient: p.gradient,
+          label: p.label,
+          image: chosen?.images[0] ?? p.images?.[0],
+        })
 
   // Concierge button, admin-toggleable in Store Settings (60s server cache — mirrors WhatsAppFab).
   const [waHref, setWaHref] = useState<string>()
@@ -375,7 +409,8 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
         </div>
         <div className="mb-3 h-px w-6 bg-copper" />
         <p className="font-ui text-[13px] font-light leading-[1.8] text-[rgba(28,10,6,0.85)]">
-          {`A ${p.weave.replace(/ Sarees$/, '')} saree handwoven in the traditional technique, where each motif is woven separately into the fabric — never stitched on. The ${p.occasion.toLowerCase()} palette is hand-dyed, with intricate zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Bengal.`}
+          {p.description?.trim() ||
+            `A ${p.weave.replace(/ Sarees$/, '')} saree handwoven in the traditional technique, where each motif is woven separately into the fabric — never stitched on. The ${p.occasion.toLowerCase()} palette is hand-dyed, with intricate zari work across the pallu and border. Sourced directly from a fourth-generation weaving family in Bengal.`}
         </p>
       </div>
 
@@ -402,9 +437,15 @@ function ProductInfo({ p, variantId, setVariantId }: { p: CatalogProduct; varian
 }
 
 // ── 3. ProductHero (two-column) ──
-function ProductHero({ p }: { p: CatalogProduct }) {
-  // default to the first variant so its gallery shows (others fall back to p.images)
-  const [variantId, setVariantId] = useState<string | null>(p.variants?.[0]?.id ?? null)
+function ProductHero({
+  p,
+  variantId,
+  setVariantId,
+}: {
+  p: CatalogProduct
+  variantId: string | null
+  setVariantId: (id: string | null) => void
+}) {
   return (
     <section className={cn(PAD, 'flex flex-col gap-10 pb-24 pt-8 lg:flex-row lg:gap-[60px] lg:pb-24')}>
       {/* key: remount on variant switch → gallery snaps back to its first photo */}
@@ -512,10 +553,17 @@ function MoreFrom({ p, related }: { p: CatalogProduct; related: CatalogProduct[]
 }
 
 // ── Sticky mobile bottom bar ──
-function StickyBar({ p }: { p: CatalogProduct }) {
+function StickyBar({ p, variantId }: { p: CatalogProduct; variantId: string | null }) {
   const cart = useCart()
   const mounted = useMounted()
-  const inCart = mounted && cart.has(p.id)
+  const choices = p.variants && p.variants.length > 1 ? p.variants : undefined
+  const chosen = choices?.find((v) => v.id === variantId)
+  const lineId = `${p.id}:${variantId ?? ''}`
+  const inCart =
+    mounted &&
+    (choices
+      ? cart.items.some((i) => i.id === lineId || i.variantId === variantId)
+      : cart.has(p.id))
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center gap-3 border-t border-[rgba(212,136,10,0.12)] bg-dark px-[clamp(20px,6vw,85px)] py-2 md:hidden">
       <div className="min-w-0 flex-1">
@@ -523,7 +571,22 @@ function StickyBar({ p }: { p: CatalogProduct }) {
         <div className="truncate font-display text-sm text-ivory">{p.name}</div>
       </div>
       <button
-        onClick={() => (inCart ? cart.open() : cart.add({ id: p.id, productId: p.id, slug: p.slug, name: p.name, price: p.price, priceNum: p.priceNum, gradient: p.gradient, label: p.label, image: p.images?.[0] }))}
+        onClick={() =>
+          inCart
+            ? cart.open()
+            : cart.add({
+                id: lineId,
+                productId: p.id,
+                variantId: variantId ?? null,
+                slug: p.slug,
+                name: p.name,
+                price: p.price,
+                priceNum: p.priceNum,
+                gradient: p.gradient,
+                label: p.label,
+                image: chosen?.images[0] ?? p.images?.[0],
+              })
+        }
         disabled={p.sold}
         className={cn(
           'h-12 shrink-0 px-6 font-ui text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors',
@@ -537,16 +600,17 @@ function StickyBar({ p }: { p: CatalogProduct }) {
 }
 
 export default function Pdp({ product, related = [] }: { product: CatalogProduct; related?: CatalogProduct[] }) {
+  const [variantId, setVariantId] = useState<string | null>(product.variants?.[0]?.id ?? null)
   const others = related.filter((r) => r.slug !== product.slug)
   return (
     <div className="bg-ivory">
       <Breadcrumb p={product} />
-      <ProductHero p={product} />
+      <ProductHero p={product} variantId={variantId} setVariantId={setVariantId} />
       <SareeBorderDivider />
       <TrustStrip />
       <MoreFrom p={product} related={others} />
       <Reviews productId={product.id} productName={product.name} />
-      <StickyBar p={product} />
+      <StickyBar p={product} variantId={variantId} />
     </div>
   )
 }

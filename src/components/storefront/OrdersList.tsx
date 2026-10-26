@@ -17,6 +17,7 @@ const longDate = (iso: string) =>
 function paymentNote(status: string): string {
   switch (status) {
     case 'pending': return 'Payment was not completed for this order.'
+    case 'payment_review': return 'We received your payment and are reviewing the order. Our team will contact you shortly.'
     case 'cancelled': return 'This order was cancelled.'
     case 'refunded': return 'This order was refunded.'
     default: return 'Paid securely at checkout.'

@@ -167,18 +167,11 @@ Expected response:
 
 ## 4. Supabase Database Migration & Seeding
 
-1. Open your Supabase project dashboard: [app.supabase.com](https://app.supabase.com).
-2. Go to **SQL Editor**.
-3. Run the schema migrations located in:
-   - `supabase/migrations/`
-4. Set up Storage Buckets:
-   - `products` (Public read)
-   - `banners` (Public read)
-   - `cms` (Public read)
-5. Create Initial Admin User:
-   ```bash
-   node scripts/create-admin.mjs admin@sumamsboutique.com "YourSecurePassword"
-   ```
+The current workspace is configured for a live Supabase database. Do not run migrations or write-based checks against it. The repository has migrations 001–033, no `supabase/config.toml`, and no recorded applied-version snapshot; use [the operations guide](docs/OPERATIONS.md) to compare state and validate against a separate staging/test project before any production change.
+
+Do not paste all migration files into the SQL Editor or use `supabase db push` without confirming the linked project and unapplied versions. Product image uploads expect the `sarees` bucket; profile avatars are provisioned by migration 016. Existing homepage image URLs may point to previously configured storage. Verify bucket names, public-read needs, upload MIME/size restrictions, and RLS on staging instead of creating generic `products`, `banners`, or `cms` buckets by assumption.
+
+Create the initial Auth user through Supabase Auth or the app signup. The profile role is assigned by the server-only `scripts/promote-admin.mjs` after migration 030 has been reviewed and applied to the intended environment. That script requires `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` and does not accept or print a password. Do not point it at production without an authorized operator change.
 
 ---
 

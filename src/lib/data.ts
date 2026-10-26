@@ -5,6 +5,7 @@
 
 import { supabase } from './supabase'
 import { CATALOG, type CatalogProduct } from './catalog'
+import { publishedContentMap, type PublishedContentRow } from './content-publishing'
 
 type Row = {
   id: string
@@ -12,6 +13,13 @@ type Row = {
   slug: string
   category_id: string | null
   short_description: string | null
+  description: string | null
+  fabric_weave_details: string | null
+  dimensions: string | null
+  care_instructions: string | null
+  shipping_returns_note: string | null
+  seo_title: string | null
+  seo_description: string | null
   price: number | string
   compare_at_price: number | string | null
   badge_text: string | null
@@ -83,6 +91,14 @@ function toProduct(row: Row, parentOf: Map<string, string>): CatalogProduct {
     variants,
     categorySlug: row.categories?.slug ?? '',
     createdAt: row.created_at,
+    description: row.description ?? null,
+    fabricWeaveDetails: row.fabric_weave_details ?? null,
+    dimensions: row.dimensions ?? null,
+    careInstructions: row.care_instructions ?? null,
+    shippingReturnsNote: row.shipping_returns_note ?? null,
+    occasionTags: row.occasion_tags ?? undefined,
+    seoTitle: row.seo_title ?? null,
+    seoDescription: row.seo_description ?? null,
   }
 }
 
@@ -124,6 +140,12 @@ let cachedProducts: { data: CatalogProduct[]; expiresAt: number } | null = null
 let cachedHomeContent: { data: HomeContent; expiresAt: number } | null = null
 const CACHE_TTL_MS = 60 * 1000 // 60s in-memory cache
 
+/** Clears the 60s in-memory product and homepage CMS caches after admin mutations. */
+export function clearCatalogCache(): void {
+  cachedProducts = null
+  cachedHomeContent = null
+}
+
 async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, string> } | null> {
   if (!isSupabaseAvailable()) return null
   try {
@@ -132,7 +154,7 @@ async function fetchProducts(): Promise<{ rows: Row[]; parentOf: Map<string, str
         supabase!.from('categories').select('id, name, parent_id'),
         supabase!
           .from('products')
-          .select('id, name, slug, category_id, short_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, created_at, product_images(storage_path, variant_id, display_order), product_variants(id, variant_type, variant_value, created_at), categories(name, slug)')
+          .select('id, name, slug, category_id, short_description, description, fabric_weave_details, dimensions, care_instructions, shipping_returns_note, seo_title, seo_description, price, compare_at_price, badge_text, badge_color, is_featured_large, stock_status, occasion_tags, created_at, product_images(storage_path, variant_id, display_order), product_variants(id, variant_type, variant_value, created_at), categories(name, slug)')
           .eq('is_published', true)
           .eq('is_active', true),
       ]),
@@ -281,30 +303,20 @@ const emptyHomeContent: HomeContent = {
   published_sections: null,
 }
 
-type ContentBlockRow = {
-  section_key: string
-  content: unknown
-}
-
 async function fetchAllContentBlocks(): Promise<Record<string, unknown> | null> {
   if (!isSupabaseAvailable()) return null
   try {
     const { data, error } = await withTimeout(
       supabase!
-        .from('content_blocks')
-        .select('section_key, content')
-        .eq('is_published', true),
+        .from('published_content_blocks')
+        .select('section_key, published_content'),
       5000
     )
     if (error || !data) {
       markSupabaseFailure(error)
       return null
     }
-    const map: Record<string, unknown> = {}
-    for (const item of (data as ContentBlockRow[])) {
-      map[item.section_key] = item.content
-    }
-    return map
+    return publishedContentMap(data as PublishedContentRow[])
   } catch (err) {
     markSupabaseFailure(err)
     return null

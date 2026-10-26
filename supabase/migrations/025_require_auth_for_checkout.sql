@@ -1,5 +1,8 @@
 -- 025_require_auth_for_checkout.sql
--- Require a signed-in customer to place an order (checkout requires login).
+-- Require a signed-in customer to place an order (checkout requires login),
+-- while preserving all hardening from 021 (deferred coupon use, 30-min retry
+-- deduplication), 023 (variant-aware order items & stock checks), and 024
+-- (service_role-only shipping overrides and non-negative totals).
 
 create or replace function public.create_pending_order(
   p_address jsonb,
@@ -17,6 +20,7 @@ declare
   v_uid uuid := auth.uid();
   v_item jsonb;
   v_product_id uuid;
+  v_variant_id uuid;
   v_qty int;
   v_price numeric(10,2);
   v_name text;
@@ -33,7 +37,7 @@ declare
   v_free_threshold numeric;
   v_flat_shipping numeric;
 begin
-  if v_uid is null then
+  if v_uid is null and auth.role() <> 'service_role' then
     return jsonb_build_object('ok', false, 'error', 'AUTH_REQUIRED');
   end if;
 
@@ -41,17 +45,23 @@ begin
     raise exception 'INVALID_PAYLOAD';
   end if;
 
-  -- Shipping policy: caller override > store_settings > 010 defaults.
-  v_free_threshold := p_free_threshold;
-  v_flat_shipping := p_flat_shipping;
+  -- Shipping policy: service-role override > store_settings > 010 defaults.
+  -- anon/authenticated must never be able to choose what they are charged.
+  if auth.role() = 'service_role' then
+    v_free_threshold := p_free_threshold;
+    v_flat_shipping := p_flat_shipping;
+  end if;
   if v_free_threshold is null or v_flat_shipping is null then
     select value into v_commerce from store_settings where key = 'commerce';
     v_free_threshold := coalesce(v_free_threshold, (v_commerce->>'free_shipping_threshold')::numeric, 10000);
     v_flat_shipping := coalesce(v_flat_shipping, (v_commerce->>'flat_shipping_rate')::numeric, 199);
   end if;
+  v_free_threshold := greatest(0, v_free_threshold);
+  v_flat_shipping := greatest(0, v_flat_shipping);
 
   for v_item in select * from jsonb_array_elements(p_items) loop
     v_product_id := (v_item->>'product_id')::uuid;
+    v_variant_id := nullif(v_item->>'variant_id', '')::uuid;
     v_qty := (v_item->>'quantity')::int;
 
     if v_product_id is null or v_qty is null or v_qty <= 0 then
@@ -69,11 +79,25 @@ begin
       raise exception 'OUT_OF_STOCK';
     end if;
 
-    select coalesce(sum(v.stock_quantity), -1) into v_available
-    from product_variants v
-    where v.product_id = v_product_id;
-    if v_available >= 0 and v_available < v_qty then
-      raise exception 'INSUFFICIENT_STOCK';
+    if v_variant_id is not null then
+      -- A variant must belong to the product it is ordered with, and it must
+      -- itself have enough stock.
+      select coalesce(sum(stock_quantity), -1) into v_available
+      from product_variants
+      where id = v_variant_id and product_id = v_product_id;
+      if v_available = -1 then
+        raise exception 'VARIANT_NOT_FOUND';
+      end if;
+      if v_available < v_qty then
+        raise exception 'INSUFFICIENT_STOCK';
+      end if;
+    else
+      select coalesce(sum(v.stock_quantity), -1) into v_available
+      from product_variants v
+      where v.product_id = v_product_id;
+      if v_available >= 0 and v_available < v_qty then
+        raise exception 'INSUFFICIENT_STOCK';
+      end if;
     end if;
 
     v_subtotal := v_subtotal + (v_price * v_qty);
@@ -83,6 +107,7 @@ begin
     raise exception 'EMPTY_ORDER';
   end if;
 
+  -- Validate the coupon, but do not consume it — see mark_order_paid() in 021.
   v_coupon_result := public.coupon_quote(p_coupon, v_subtotal);
   if not (v_coupon_result->>'ok')::boolean then
     return jsonb_build_object('ok', false, 'error', v_coupon_result->>'error');
@@ -93,24 +118,43 @@ begin
   v_shipping := case when v_subtotal > v_free_threshold then 0 else v_flat_shipping end;
   v_total := v_subtotal + v_shipping - v_discount;
 
-  insert into orders (user_id, status, subtotal, shipping_fee, discount, coupon_code, total, shipping_address)
-  values (v_uid, 'pending', v_subtotal, v_shipping, v_discount, v_coupon_code, v_total, p_address)
-  returning id into v_order_id;
+  if v_total < 0 then
+    raise exception 'INVALID_TOTAL';
+  end if;
 
-  if v_coupon_code is not null then
-    update coupons set used_count = used_count + 1 where upper(code) = v_coupon_code;
+  -- Reuse an identical unpaid order from the last 30 minutes instead of piling
+  -- up duplicates when the customer dismisses the Razorpay modal and retries.
+  select id into v_order_id
+  from orders
+  where status = 'pending'
+    and total = v_total
+    and coalesce(coupon_code, '') = coalesce(v_coupon_code, '')
+    and shipping_address = p_address
+    and created_at > now() - interval '30 minutes'
+    and (user_id = v_uid or (user_id is null and v_uid is null))
+  order by created_at desc
+  limit 1;
+
+  if v_order_id is null then
+    insert into orders (user_id, status, subtotal, shipping_fee, discount, coupon_code, total, shipping_address)
+    values (v_uid, 'pending', v_subtotal, v_shipping, v_discount, v_coupon_code, v_total, p_address)
+    returning id into v_order_id;
+  else
+    -- Same cart retried: refresh the lines so quantity edits are picked up.
+    delete from order_items where order_id = v_order_id;
   end if;
 
   for v_item in select * from jsonb_array_elements(p_items) loop
     v_product_id := (v_item->>'product_id')::uuid;
+    v_variant_id := nullif(v_item->>'variant_id', '')::uuid;
     v_qty := (v_item->>'quantity')::int;
 
     select p.price, p.name into v_price, v_name
     from products p
     where p.id = v_product_id and p.is_active and p.is_published;
 
-    insert into order_items (order_id, product_id, quantity, unit_price, product_name_snapshot)
-    values (v_order_id, v_product_id, v_qty, v_price, v_name);
+    insert into order_items (order_id, product_id, variant_id, quantity, unit_price, product_name_snapshot)
+    values (v_order_id, v_product_id, v_variant_id, v_qty, v_price, v_name);
   end loop;
 
   return jsonb_build_object(
@@ -124,5 +168,4 @@ end;
 $$;
 
 revoke all on function public.create_pending_order(jsonb, jsonb, text, numeric, numeric) from public;
-grant execute on function public.create_pending_order(jsonb, jsonb, text, numeric, numeric) to authenticated;
-grant execute on function public.create_pending_order(jsonb, jsonb, text, numeric, numeric) to anon;
+grant execute on function public.create_pending_order(jsonb, jsonb, text, numeric, numeric) to anon, authenticated, service_role;

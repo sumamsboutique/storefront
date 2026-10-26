@@ -63,7 +63,9 @@ describe('renderOrderStatus', () => {
   })
 
   it('has copy for every notifiable status', () => {
-    for (const status of ['processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const) {
+    for (const status of [
+      'processing', 'shipped', 'delivered', 'cancelled', 'refunded', 'payment_review', 'additional_payment_review',
+    ] as const) {
       const out = renderOrderStatus({ name: 'Ishita', orderId: base.orderId, status, total: 9000 })
       expect(out.subject.length).toBeGreaterThan(0)
       expect(out.html).toContain('Sumam&apos;s Boutique')

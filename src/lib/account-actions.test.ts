@@ -186,7 +186,14 @@ describe('changeMyPassword', () => {
 })
 
 const img = (type: string, size = 1024) => {
-  const f = new File([new Uint8Array(size)], 'a', { type })
+  const bytes = new Uint8Array(size)
+  const signatures: Record<string, number[]> = {
+    'image/jpeg': [0xff, 0xd8, 0xff],
+    'image/png': [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+    'image/webp': [0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50],
+  }
+  bytes.set((signatures[type] ?? []).slice(0, size))
+  const f = new File([bytes], 'a', { type })
   Object.defineProperty(f, 'size', { value: size })
   return f
 }
@@ -225,6 +232,14 @@ describe('uploadMyAvatar', () => {
     const { uploadMyAvatar } = await importActions()
     const res = await uploadMyAvatar({ file: img('application/pdf') })
     expect(res).toEqual({ ok: false, error: 'Use a JPG, PNG or WebP image.' })
+    expect(state.uploads).toHaveLength(0)
+  })
+
+  it('rejects image MIME spoofing before touching storage', async () => {
+    const { uploadMyAvatar } = await importActions()
+    const spoofed = new File([new Uint8Array([0x4d, 0x5a])], 'a.png', { type: 'image/png' })
+    const res = await uploadMyAvatar({ file: spoofed })
+    expect(res).toEqual({ ok: false, error: 'The file content does not match its image type.' })
     expect(state.uploads).toHaveLength(0)
   })
 

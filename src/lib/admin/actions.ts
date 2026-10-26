@@ -15,12 +15,17 @@ import {
   UpdateUserRoleSchema,
   StoreSettingsSchema,
   CouponFormSchema,
+  ResolvePaymentReconciliationSchema,
   isValidOrderTransition,
   type OrderStatus,
 } from './schemas'
 import { logAudit } from './audit'
 import { clearStoreSettingsCache } from '../settings'
-import { renderOrderStatus, renderWelcome, sendEmail } from '../email'
+import { clearCatalogCache } from '../data'
+import { renderOrderStatus, renderWelcome, sendEmail, sendPaidOrderEmails } from '../email'
+import { hasMatchingImageSignature } from '../image-files'
+import { createServiceClient } from '../supabase'
+import { safeLocalRedirectPath } from '../safe-redirect'
 
 // ponytail: in-memory login throttle, per-instance only. Fine until we run
 // multiple server instances; swap for a shared store (Redis/DB) if that happens.
@@ -245,7 +250,7 @@ export async function customerLoginAction(
       return { error: 'Your account is registered for staff access. Please use the staff CRM login.' }
     }
 
-    const redirectTo = next.startsWith('/') && !next.startsWith('//') ? next : '/account'
+    const redirectTo = safeLocalRedirectPath(next)
     redirect(redirectTo)
   } catch (err) {
     if (err && typeof err === 'object' && 'digest' in err) {
@@ -315,6 +320,7 @@ export async function saveProduct(
 
   try {
     let productId = id
+    const productAction = productId ? 'update' : 'create'
 
     if (productId) {
       // Update existing
@@ -328,13 +334,6 @@ export async function saveProduct(
 
       if (prodErr) return { success: false, error: prodErr.message }
 
-      await logAudit({
-        tableName: 'products',
-        recordId: productId,
-        action: 'update',
-        userId: session.user.id,
-        diff: productData as Record<string, unknown>,
-      })
     } else {
       // Create new
       const { data: newProd, error: prodErr } = await supabase
@@ -346,37 +345,46 @@ export async function saveProduct(
       if (prodErr || !newProd) return { success: false, error: prodErr?.message || 'Failed to create product' }
       productId = newProd.id
 
-      await logAudit({
-        tableName: 'products',
-        recordId: newProd.id,
-        action: 'create',
-        userId: session.user.id,
-        diff: productData as Record<string, unknown>,
-      })
     }
 
     if (!productId) return { success: false, error: 'Product ID resolution failed' }
+
+    const partialSyncFailure = (error: string): ActionResult<{ id: string }> => {
+      // The product row may already be committed; invalidate storefront data so
+      // the visible catalog cannot stay stale after a partial sync failure.
+      clearCatalogCache()
+      revalidatePath('/admin/products')
+      revalidatePath(`/admin/products/${productId}`)
+      revalidatePath('/')
+      revalidatePath('/sarees')
+      revalidatePath('/jewellery')
+      revalidatePath(`/products/${productData.slug}`)
+      return { success: false, error }
+    }
 
     // Sync Images
     if (images && images.length >= 0) {
       // Delete old images not in incoming list
       const incomingIds = images.map((i) => i.id).filter(Boolean) as string[]
       if (incomingIds.length > 0) {
-        await supabase
+        const { error } = await supabase
           .from('product_images')
           .delete()
           .eq('product_id', productId)
           .not('id', 'in', `(${incomingIds.join(',')})`)
+        if (error) return partialSyncFailure('Product details were saved, but removed images could not be synchronized. Reopen the product and retry.')
       } else {
-        await supabase.from('product_images').delete().eq('product_id', productId)
+        const { error } = await supabase.from('product_images').delete().eq('product_id', productId)
+        if (error) return partialSyncFailure('Product details were saved, but old images could not be cleared. Reopen the product and retry.')
       }
 
       // Upsert current images
       for (const [idx, img] of images.entries()) {
         if (img.id) {
-          await supabase
+          const { data, error } = await supabase
             .from('product_images')
             .update({
+              variant_id: img.variant_id ?? null,
               storage_path: img.storage_path,
               alt_text: img.alt_text,
               display_order: idx,
@@ -384,15 +392,21 @@ export async function saveProduct(
               aspect_ratio: img.aspect_ratio || '3/4',
             })
             .eq('id', img.id)
+            .eq('product_id', productId)
+            .select('id')
+            .maybeSingle()
+          if (error || !data) return partialSyncFailure('Product details were saved, but an existing image could not be updated. Reopen the product and retry.')
         } else {
-          await supabase.from('product_images').insert({
+          const { error } = await supabase.from('product_images').insert({
             product_id: productId,
+            variant_id: img.variant_id ?? null,
             storage_path: img.storage_path,
             alt_text: img.alt_text,
             display_order: idx,
             is_primary: img.is_primary,
             aspect_ratio: img.aspect_ratio || '3/4',
           })
+          if (error) return partialSyncFailure('Product details were saved, but a new image could not be added. Reopen the product and retry.')
         }
       }
     }
@@ -401,18 +415,20 @@ export async function saveProduct(
     if (variants && variants.length >= 0) {
       const incomingVarIds = variants.map((v) => v.id).filter(Boolean) as string[]
       if (incomingVarIds.length > 0) {
-        await supabase
+        const { error } = await supabase
           .from('product_variants')
           .delete()
           .eq('product_id', productId)
           .not('id', 'in', `(${incomingVarIds.join(',')})`)
+        if (error) return partialSyncFailure('Product details were saved, but removed variants could not be synchronized. Existing orders may reference them.')
       } else {
-        await supabase.from('product_variants').delete().eq('product_id', productId)
+        const { error } = await supabase.from('product_variants').delete().eq('product_id', productId)
+        if (error) return partialSyncFailure('Product details were saved, but old variants could not be cleared. Existing orders may reference them.')
       }
 
       for (const v of variants) {
         if (v.id) {
-          await supabase
+          const { data, error } = await supabase
             .from('product_variants')
             .update({
               variant_type: v.variant_type,
@@ -421,18 +437,32 @@ export async function saveProduct(
               price_override: v.price_override ?? null,
             })
             .eq('id', v.id)
+            .eq('product_id', productId)
+            .select('id')
+            .maybeSingle()
+          if (error || !data) return partialSyncFailure('Product details were saved, but an existing variant could not be updated. Reopen the product and retry.')
         } else {
-          await supabase.from('product_variants').insert({
+          const { error } = await supabase.from('product_variants').insert({
             product_id: productId,
             variant_type: v.variant_type,
             variant_value: v.variant_value,
             stock_quantity: v.stock_quantity,
             price_override: v.price_override ?? null,
           })
+          if (error) return partialSyncFailure('Product details were saved, but a new variant could not be added. Reopen the product and retry.')
         }
       }
     }
 
+    await logAudit({
+      tableName: 'products',
+      recordId: productId,
+      action: productAction,
+      userId: session.user.id,
+      diff: productData as Record<string, unknown>,
+    })
+
+    clearCatalogCache()
     revalidatePath('/admin/products')
     revalidatePath(`/admin/products/${productId}`)
     revalidatePath('/')
@@ -474,6 +504,7 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
       userId: session.user.id,
     })
 
+    clearCatalogCache()
     revalidatePath('/admin/products')
     revalidatePath('/')
     return { success: true }
@@ -513,6 +544,7 @@ export async function bulkUpdateProducts(
       })
     }
 
+    clearCatalogCache()
     revalidatePath('/admin/products')
     revalidatePath('/')
     return { success: true }
@@ -582,6 +614,7 @@ export async function saveCategory(
 
     if (!categoryId) return { success: false, error: 'Category ID resolution failed' }
 
+    clearCatalogCache()
     revalidatePath('/admin/categories')
     revalidatePath('/admin/products')
     revalidatePath('/')
@@ -632,6 +665,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
       userId: session.user.id,
     })
 
+    clearCatalogCache()
     revalidatePath('/admin/categories')
     return { success: true }
   } catch (err) {
@@ -640,18 +674,47 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
 }
 
 export async function reorderCategories(orderedIds: string[]): Promise<ActionResult> {
-  await requireAdminOrStaff()
+  const session = await requireAdminOrStaff()
+  const parsed = z.array(z.string().uuid()).min(1).max(500).safeParse(orderedIds)
+  if (!parsed.success) return { success: false, error: 'Invalid category order.' }
+  if (new Set(parsed.data).size !== parsed.data.length) {
+    return { success: false, error: 'A category cannot appear more than once.' }
+  }
+
   const supabase = await createAdminServerClient()
 
   try {
-    for (const [idx, id] of orderedIds.entries()) {
-      await supabase
-        .from('categories')
-        .update({ display_order: idx })
-        .eq('id', id)
+    const { data, error } = await supabase.rpc('reorder_categories', {
+      p_ordered_ids: parsed.data,
+    })
+    if (error) {
+      console.error('[admin/categories] reorder failed:', error.message)
+      return { success: false, error: 'Could not update category order. Reload the page and retry.' }
     }
 
+    const result = data as { ok?: boolean; error?: string } | null
+    if (!result?.ok) {
+      const messages: Record<string, string> = {
+        CATEGORY_SET_CHANGED: 'The category list changed. Reload the page and retry.',
+        INVALID_CATEGORY_ORDER: 'The category order is invalid. Reload the page and retry.',
+        FORBIDDEN: 'You do not have permission to reorder categories.',
+      }
+      return { success: false, error: messages[result?.error ?? ''] || 'Could not update category order.' }
+    }
+
+    for (const [idx, id] of parsed.data.entries()) {
+      await logAudit({
+        tableName: 'categories',
+        recordId: id,
+        action: 'update',
+        userId: session.user.id,
+        diff: { display_order: idx },
+      })
+    }
+
+    clearCatalogCache()
     revalidatePath('/admin/categories')
+    revalidatePath('/')
     return { success: true }
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Failed to reorder' }
@@ -681,44 +744,26 @@ export async function saveContentBlock(rawPayload: unknown): Promise<ActionResul
       updateObj.is_published = true
     }
 
-    // Upsert by section_key
-    const { data: existing } = await supabase
+    // A unique-key upsert avoids the read-then-insert race. Draft saves omit
+    // publication fields so a live snapshot remains visible until explicit
+    // publish; publishNow writes both the editor value and the live snapshot.
+    const { data: saved, error } = await supabase
       .from('content_blocks')
+      .upsert({ section_key, ...updateObj }, { onConflict: 'section_key' })
       .select('id')
-      .eq('section_key', section_key)
-      .maybeSingle()
+      .single()
 
-    let recordId: string
-    if (existing) {
-      recordId = existing.id
-      const { error } = await supabase
-        .from('content_blocks')
-        .update(updateObj)
-        .eq('id', recordId)
-
-      if (error) return { success: false, error: error.message }
-    } else {
-      const { data: inserted, error } = await supabase
-        .from('content_blocks')
-        .insert({
-          section_key,
-          ...updateObj,
-        })
-        .select('id')
-        .single()
-
-      if (error || !inserted) return { success: false, error: error?.message || 'Failed to save block' }
-      recordId = inserted.id
-    }
+    if (error || !saved) return { success: false, error: error?.message || 'Failed to save block' }
 
     await logAudit({
       tableName: 'content_blocks',
-      recordId,
+      recordId: saved.id,
       action: publishNow ? 'publish' : 'update',
       userId: session.user.id,
       diff: { section_key, publishNow },
     })
 
+    clearCatalogCache()
     revalidatePath('/admin/content')
     revalidatePath('/')
     return { success: true }
@@ -758,6 +803,7 @@ export async function setContentBlockPublished(
       diff: { section_key: parsed.data, is_published: published },
     })
 
+    clearCatalogCache()
     revalidatePath('/admin/content')
     revalidatePath('/')
     return { success: true }
@@ -840,6 +886,65 @@ export async function updateOrderStatus(rawPayload: unknown): Promise<ActionResu
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Status update failed' }
   }
+}
+
+/**
+ * Records a human resolution for a captured-payment review. This action never
+ * calls Razorpay: refund_recorded requires a refund already completed in the
+ * provider dashboard; fulfilled decrements stock and marks the order paid.
+ */
+export async function resolvePaymentReconciliation(rawPayload: unknown): Promise<ActionResult> {
+  const session = await requireAdminOrStaff()
+  const parsed = ResolvePaymentReconciliationSchema.safeParse(rawPayload)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message || 'Invalid reconciliation details.' }
+  }
+
+  const service = createServiceClient()
+  if (!service) return { success: false, error: 'Payment reconciliation is not configured.' }
+
+  const { case_id, resolution, note, refund_reference } = parsed.data
+  const { data, error } = await service.rpc('resolve_payment_reconciliation', {
+    p_case_id: case_id,
+    p_resolution: resolution,
+    p_note: note,
+    p_refund_reference: refund_reference ?? null,
+    p_resolved_by: session.user.id,
+  })
+  if (error) {
+    console.error('[admin/reconciliation] resolution failed:', error.message)
+    return { success: false, error: 'Could not record this resolution. Check stock and try again.' }
+  }
+
+  const result = data as { ok?: boolean; error?: string; order_id?: string } | null
+  if (!result?.ok) {
+    const messages: Record<string, string> = {
+      CASE_NOT_OPEN: 'This payment review case is already resolved.',
+      ORDER_NOT_IN_PAYMENT_REVIEW: 'This order is no longer waiting for payment review.',
+      REFUND_REFERENCE_REQUIRED: 'Enter the Razorpay refund reference.',
+      RESOLUTION_NOTE_REQUIRED: 'Add a short reconciliation note.',
+      COUPON_UNAVAILABLE: 'The order coupon is no longer available. Record the completed external refund instead.',
+      COUPON_LIMIT_REACHED: 'The coupon limit is exhausted. Record the completed external refund instead.',
+      STAFF_ACTOR_REQUIRED: 'Your staff session could not be verified. Sign in again and retry.',
+    }
+    return { success: false, error: messages[result?.error ?? ''] || 'This case could not be resolved.' }
+  }
+
+  await logAudit({
+    tableName: 'payment_reconciliations',
+    recordId: case_id,
+    action: 'status_change',
+    userId: session.user.id,
+    diff: { resolution },
+  })
+
+  if (resolution === 'fulfilled' && result.order_id) {
+    await sendPaidOrderEmails(result.order_id)
+  }
+  revalidatePath('/admin/reconciliation')
+  revalidatePath('/admin/orders')
+  if (result.order_id) revalidatePath(`/admin/orders/${result.order_id}`)
+  return { success: true }
 }
 
 // ── Subscribers ──────────────────────────────────────────────────────────────
@@ -1008,6 +1113,9 @@ export async function uploadProductImage(
   if (!ext) return { success: false, error: 'Use a JPG, PNG or WebP image.' }
   if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
     return { success: false, error: 'Image must be under 5 MB.' }
+  }
+  if (!(await hasMatchingImageSignature(file))) {
+    return { success: false, error: 'The file content does not match its image type.' }
   }
 
   const supabase = await createAdminServerClient()

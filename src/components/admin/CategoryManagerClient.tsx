@@ -128,7 +128,7 @@ export function CategoryManagerClient({
       if (res.success) {
         router.refresh()
       } else {
-        error('Failed to update order.')
+        error(res.error || 'Failed to update order.')
       }
     })
   }

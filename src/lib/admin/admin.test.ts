@@ -6,6 +6,7 @@ import {
   StoreSettingsSchema,
   UploadProductImageSchema,
   isValidOrderTransition,
+  ResolvePaymentReconciliationSchema,
 } from './schemas'
 
 describe('Admin Schemas & Domain Logic', () => {
@@ -110,16 +111,19 @@ describe('Admin Schemas & Domain Logic', () => {
 
   describe('Order Status Transitions State Machine', () => {
     it('allows valid progressive status transitions', () => {
-      expect(isValidOrderTransition('pending', 'paid')).toBe(true)
+      expect(isValidOrderTransition('pending', 'paid')).toBe(false)
+      expect(isValidOrderTransition('pending', 'payment_review')).toBe(false)
+      expect(isValidOrderTransition('payment_review', 'paid')).toBe(false)
       expect(isValidOrderTransition('paid', 'processing')).toBe(true)
       expect(isValidOrderTransition('processing', 'shipped')).toBe(true)
       expect(isValidOrderTransition('shipped', 'delivered')).toBe(true)
     })
 
-    it('allows cancellations from active states', () => {
+    it('allows cancellation only before payment is verified', () => {
       expect(isValidOrderTransition('pending', 'cancelled')).toBe(true)
-      expect(isValidOrderTransition('paid', 'cancelled')).toBe(true)
-      expect(isValidOrderTransition('processing', 'cancelled')).toBe(true)
+      expect(isValidOrderTransition('paid', 'cancelled')).toBe(false)
+      expect(isValidOrderTransition('processing', 'cancelled')).toBe(false)
+      expect(isValidOrderTransition('shipped', 'refunded')).toBe(false)
     })
 
     it('disallows jumping directly from pending to delivered', () => {
@@ -129,6 +133,32 @@ describe('Admin Schemas & Domain Logic', () => {
     it('disallows modifying terminal states (cancelled/refunded)', () => {
       expect(isValidOrderTransition('cancelled', 'paid')).toBe(false)
       expect(isValidOrderTransition('cancelled', 'delivered')).toBe(false)
+    })
+  })
+
+  describe('ResolvePaymentReconciliationSchema', () => {
+    const caseId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+
+    it('accepts a staff-confirmed fulfillment with a note', () => {
+      expect(ResolvePaymentReconciliationSchema.safeParse({
+        case_id: caseId,
+        resolution: 'fulfilled',
+        note: 'Stock checked and order packed.',
+      }).success).toBe(true)
+    })
+
+    it('requires an external refund reference and resolution note', () => {
+      expect(ResolvePaymentReconciliationSchema.safeParse({
+        case_id: caseId,
+        resolution: 'refund_recorded',
+        note: 'Refund confirmed.',
+      }).success).toBe(false)
+      expect(ResolvePaymentReconciliationSchema.safeParse({
+        case_id: caseId,
+        resolution: 'refund_recorded',
+        note: 'Done',
+        refund_reference: 'rfnd_123',
+      }).success).toBe(false)
     })
   })
 

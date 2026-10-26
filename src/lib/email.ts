@@ -45,7 +45,9 @@ export async function sendEmail({ to, subject, html, replyTo }: SendParams): Pro
       signal: AbortSignal.timeout(10_000),
     })
     if (!res.ok) {
-      console.error('[email] Resend rejected send:', res.status, await res.text().catch(() => ''))
+      // Provider bodies can contain recipient or request details. Keep logs to
+      // the status code; delivery diagnostics belong in the provider dashboard.
+      console.error('[email] Resend rejected send:', res.status)
     }
     return { ok: res.ok }
   } catch (err) {
@@ -222,7 +224,17 @@ const STATUS_COPY: Record<string, { subject: string; title: string; body: string
   cancelled: {
     subject: 'Your order has been cancelled',
     title: 'Your order was cancelled',
-    body: 'This order has been cancelled. If a payment was taken, the refund is processed back to your original payment method.',
+    body: 'This order has been cancelled. If you see a payment for this order, please contact us so we can reconcile it.',
+  },
+  payment_review: {
+    subject: 'We are reviewing your payment',
+    title: 'Your payment needs a quick review',
+    body: 'We received your payment, but need to confirm stock or payment details before we can complete the order. Our team will contact you shortly.',
+  },
+  additional_payment_review: {
+    subject: 'We are checking an additional payment',
+    title: 'An additional payment needs review',
+    body: 'Your order is already confirmed, but we detected another captured payment for it. Our team will reconcile the extra payment and contact you shortly.',
   },
   refunded: {
     subject: 'Your refund has been processed',
@@ -234,7 +246,7 @@ const STATUS_COPY: Record<string, { subject: string; title: string; body: string
 export function renderOrderStatus(p: {
   name: string
   orderId: string
-  status: 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+  status: 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' | 'payment_review' | 'additional_payment_review'
   total: number
 }): { subject: string; html: string } {
   const copy = STATUS_COPY[p.status]
@@ -354,4 +366,52 @@ export async function sendPaidOrderEmails(orderId: string): Promise<{ ok: boolea
   }
 
   return { ok: true }
+}
+
+/** Notify the customer and configured order-alert inbox after a captured
+ * payment enters the durable manual-reconciliation queue. */
+export async function sendPaymentReviewEmails(orderId: string): Promise<{ ok: boolean }> {
+  const supabase = createServiceClient()
+  if (!supabase) return { ok: false }
+
+  const { data: order, error } = await supabase
+    .from('orders')
+    .select('id, status, total, shipping_address')
+    .eq('id', orderId)
+    .single()
+  if (error || !order) {
+    console.error('[sendPaymentReviewEmails] order fetch failed:', error?.message)
+    return { ok: false }
+  }
+
+  const address = order.shipping_address as { email?: string; name?: string } | null
+  const customerEmail = address?.email ?? ''
+  const { subject, html } = renderOrderStatus({
+    name: address?.name || 'friend',
+    orderId,
+    status: order.status === 'paid' ? 'additional_payment_review' : 'payment_review',
+    total: Number(order.total),
+  })
+  const customerResult = customerEmail
+    ? await sendEmail({ to: customerEmail, subject, html, replyTo: process.env.EMAIL_FROM })
+    : { ok: false }
+
+  const { data: notif } = await supabase
+    .from('store_settings')
+    .select('value')
+    .eq('key', 'notifications')
+    .maybeSingle()
+  const alertTo = (notif?.value as { order_alert_email?: string } | null)?.order_alert_email
+  if (alertTo) {
+    await sendEmail({
+      to: alertTo,
+      subject: `Payment review required — #${shortId(orderId)}`,
+      html: shell(`${heading('Captured payment needs review.')}
+        <p style="color:${MUTED};font-size:14px;">Order #${esc(shortId(orderId))} needs manual stock, coupon or payment reconciliation.</p>
+        ${button(`${siteUrl()}/admin/reconciliation`, 'Open payment review')}`),
+      replyTo: process.env.EMAIL_FROM,
+    })
+  }
+
+  return customerResult
 }
