@@ -95,37 +95,38 @@ export function CartDrawer() {
               </div>
             )}
             <div className="flex-1 overflow-y-auto px-6">
+              {items.map((line) => {
                 const img = cartImage(line)
                 return (
-                <div key={line.id} className="flex gap-4 border-b border-[rgba(140,106,85,0.2)] py-5">
-                  <div className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden bg-cream" style={{ background: line.gradient }}>
-                    {img && <Image fill src={img} alt={line.name} sizes="80px" className="object-cover" />}
-                  </div>
-                  <div className="flex flex-1 flex-col">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-display text-[15px] leading-tight text-dark">{line.name}</div>
-                        <div className="mt-0.5 font-ui text-[9px] tracking-[0.1em] text-muted uppercase">{line.label}</div>
-                      </div>
-                      <button
-                        onClick={() => remove(line.id)}
-                        aria-label={`Remove ${line.name}`}
-                        className="text-muted hover:text-copper"
-                      >
-                        <TrashIcon size={15} />
-                      </button>
+                  <div key={line.id} className="flex gap-4 border-b border-[rgba(140,106,85,0.2)] py-5">
+                    <div className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden bg-cream" style={{ background: line.gradient }}>
+                      {img && <Image fill src={img} alt={line.name} sizes="80px" className="object-cover" />}
                     </div>
-                    <div className="mt-auto flex items-center justify-between pt-3">
-                      <div className="flex items-center border border-[rgba(140,106,85,0.35)]">
-                        <button onClick={() => setQty(line.id, line.qty - 1)} className="px-2.5 py-1 font-ui text-sm text-dark" aria-label="Decrease quantity">−</button>
-                        <span className="px-2 font-ui text-xs text-dark">{line.qty}</span>
-                        <button onClick={() => setQty(line.id, line.qty + 1)} className="px-2.5 py-1 font-ui text-sm text-dark" aria-label="Increase quantity">+</button>
+                    <div className="flex flex-1 flex-col">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-display text-[15px] leading-tight text-dark">{line.name}</div>
+                          <div className="mt-0.5 font-ui text-[9px] tracking-[0.1em] text-muted uppercase">{line.label}</div>
+                        </div>
+                        <button
+                          onClick={() => remove(line.id)}
+                          aria-label={`Remove ${line.name}`}
+                          className="text-muted hover:text-copper"
+                        >
+                          <TrashIcon size={15} />
+                        </button>
                       </div>
-                      <span className="font-ui text-sm font-medium text-copper">{line.price}</span>
+                      <div className="mt-auto flex items-center justify-between pt-3">
+                        <div className="flex items-center border border-[rgba(140,106,85,0.35)]">
+                          <button onClick={() => setQty(line.id, line.qty - 1)} className="px-2.5 py-1 font-ui text-sm text-dark" aria-label="Decrease quantity">−</button>
+                          <span className="px-2 font-ui text-xs text-dark">{line.qty}</span>
+                          <button onClick={() => setQty(line.id, line.qty + 1)} className="px-2.5 py-1 font-ui text-sm text-dark" aria-label="Increase quantity">+</button>
+                        </div>
+                        <span className="font-ui text-sm font-medium text-copper">{line.price}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
+                )
               })}
             </div>
             <footer className="border-t border-[rgba(140,106,85,0.25)] px-6 py-5">
