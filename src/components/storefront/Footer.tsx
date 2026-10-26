@@ -17,11 +17,20 @@ const FOOTER_SAREES = [
 ]
 const FOOTER_HELP = [
   { label: 'Our Story', href: '/story' },
+  { label: 'Contact Us', href: '/contact' },
+  { label: 'FAQs', href: '/faqs' },
   { label: 'Shipping & Returns', href: '/shipping-returns' },
   { label: 'Size Guide', href: '/size-guide' },
   { label: 'Care Instructions', href: '/care-instructions' },
-  { label: 'Contact Us', href: '/contact' },
-  { label: 'FAQs', href: '/faqs' },
+  { label: 'Cancellation Policy', href: '/cancellation-policy' },
+  { label: 'Refund Policy', href: '/refund-policy' },
+]
+
+const FOOTER_LEGAL = [
+  { label: 'Terms of Service', href: '/terms-of-service' },
+  { label: 'Privacy Policy', href: '/privacy-policy' },
+  { label: 'Cookie Policy', href: '/cookie-policy' },
+  { label: 'Disclaimer', href: '/disclaimer' },
 ]
 const PAYMENT_METHODS = ['RAZORPAY', 'VISA', 'MASTERCARD', 'UPI']
 
@@ -159,6 +168,7 @@ function MobileAccordion() {
   const rows: { title: string; items: { label: string; href?: string }[] }[] = [
     { title: 'SAREES', items: FOOTER_SAREES },
     { title: 'HELP', items: FOOTER_HELP },
+    { title: 'LEGAL', items: FOOTER_LEGAL },
   ]
   return (
     <div>
@@ -201,8 +211,13 @@ function BrandBlock({ footer, socials }: { footer: FooterContent; socials: Store
       <div className="font-bengali text-xs font-light text-[rgba(212,136,10,0.60)] mb-4 tracking-[0.02em]">
         {footer.brand.taglineBn}
       </div>
-      <p className="font-sans text-[11px] italic text-muted leading-[1.7] mb-6 max-w-[260px]">
+      <p className="font-sans text-[11px] italic text-muted leading-[1.7] mb-4 max-w-[260px]">
         {footer.brand.tagline}
+      </p>
+      <p className="font-sans text-[11px] text-[rgba(245,239,230,0.5)] leading-[1.7] mb-4 max-w-[260px]">
+        <a href="mailto:hello@sumamsboutique.com" className="no-underline hover:text-gold transition-colors">
+          hello@sumamsboutique.com
+        </a>
       </p>
       <div className="flex gap-3">
         {SOCIALS.map((s) => (
@@ -246,7 +261,7 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
         </div>
       </div>
 
-      <div className="relative z-10 hidden md:grid mx-auto w-full max-w-[1100px]" style={{ gridTemplateColumns: '1.6fr 1fr 1fr 1.4fr', gap: 40 }}>
+      <div className="relative z-10 hidden md:grid mx-auto w-full max-w-[1100px]" style={{ gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1.4fr', gap: 36 }}>
         <BrandBlock footer={footer} socials={socials} />
         <div>
           <FooterColTitle>Sarees</FooterColTitle>
@@ -255,6 +270,10 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
         <div>
           <FooterColTitle>Help</FooterColTitle>
           {FOOTER_HELP.map((l) => <FooterLink key={l.label} item={l} />)}
+        </div>
+        <div>
+          <FooterColTitle>Legal</FooterColTitle>
+          {FOOTER_LEGAL.map((l) => <FooterLink key={l.label} item={l} />)}
         </div>
         <Newsletter footer={footer} />
       </div>
