@@ -3,6 +3,8 @@ import { Eyebrow } from '@/components/shared/primitives'
 import { Reveal } from '@/lib/reveal'
 import type { OurHeritageContent, HeroPart } from '@/lib/data'
 
+const FOUNDER_FALLBACK = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/avatars/founder_portrait.webp`
+
 const DEFAULT: OurHeritageContent = {
   eyebrow: 'OUR HERITAGE',
   headlineParts: [
@@ -17,7 +19,7 @@ const DEFAULT: OurHeritageContent = {
     'She has lived across different countries for over 25 years. She has seen every kind of fashion, every kind of trend. And through all of it, a Bengali handloom is the one thing that has never needed to prove itself.',
     "Sumam's is named after her daughter. It is built on her father's knowledge. And it is opened for every woman in the world who deserves to own something truly handcrafted — not mass made, not repeated, not forgotten.",
   ],
-  image: '',
+  image: FOUNDER_FALLBACK,
   founder: { en: 'Nita', bn: 'নিতা' },
 }
 
@@ -65,9 +67,9 @@ export default function OurHeritage({ data }: { data?: OurHeritageContent }) {
           <div className="mx-auto w-full max-w-[560px] md:max-w-[520px] lg:max-w-[560px] flex justify-center">
             <div className="relative w-full aspect-[5/6] overflow-hidden max-h-[min(85vh,680px)]">
               <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, #2A1008, #BF5E18)' }} />
-              {d.image ? (
+              {(d.image || FOUNDER_FALLBACK) ? (
                 <Image
-                  src={d.image}
+                  src={d.image || FOUNDER_FALLBACK}
                   alt="Nita, founder of Sumam's Boutique"
                   fill
                   sizes="(max-width: 768px) 100vw, 46vw"
