@@ -167,6 +167,7 @@ function MobileAccordion() {
   const [open, setOpen] = useState<string>('SAREES')
   const rows: { title: string; items: { label: string; href?: string }[] }[] = [
     { title: 'SAREES', items: FOOTER_SAREES },
+    { title: 'JEWELLERY', items: [{ label: 'Coming Soon', href: undefined }] },
     { title: 'HELP', items: FOOTER_HELP },
     { title: 'LEGAL', items: FOOTER_LEGAL },
   ]
@@ -261,11 +262,15 @@ export default function Footer({ footer: footerProp }: { footer?: FooterContent 
         </div>
       </div>
 
-      <div className="relative z-10 hidden md:grid mx-auto w-full max-w-[1100px]" style={{ gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1.4fr', gap: 36 }}>
+      <div className="relative z-10 hidden md:grid mx-auto w-full max-w-[1200px]" style={{ gridTemplateColumns: '1.3fr 0.9fr 0.9fr 0.9fr 0.9fr 1.3fr', gap: 32 }}>
         <BrandBlock footer={footer} socials={socials} />
         <div>
           <FooterColTitle>Sarees</FooterColTitle>
           {FOOTER_SAREES.map((l) => <FooterLink key={l.label} item={l} />)}
+        </div>
+        <div>
+          <FooterColTitle>Jewellery</FooterColTitle>
+          <FooterLink item={{ label: 'Coming Soon', href: undefined }} />
         </div>
         <div>
           <FooterColTitle>Help</FooterColTitle>
