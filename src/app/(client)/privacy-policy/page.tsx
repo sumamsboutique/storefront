@@ -3,8 +3,8 @@ import Footer from '@/components/storefront/Footer'
 import { SareeBorderDivider } from '@/components/shared/primitives'
 
 export const metadata = {
-  title: "Privacy Policy | Sumam's Boutique",
-  description: "Privacy Policy for Sumam's Boutique.",
+  title: "Privacy Policy | Sumam&apos;s Boutique",
+  description: "Privacy Policy for Sumam&apos;s Boutique.",
 }
 
 export default function PrivacyPolicyPage() {

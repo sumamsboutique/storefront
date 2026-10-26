@@ -3,8 +3,8 @@ import Footer from '@/components/storefront/Footer'
 import { SareeBorderDivider } from '@/components/shared/primitives'
 
 export const metadata = {
-  title: "Terms of Service | Sumam's Boutique",
-  description: "Terms of Service for Sumam's Boutique.",
+  title: "Terms of Service | Sumam&apos;s Boutique",
+  description: "Terms of Service for Sumam&apos;s Boutique.",
 }
 
 export default function TermsOfServicePage() {
@@ -20,7 +20,7 @@ export default function TermsOfServicePage() {
         <div className="prose prose-sm max-w-none font-ui text-dark/90 leading-relaxed space-y-6">
           <section>
             <h2 className="font-display text-xl font-light text-dark">1. Acceptance of Terms</h2>
-            <p>By accessing or using www.sumamsboutique.com (the "Site"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, please do not use the Site.</p>
+            <p>By accessing or using www.sumamsboutique.com (the &quot;Site&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree, please do not use the Site.</p>
           </section>
 
           <section>
