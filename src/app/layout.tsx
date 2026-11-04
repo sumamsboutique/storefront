@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, DM_Sans, Hind_Siliguri } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import { CartDrawer } from '@/components/storefront/CartDrawer'
 import { GoogleAnalytics } from '@/components/storefront/GoogleAnalytics'
 import WhatsAppFab from '@/components/storefront/WhatsAppFab'
@@ -62,6 +63,7 @@ export default function RootLayout({
         <CartDrawer />
         <GoogleAnalytics />
         <WhatsAppFab />
+        <Analytics />
       </body>
     </html>
   )
