@@ -42,12 +42,13 @@ const nextConfig = {
               // dev callstacks/HMR. Next never evals in production mode.
               // cdn.razorpay.com serves the risk-detection bundle that validates the
               // checkout phone number; without it Razorpay rejects every mobile number.
-              `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+              // va.vercel-scripts.com serves Vercel Web Analytics scripts.
+              `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com https://va.vercel-scripts.com${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
               "style-src 'self' 'unsafe-inline'",
               // ponytail: Instagram review thumbnails may be pasted as post image URLs.
               "img-src 'self' data: blob: https://*.supabase.co https://*.razorpay.com https://*.cdninstagram.com https://*.fbcdn.net https://www.google-analytics.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.razorpay.com https://api.razorpay.com https://*.google-analytics.com https://*.analytics.google.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.razorpay.com https://api.razorpay.com https://*.google-analytics.com https://*.analytics.google.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
               "frame-src 'self' https://*.razorpay.com https://checkout.razorpay.com",
               "object-src 'none'",
               "base-uri 'self'",
